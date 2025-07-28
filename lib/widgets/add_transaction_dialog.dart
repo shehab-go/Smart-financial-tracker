@@ -144,13 +144,13 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               if (_isNewAccount)
                 TextFormField(
                   controller: _accountNameController,
-                  decoration: const InputDecoration(labelText: 'اسم الحساب'),
+                  decoration: const InputDecoration(hintText: 'اسم الحساب'),
                   validator: (v) => v == null || v.trim().isEmpty ? 'مطلوب' : null,
                 ),
               TextFormField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'المبلغ'),
+                decoration: const InputDecoration(hintText: 'المبلغ'),
                 validator: (v) => v == null || v.trim().isEmpty ? 'مطلوب' : null,
               ),
               Padding(
@@ -188,14 +188,14 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               _buildDatePicker(context),
               TextFormField(
                 controller: _detailsController,
-                decoration: const InputDecoration(labelText: 'التفاصيل'),
+                decoration: const InputDecoration(hintText: 'التفاصيل'),
               ),
               Row(
                 children: [
                   Expanded(
                     child: TextFormField(
                       controller: _phoneController,
-                      decoration: const InputDecoration(labelText: 'رقم الهاتف'),
+                      decoration: const InputDecoration(hintText: 'رقم الهاتف'),
                     ),
                   ),
                   IconButton(
@@ -224,7 +224,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   Widget _buildCurrencyDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedCurrencyCode,
-      decoration: const InputDecoration(labelText: 'العملة'),
+      decoration: const InputDecoration(hintText: 'العملة'),
       items: _currencies
           .map((c) => DropdownMenuItem(value: c.code, child: Text(c.nameArabic)))
           .toList(),
@@ -237,7 +237,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     return TextFormField(
       initialValue: curr.nameArabic,
       enabled: false,
-      decoration: const InputDecoration(labelText: 'العملة'),
+      decoration: const InputDecoration(hintText: 'العملة'),
     );
   }
 
@@ -253,7 +253,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         if (picked != null) setState(() => _selectedDate = picked);
       },
       child: InputDecorator(
-        decoration: const InputDecoration(labelText: 'التاريخ'),
+        decoration: const InputDecoration(hintText: 'التاريخ'),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

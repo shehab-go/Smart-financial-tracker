@@ -22,12 +22,17 @@ class TransactionTile extends StatelessWidget {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: InkWell(
+        onTap: onEdit,
+        onLongPress: onDelete,
+        child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)), 
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           child: Row(
             children: [
+              
               // التاريخ
               Expanded(
                 flex: 3,
@@ -37,7 +42,7 @@ class TransactionTile extends StatelessWidget {
                   style: const TextStyle(fontSize: 14),
                 ),
               ),
-              // الوصف
+              // التفاصيل
               Expanded(
                 flex: 4,
                 child: Text(
@@ -59,34 +64,16 @@ class TransactionTile extends StatelessWidget {
                   ),
                 ),
               ),
-              // خيارات
-              SizedBox(
-                width: 40,
-                child: Center(
-                  child: PopupMenuButton<String>(
-                    tooltip: 'خيارات',
-                    onSelected: (v) {
-                      if (v == 'edit' && onEdit != null) onEdit!();
-                      if (v == 'delete' && onDelete != null) onDelete!();
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Row(children: [Icon(Icons.edit, size: 18), SizedBox(width: 6), Text('تعديل')]),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 6), Text('حذف', style: TextStyle(color: Colors.red))]),
-                      ),
-                    ],
-                    child: const Icon(Icons.more_vert, size: 18),
-                  ),
-                ),
-              ),
+
+              
+              
+              
+              
             ],
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

@@ -41,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
       for (CategoryModel category in categories) {
         final categoryAccounts =
-            await DatabaseHelper().getAccountsByCategory(category.name);
+            await DatabaseHelper().getAccountsWithStatsByCategory(category.name);
         accountsByCategory[category.name] = categoryAccounts;
 
         // Calculate totals for this category
@@ -238,17 +238,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Column(
         children: [
-          // اسم الفئة
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(category.icon, style: const TextStyle(fontSize: 24)),
-              const SizedBox(width: 8),
-              Text(category.nameArabic,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
-            ],
-          ),
+      
+          
           const SizedBox(height: 16),
 
           // ترويسة الجدول
@@ -338,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                                  Container(
                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                    decoration: BoxDecoration(
-                                                     color: Theme.of(context).colorScheme.primary,
+                                                     color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                                                      borderRadius: BorderRadius.circular(12),
                                                    ),
                                                    child: Text(

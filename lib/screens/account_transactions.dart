@@ -243,31 +243,30 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                      color: Theme.of(context).colorScheme.surfaceVariant,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                     child: const Row(
-                      children: const [
+                      children: [
                         Expanded(
-                                  flex: 3,
-                                  child: Text('المبلغ', textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold)),
-                                ),
-                                 Expanded(
-                                  flex: 3,
-                                  child: Text('الوصف', textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold)),
-                                ),
-                                Expanded(
-                                  flex: 3,
-                                  child: Text('التاريخ', textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold)),
-                                ),
-                               
-                                
-                                Expanded(
-                                  flex: 1,
-                                  child: SizedBox.shrink(),   // أو Text('خيارات')
-                                ),
-                              ],
+                          flex: 3,
+                          child: Text('المبلغ', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: Text('تفاصيل', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Text('التاريخ', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                        
+                        
+                        
+                                             
+
+                      ],
                     ),
                   ),
                 ),
