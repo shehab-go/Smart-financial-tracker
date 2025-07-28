@@ -427,16 +427,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Scaffold(
       endDrawer: const AppDrawer(),
       appBar: AppBar(
+        centerTitle: false,
+        titleSpacing: 0,
         title: AnimatedBuilder(
           animation: _tabController,
           builder: (context, child) {
             if (_tabController.index < _categories.length) {
               final currentCategory = _categories[_tabController.index];
-              return Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(currentCategory.icon),
-                const SizedBox(width: 8),
-                Text(currentCategory.nameArabic),
-              ]);
+              return Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.start,
+                textDirection: TextDirection.rtl,
+                children: [
+                  Text(currentCategory.nameArabic),
+                  const SizedBox(width: 8),
+                  Text(currentCategory.icon),
+                ],
+              );
             }
             return const Text('إدارة الأموال الشخصية');
           },
