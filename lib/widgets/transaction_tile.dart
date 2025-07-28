@@ -22,13 +22,9 @@ class TransactionTile extends StatelessWidget {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(4),
-          ),
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           child: Row(
             children: [
@@ -43,7 +39,7 @@ class TransactionTile extends StatelessWidget {
               ),
               // الوصف
               Expanded(
-                flex: 3,
+                flex: 4,
                 child: Text(
                   transaction.description ?? '—',
                   overflow: TextOverflow.ellipsis,
@@ -64,25 +60,27 @@ class TransactionTile extends StatelessWidget {
                 ),
               ),
               // خيارات
-              Expanded(
-                flex: 1,
-                child: PopupMenuButton<String>(
-                  tooltip: 'خيارات',
-                  onSelected: (v) {
-                    if (v == 'edit' && onEdit != null) onEdit!();
-                    if (v == 'delete' && onDelete != null) onDelete!();
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Row(children: [Icon(Icons.edit, size: 18), SizedBox(width: 6), Text('تعديل')]),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 6), Text('حذف', style: TextStyle(color: Colors.red))]),
-                    ),
-                  ],
-                  child: const Icon(Icons.more_vert, size: 18),
+              SizedBox(
+                width: 40,
+                child: Center(
+                  child: PopupMenuButton<String>(
+                    tooltip: 'خيارات',
+                    onSelected: (v) {
+                      if (v == 'edit' && onEdit != null) onEdit!();
+                      if (v == 'delete' && onDelete != null) onDelete!();
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(children: [Icon(Icons.edit, size: 18), SizedBox(width: 6), Text('تعديل')]),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 6), Text('حذف', style: TextStyle(color: Colors.red))]),
+                      ),
+                    ],
+                    child: const Icon(Icons.more_vert, size: 18),
+                  ),
                 ),
               ),
             ],
