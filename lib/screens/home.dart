@@ -6,6 +6,9 @@ import '../db/database_helper.dart';
 import '../widgets/app_drawer.dart';
 import 'account_transactions.dart';
 import '../widgets/add_transaction_dialog.dart';
+import '../widgets/report_bottom_sheet.dart';
+import '../services/report_service.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,6 +18,31 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  void _showReportOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => ReportBottomSheet(
+        onCurrentCategory: _generateReportForCurrentCategory,
+        onAllCategories: _generateReportForAll,
+      ),
+    );
+  }
+
+
+  Future<void> _generateReportForCurrentCategory() async {
+    await ReportService.generateAndOpenPdf(
+      title: 'تقرير الفئة الحالية',
+      content: [pw.Paragraph(text: 'سيتم تنفيذ محتوى التقرير هنا')],
+    );
+  }
+
+  Future<void> _generateReportForAll() async {
+    await ReportService.generateAndOpenPdf(
+      title: 'تقرير جميع الفئات',
+      content: [pw.Paragraph(text: 'سيتم تنفيذ محتوى التقرير هنا')],
+    );
+  }
+
   late TabController _tabController;
   List<CategoryModel> _categories = [];
   Map<String, List<AccountModel>> _accountsByCategory = {};
@@ -428,27 +456,43 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       endDrawer: const AppDrawer(),
       appBar: AppBar(
         centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.print),
+          tooltip: 'تقرير',
+          onPressed: _showReportOptions,
+        ),
         titleSpacing: 0,
         title: AnimatedBuilder(
           animation: _tabController,
           builder: (context, child) {
             if (_tabController.index < _categories.length) {
               final currentCategory = _categories[_tabController.index];
-              return Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.start,
-                textDirection: TextDirection.rtl,
-                children: [
-                  Text(currentCategory.nameArabic),
-                  const SizedBox(width: 8),
-                  Text(currentCategory.icon),
-                ],
+              return Align(
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  textDirection: TextDirection.rtl,
+                  children: [
+                    Text(currentCategory.nameArabic),
+                    const SizedBox(width: 8),
+                    Text(currentCategory.icon),
+                  ],
+                ),
               );
             }
             return const Text('إدارة الأموال الشخصية');
           },
         ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              tooltip: 'القائمة',
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
