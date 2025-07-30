@@ -163,8 +163,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         groupValue: _selectedType,
                         contentPadding: EdgeInsets.zero,
                         title: const Text(
-                          'مدين',
-                          style: TextStyle(color: Colors.green),
+                          'عليه',
+                          style: TextStyle(color: Colors.red),
                         ),
                         onChanged: (val) => setState(() => _selectedType = val ?? 'debit'),
                       ),
@@ -175,8 +175,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         groupValue: _selectedType,
                         contentPadding: EdgeInsets.zero,
                         title: const Text(
-                          'دائن',
-                          style: TextStyle(color: Colors.red),
+                          'له',
+                          style: TextStyle(color: Colors.green),
                         ),
                         onChanged: (val) => setState(() => _selectedType = val ?? 'credit'),
                       ),

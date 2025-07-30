@@ -6,6 +6,8 @@ import '../db/database_helper.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/add_transaction_dialog.dart';
+import '../services/report_service.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 
 class AccountTransactionsScreen extends StatefulWidget {
@@ -24,6 +26,41 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   List<TransactionModel> _transactions = [];
   Map<String, double> _totals = {'debit': 0.0, 'credit': 0.0, 'net': 0.0};
   bool _isLoading = true;
+
+  Future<void> _generateReportForAccount() async {
+    debugPrint('Generating PDF for account');
+    // Build table data
+    final rows = _transactions.map((t) => [
+          DateFormat('yyyy/MM/dd').format(t.date),
+          t.description ?? '-',
+          // "له" = credit (green)
+          t.type == 'credit' ? t.amount.toStringAsFixed(0) : '-',
+          // "عليه" = debit (red)
+          t.type == 'debit' ? t.amount.toStringAsFixed(0) : '-',
+        ]).toList();
+
+    final table = pw.Table.fromTextArray(
+      headers: ['التاريخ', 'تفاصيل', 'له', 'عليه'],
+      data: rows,
+      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+      cellAlignment: pw.Alignment.center,
+    );
+
+    // Totals row
+    final String netLabel = _totals['credit']! >= _totals['debit']! ? 'المتبقي له' : 'المتبقي عليه';
+    final totalsRow = pw.Container(
+      alignment: pw.Alignment.centerRight,
+      padding: pw.EdgeInsets.symmetric(vertical: 8),
+      child: pw.Text(
+          'الإجمالي - له: ${_totals["credit"]!.toStringAsFixed(0)}  |  عليه: ${_totals["debit"]!.toStringAsFixed(0)}  |  $netLabel: ${_totals["net"]!.abs().toStringAsFixed(0)}',
+          textDirection: pw.TextDirection.rtl),
+    );
+
+    await ReportService.generateAndOpenPdf(
+      title: 'تقرير حساب ${widget.account.name}',
+      content: [table, pw.SizedBox(height: 12), totalsRow],
+    );
+  }
 
   @override
   void initState() {
@@ -155,19 +192,22 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     return Scaffold(
       endDrawer: const AppDrawer(),
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                widget.account.name,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+    titleSpacing: 0,
+      automaticallyImplyLeading: false,
+      leading: IconButton(
+        icon: const Icon(Icons.print),
+        onPressed: _generateReportForAccount,
+      ),
+
+        title: Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            widget.account.name,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -188,16 +228,16 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                             Column(
                               children: [
                                 Text(
-                                  _totals['net']! >= 0 ? 'المتبقي لك' : 'المتبقي عليك',
+                                  _totals['credit']! >= _totals['debit']! ?  'المتبقي له': 'المتبقي عليه',
                                   style: TextStyle(
-                                    color: _totals['net']! >= 0 ? Colors.red : Colors.green,
+                                    color: _totals['credit']! >= _totals['debit']! ?  Colors.red:Colors.green ,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 Text(
                                   NumberFormat('#,##0').format((_totals['net']!).abs()) + ' ${widget.account.currencyCode}',
                                   style: TextStyle(
-                                    color: _totals['net']! >= 0 ? Colors.red : Colors.green,
+                                    color: _totals['credit']! >= _totals['debit']! ?  Colors.red:Colors.green ,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                   ),
@@ -206,7 +246,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                             ),
                             Column(
                               children: [
-                                const Text('لك', style: TextStyle(color: Colors.red)),
+                                const Text('عليه', style: TextStyle(color: Colors.red)),
                                 Text(
                                   NumberFormat('#,##0').format(_totals['debit']) + ' ${widget.account.currencyCode}',
                                   style: const TextStyle(
@@ -219,7 +259,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                             ),
                             Column(
                               children: [
-                                const Text('عليك', style: TextStyle(color: Colors.green)),
+                                const Text('له', style: TextStyle(color: Colors.green)),
                                 Text(
                                   NumberFormat('#,##0').format(_totals['credit']) + ' ${widget.account.currencyCode}',
                                   style: const TextStyle(
@@ -261,11 +301,6 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                           flex: 3,
                           child: Text('التاريخ', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
-                        
-                        
-                        
-                                             
-
                       ],
                     ),
                   ),

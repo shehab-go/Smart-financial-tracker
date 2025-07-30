@@ -30,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
 
   Future<void> _generateReportForCurrentCategory() async {
+    debugPrint('Generating PDF for current category');
     await ReportService.generateAndOpenPdf(
       title: 'تقرير الفئة الحالية',
       content: [pw.Paragraph(text: 'سيتم تنفيذ محتوى التقرير هنا')],
@@ -37,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _generateReportForAll() async {
+    debugPrint('Generating PDF for all categories');
     await ReportService.generateAndOpenPdf(
       title: 'تقرير جميع الفئات',
       content: [pw.Paragraph(text: 'سيتم تنفيذ محتوى التقرير هنا')],
@@ -288,12 +290,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 Expanded(
                     flex: 2,
                     child: Center(
-                        child: Text('مدين',
+                        child: Text('عليه',
                             style: headerStyle.copyWith(color: Colors.red)))),
                 Expanded(
                     flex: 2,
                     child: Center(
-                        child: Text('دائن',
+                        child: Text('له',
                             style: headerStyle.copyWith(color: Colors.green)))),
                 Expanded(
                   flex: 1,
@@ -375,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                                 child:
                                                     Text(account.currencyCode)),
                                           ),
-                                          // مدين
+                                          // له
                                           Expanded(
                                             flex: 2,
                                             child: Center(
@@ -387,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                                       color: Colors.red)),
                                             ),
                                           ),
-                                          // دائن
+                                          // عليه
                                           Expanded(
                                             flex: 2,
                                             child: Center(
