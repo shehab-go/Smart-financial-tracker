@@ -4,14 +4,16 @@ import '../models/transaction.dart';
 
 class TransactionTile extends StatelessWidget {
   final TransactionModel transaction;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final bool selected;
 
   const TransactionTile({
     super.key,
     required this.transaction,
-    this.onEdit,
-    this.onDelete,
+    required this.selected,
+    this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -23,9 +25,10 @@ class TransactionTile extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: InkWell(
-        onTap: onEdit,
-        onLongPress: onDelete,
+        onTap: onTap,
+        onLongPress: onLongPress,
         child: Card(
+        color: selected ? Colors.blue.withOpacity(0.2) : null,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)), 
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Padding(

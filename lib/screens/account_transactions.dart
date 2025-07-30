@@ -7,6 +7,7 @@ import '../widgets/transaction_tile.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/add_transaction_dialog.dart';
 import '../services/report_service.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 
@@ -23,9 +24,80 @@ class AccountTransactionsScreen extends StatefulWidget {
 }
 
 class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
+  // helper to toggle selection
+  void _toggleSelection(TransactionModel t) {
+    if (t.id == null) return;
+    setState(() {
+      if (_selectedIds.contains(t.id)) {
+        _selectedIds.remove(t.id);
+      } else {
+        _selectedIds.add(t.id!);
+      }
+    });
+  }
+
+  void _clearSelection() {
+    setState(() => _selectedIds.clear());
+  }
+
+  Future<void> _deleteSelected() async {
+    if (_selectedIds.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (c) => AlertDialog(
+            title: const Text('تأكيد الحذف'),
+            content: Text('سيتم حذف ${_selectedIds.length} معاملة. هل تريد المتابعة؟'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('إلغاء')),
+              TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('حذف', style: TextStyle(color: Colors.red))),
+            ],
+          ),
+        ) ??
+        false;
+    if (confirmed) {
+      for (final id in _selectedIds) {
+        await DatabaseHelper().deleteTransaction(id);
+      }
+      _clearSelection();
+      _loadTransactions();
+    }
+  }
+
+  Future<void> _printSelected() async {
+    if (_selectedIds.isEmpty) return;
+    final sel = _transactions.where((t) => _selectedIds.contains(t.id)).toList();
+    final rows = sel.map((t) => [
+          DateFormat('yyyy/MM/dd').format(t.date),
+          t.description ?? '-',
+          t.type == 'credit' ? t.amount.toStringAsFixed(0) : '-',
+          t.type == 'debit' ? t.amount.toStringAsFixed(0) : '-',
+        ]).toList();
+    final table = pw.Table.fromTextArray(headers: ['التاريخ', 'تفاصيل', 'له', 'عليه'], data: rows);
+    await ReportService.generateAndOpenPdf(
+      title: 'معاملات مختارة - ${widget.account.name}',
+      content: [table],
+    );
+  }
+
+  void _shareSelected() {
+    if (_selectedIds.isEmpty) return;
+    final selectedTx = _transactions.where((t) => _selectedIds.contains(t.id)).toList();
+    final header = 'حساب: ${widget.account.name}';
+    final lines = selectedTx
+        .map((t) {
+          final label = t.type == 'debit' ? 'عليه' : 'له';
+          return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label ${t.amount.toStringAsFixed(0)} ${widget.account.currencyCode}';
+        })
+        .join('\n');
+    Share.share('$header\n$lines', subject: 'معاملات مختارة - ${widget.account.name}');
+  }
   List<TransactionModel> _transactions = [];
   Map<String, double> _totals = {'debit': 0.0, 'credit': 0.0, 'net': 0.0};
   bool _isLoading = true;
+
+  // multi-select
+  final Set<int> _selectedIds = {};
+  bool get _selectionMode => _selectedIds.isNotEmpty;
 
   Future<void> _generateReportForAccount() async {
     debugPrint('Generating PDF for account');
@@ -191,7 +263,26 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       endDrawer: const AppDrawer(),
-      appBar: AppBar(
+      appBar: _selectionMode ? AppBar(
+      leading: IconButton(icon: const Icon(Icons.close), onPressed: _clearSelection),
+      title: Text('تم تحديد ${_selectedIds.length}'),
+      actions: [
+        IconButton(icon: const Icon(Icons.select_all), onPressed: () {
+          setState(() {
+            if (_selectedIds.length == _transactions.length) {
+              _selectedIds.clear();
+            } else {
+              _selectedIds
+                ..clear()
+                ..addAll(_transactions.map((e) => e.id!).whereType<int>());
+            }
+          });
+        }),
+        IconButton(icon: const Icon(Icons.delete), onPressed: _deleteSelected),
+        IconButton(icon: const Icon(Icons.print), onPressed: _printSelected),
+        IconButton(icon: const Icon(Icons.share), onPressed: _shareSelected),
+      ],
+    ) : AppBar(
     titleSpacing: 0,
       automaticallyImplyLeading: false,
       leading: IconButton(
@@ -339,8 +430,11 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                             final transaction = _transactions[index];
                             return TransactionTile(
                               transaction: transaction,
-                              onEdit: () => _navigateToEditTransaction(transaction),
-                              onDelete: () => _deleteTransaction(transaction),
+                              selected: _selectedIds.contains(transaction.id),
+                              onTap: _selectionMode
+                                  ? () => _toggleSelection(transaction)
+                                  : () => _navigateToEditTransaction(transaction),
+                              onLongPress: () => _toggleSelection(transaction),
                             );
                           },
                         ),
