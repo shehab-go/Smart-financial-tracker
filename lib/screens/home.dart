@@ -82,18 +82,62 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
 
   Future<void> _generateReportForCurrentCategory() async {
-    debugPrint('Generating PDF for current category');
+    if (_tabController.index >= _categories.length) return;
+    final cat = _categories[_tabController.index];
+    final accounts = _accountsByCategory[cat.name] ?? [];
+    if (accounts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لا توجد حسابات في هذه الفئة')));
+      return;
+    }
+    // إجمالي لتحديد عنوان العمود الديناميكي
+    final totalCredit = accounts.fold<double>(0, (s, a) => s + a.totalCredit);
+    final totalDebit = accounts.fold<double>(0, (s, a) => s + a.totalDebit);
+    final netHeaderLabel = totalCredit >= totalDebit ?  'المتبقي عليك':'المتبقي لك' ;
+
+    final rows = accounts.map((a) {
+      final net = a.totalCredit - a.totalDebit;
+      return [
+        a.name,
+        NumberFormat('#,##0').format(a.totalCredit),
+        NumberFormat('#,##0').format(a.totalDebit),
+       NumberFormat('#,##0').format(net.abs())
+      ];
+    }).toList();
+    final table = pw.Table.fromTextArray(
+        headers: ['الحساب', 'له', 'عليه', netHeaderLabel], data: rows);
     await ReportService.generateAndOpenPdf(
-      title: 'تقرير الفئة الحالية',
-      content: [pw.Paragraph(text: 'سيتم تنفيذ محتوى التقرير هنا')],
+      title: 'تقرير فئة ${cat.name}',
+      content: [table],
     );
   }
 
   Future<void> _generateReportForAll() async {
-    debugPrint('Generating PDF for all categories');
+    final allAccounts = _categories
+        .expand((c) => _accountsByCategory[c.name] ?? [])
+        .toList();
+    if (allAccounts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لا توجد حسابات لعرضها')));
+      return;
+    }
+    final totalCreditAll = allAccounts.fold<double>(0, (s, a) => s + a.totalCredit);
+    final totalDebitAll = allAccounts.fold<double>(0, (s, a) => s + a.totalDebit);
+    final netHeaderLabelAll = totalCreditAll >= totalDebitAll ? 'المتبقي لك' :'المتبقي عليك' ;
+
+    final rows = allAccounts.map((a) {
+      final net = a.totalCredit - a.totalDebit;
+      return [
+        a.name,
+        a.category,
+        NumberFormat('#,##0').format(a.totalCredit),
+        NumberFormat('#,##0').format(a.totalDebit),
+        NumberFormat('#,##0').format(net.abs())
+      ];
+    }).toList();
+    final table = pw.Table.fromTextArray(
+        headers: ['الحساب', 'الفئة', 'له', 'عليه', netHeaderLabelAll], data: rows);
     await ReportService.generateAndOpenPdf(
-      title: 'تقرير جميع الفئات',
-      content: [pw.Paragraph(text: 'سيتم تنفيذ محتوى التقرير هنا')],
+      title: 'تقرير جميع الحسابات',
+      content: [table],
     );
   }
 

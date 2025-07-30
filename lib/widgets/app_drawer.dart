@@ -10,7 +10,9 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -25,7 +27,7 @@ class AppDrawer extends StatelessWidget {
                 end: Alignment.bottomRight,
               ),
             ),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
@@ -119,7 +121,8 @@ class AppDrawer extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   void _shareApp() {

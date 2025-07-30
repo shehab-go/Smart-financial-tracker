@@ -5,7 +5,9 @@ class PrivacyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('سياسة الخصوصية'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -160,7 +162,7 @@ class PrivacyScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildSection(BuildContext context, String title, String content, IconData icon) {

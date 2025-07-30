@@ -5,7 +5,9 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('حول التطبيق'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -115,7 +117,9 @@ class AboutScreen extends StatelessWidget {
           ],
         ),
       ),
+    )
     );
+    
   }
 
   Widget _buildSection(BuildContext context, String title, String content, IconData icon) {
