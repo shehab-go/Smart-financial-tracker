@@ -9,6 +9,7 @@ import '../widgets/add_transaction_dialog.dart';
 import '../widgets/report_bottom_sheet.dart';
 import '../services/report_service.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,57 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  // --- Account selection helpers ---
+  void _toggleAccountSelect(AccountModel acc) {
+    if (acc.id == null) return;
+    setState(() {
+      if (_selectedAccountIds.contains(acc.id)) {
+        _selectedAccountIds.remove(acc.id);
+      } else {
+        _selectedAccountIds.add(acc.id!);
+      }
+    });
+  }
+
+  void _clearAccountSelect() => setState(() => _selectedAccountIds.clear());
+
+  Future<void> _deleteSelectedAccounts() async {
+    if (_selectedAccountIds.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (c) => AlertDialog(
+            title: const Text('تأكيد الحذف'),
+            content: Text('سيتم حذف ${_selectedAccountIds.length} حساب ومعاملاته. هل تريد المتابعة؟'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('إلغاء')),
+              TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('حذف', style: TextStyle(color: Colors.red))),
+            ],
+          ),
+        ) ??
+        false;
+    if (confirmed) {
+      for (final id in _selectedAccountIds) {
+        await DatabaseHelper().deleteAccount(id);
+      }
+      _clearAccountSelect();
+      _loadData();
+    }
+  }
+
+  void _shareSelectedAccounts() {
+    if (_selectedAccountIds.isEmpty) return;
+    final sel = _categories.expand((cat) => _accountsByCategory[cat.name] ?? []).where((a) => _selectedAccountIds.contains(a.id)).toList();
+    final lines = sel.map((a) => '${a.name}: له ${a.totalCredit.toStringAsFixed(0)} - عليه ${a.totalDebit.toStringAsFixed(0)}').join('\n');
+    Share.share(lines, subject: 'حسابات مختارة');
+  }
+
+  Future<void> _printSelectedAccounts() async {
+    if (_selectedAccountIds.isEmpty) return;
+    final sel = _categories.expand((cat) => _accountsByCategory[cat.name] ?? []).where((a) => _selectedAccountIds.contains(a.id)).toList();
+    final rows = sel.map((a) => [a.name, a.totalCredit.toStringAsFixed(0), a.totalDebit.toStringAsFixed(0)]).toList();
+    final table = pw.Table.fromTextArray(headers: ['الحساب', 'له', 'عليه'], data: rows);
+    await ReportService.generateAndOpenPdf(title: 'حسابات مختارة', content: [table]);
+  }
   void _showReportOptions() {
     showModalBottomSheet(
       context: context,
@@ -50,6 +102,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Map<String, List<AccountModel>> _accountsByCategory = {};
   Map<String, Map<String, double>> _totalsByCategory = {};
   bool _isLoading = true;
+
+  // Multi-select for accounts
+  final Set<int> _selectedAccountIds = {};
+  bool get _accSelectionMode => _selectedAccountIds.isNotEmpty;
 
   @override
   void initState() {
@@ -335,12 +391,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(4)),
                               child: InkWell(
-                                  onTap: () =>
-                                      _navigateToAccountTransactions(account),
-                                  onLongPress: () => _deleteAccount(account),
-                                  child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8, horizontal: 4),
+                                  onTap: _accSelectionMode
+                                       ? () => _toggleAccountSelect(account)
+                                       : () => _navigateToAccountTransactions(account),
+                                   onLongPress: () => _toggleAccountSelect(account),
+                                  child: Container(
+                                color: _selectedAccountIds.contains(account.id) ? Colors.blue.withOpacity(0.2) : null,
+                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                                       child: Directionality(
                                         textDirection: TextDirection.rtl,
                                         child: Row(children: [
@@ -456,7 +513,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     return Scaffold(
       endDrawer: const AppDrawer(),
-      appBar: AppBar(
+      appBar: _accSelectionMode
+        ? AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: _clearAccountSelect,
+            ),
+            title: Text('تم تحديد ${_selectedAccountIds.length}'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.select_all),
+                tooltip: 'تحديد الكل',
+                onPressed: () {
+                  final allIds = _categories
+                      .expand((c) => _accountsByCategory[c.name] ?? [])
+                      .map((e) => e.id!)
+                      .whereType<int>()
+                      .toList();
+                  setState(() {
+                    if (_selectedAccountIds.length == allIds.length) {
+                      _selectedAccountIds.clear();
+                    } else {
+                      _selectedAccountIds
+                        ..clear()
+                        ..addAll(allIds);
+                    }
+                  });
+                },
+              ),
+              IconButton(icon: const Icon(Icons.delete), onPressed: _deleteSelectedAccounts),
+              IconButton(icon: const Icon(Icons.print), onPressed: _printSelectedAccounts),
+              IconButton(icon: const Icon(Icons.share), onPressed: _shareSelectedAccounts),
+            ],
+          )
+        : AppBar(
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.print),
