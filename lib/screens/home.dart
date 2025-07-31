@@ -97,14 +97,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final rows = accounts.map((a) {
       final net = a.totalCredit - a.totalDebit;
       return [
-        a.name,
-        NumberFormat('#,##0').format(a.totalCredit),
+        NumberFormat('#,##0').format(net.abs()),
         NumberFormat('#,##0').format(a.totalDebit),
-       NumberFormat('#,##0').format(net.abs())
+        NumberFormat('#,##0').format(a.totalCredit),
+        a.name,             
       ];
     }).toList();
     final table = pw.Table.fromTextArray(
-        headers: ['الحساب', 'له', 'عليه', netHeaderLabel], data: rows);
+        headers: [netHeaderLabel, 'عليه','له' ,'الحساب' ], data: rows);
     await ReportService.generateAndOpenPdf(
       title: 'تقرير فئة ${cat.name}',
       content: [table],
@@ -126,15 +126,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final rows = allAccounts.map((a) {
       final net = a.totalCredit - a.totalDebit;
       return [
-        a.name,
-        a.category,
-        NumberFormat('#,##0').format(a.totalCredit),
+        NumberFormat('#,##0').format(net.abs()),
         NumberFormat('#,##0').format(a.totalDebit),
-        NumberFormat('#,##0').format(net.abs())
+        NumberFormat('#,##0').format(a.totalCredit),
+        a.category,
+        a.name, 
       ];
     }).toList();
     final table = pw.Table.fromTextArray(
-        headers: ['الحساب', 'الفئة', 'له', 'عليه', netHeaderLabelAll], data: rows);
+        headers: [netHeaderLabelAll,'عليه' , 'له','الفئة' ,'الحساب'], data: rows);
     await ReportService.generateAndOpenPdf(
       title: 'تقرير جميع الحسابات',
       content: [table],

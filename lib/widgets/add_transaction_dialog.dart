@@ -222,12 +222,24 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   }
 
   Widget _buildCurrencyDropdown() {
+    final uniqueMap = _currencies.fold<Map<String, CurrencyModel>>({}, (map, c) {
+      map.putIfAbsent(c.code, () => c);
+      return map;
+    });
+    final items = uniqueMap.values
+        .map((c) => DropdownMenuItem(value: c.code, child: Text(c.nameArabic)))
+        .toList();
+
+    String selected = _selectedCurrencyCode;
+    if (!uniqueMap.containsKey(selected)) {
+      // fallback to first available code to avoid assertion failure
+      selected = uniqueMap.keys.first;
+    }
+
     return DropdownButtonFormField<String>(
-      value: _selectedCurrencyCode,
+      value: selected,
       decoration: const InputDecoration(hintText: 'العملة'),
-      items: _currencies
-          .map((c) => DropdownMenuItem(value: c.code, child: Text(c.nameArabic)))
-          .toList(),
+      items: items,
       onChanged: (val) => setState(() => _selectedCurrencyCode = val ?? 'LOC'),
     );
   }

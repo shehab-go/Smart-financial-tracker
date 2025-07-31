@@ -72,20 +72,20 @@ class CurrencyModel {
         name: 'Local',
         nameArabic: 'محلي',
         symbol: '¤',
-        code: 'محلي',
+        code: 'LOC',
         isDefault: true,
       ),
       CurrencyModel(
         name: 'Saudi Riyal',
         nameArabic: 'ريال سعودي',
         symbol: 'ر.س',
-        code: 'سعودي',
+        code: 'SAR',
       ),
       CurrencyModel(
         name: 'US Dollar',
         nameArabic: 'دولار أمريكي',
         symbol: '\$',
-        code: 'دولار',
+        code: 'USD',
       ),
     ];
   }
