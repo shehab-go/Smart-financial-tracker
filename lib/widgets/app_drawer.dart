@@ -4,6 +4,7 @@ import '../screens/about_screen.dart';
 import '../screens/privacy_screen.dart';
 import '../screens/categories_screen.dart';
 import '../screens/currencies_screen.dart';
+import '../screens/backup_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -62,6 +63,18 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           const Divider(),
+          ListTile(
+            leading: Icon(Icons.backup, color: Theme.of(context).primaryColor),
+            title: const Text('النسخ الاحتياطية'),
+            subtitle: const Text('إنشاء أو استعادة قاعدة البيانات'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const BackupScreen()),
+              );
+            },
+          ),
           ListTile(
             leading: Icon(Icons.category, color: Theme.of(context).primaryColor),
             title: const Text('إدارة الفئات'),

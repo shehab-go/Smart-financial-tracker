@@ -38,6 +38,9 @@ dependencies:
   # Database
   sqflite: ^2.3.0
   path: ^1.8.3
+  path_provider: ^2.1.3
+  file_picker: ^6.1.1
+
   
   # State management
   provider: ^6.1.1
@@ -52,7 +55,8 @@ dependencies:
   printing: ^5.12.0
   # Open files
   open_file: ^3.2.1
-  path_provider: ^2.1.1
+  permission_handler: ^11.1.0
+
   
   # Sharing functionality
   share_plus: ^7.2.2

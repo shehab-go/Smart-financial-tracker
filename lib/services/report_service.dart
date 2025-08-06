@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
@@ -47,17 +49,52 @@ class ReportService {
 
     final bytes = await pdf.save();
 
-    Directory? dir;
+    Directory dir;
     if (Platform.isAndroid) {
-      dir = await getExternalStorageDirectory();
+      // Ensure storage permission similar to BackupService
+      var status = await Permission.manageExternalStorage.status;
+      if (!status.isGranted) {
+        status = await Permission.manageExternalStorage.request();
+      }
+      if (!status.isGranted) {
+        status = await Permission.storage.request();
+      }
+      // Public Downloads/FinanceApp/report
+      dir = Directory('/storage/emulated/0/Download/FinanceApp/report');
     } else {
-      dir = await getDownloadsDirectory();
+      final downloads = await getDownloadsDirectory();
+      dir = Directory('${downloads?.path ?? (await getTemporaryDirectory()).path}/FinanceApp/report');
     }
-    dir ??= await getTemporaryDirectory();
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
-    final file = File('${dir.path}/report_${DateTime.now().millisecondsSinceEpoch}.pdf');
+    // Build file name: <slug>-<increment>-YYYY-MM-DD.pdf
+    final slug = title
+        .replaceAll(RegExp(r'[^A-Za-z0-9_\-]'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+
+    // Determine next incremental number for this slug.
+    final existingIndexes = dir
+        .listSync()
+        .whereType<File>()
+        .where((f) => p.extension(f.path) == '.pdf')
+        .map((f) => p.basenameWithoutExtension(f.path))
+        .where((name) => name.startsWith('$slug-'))
+        .map((name) {
+          final rest = name.substring(slug.length + 1); // after slug-
+          final parts = rest.split('-');
+          if (parts.isEmpty) return -1;
+          return int.tryParse(parts[0]) ?? -1;
+        })
+        .where((n) => n >= 0)
+        .toList();
+    final nextIndex = existingIndexes.isEmpty ? 0 : (existingIndexes.reduce((a, b) => a > b ? a : b) + 1);
+
+    final now = DateTime.now();
+    final dateStr = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final fileName = '$nextIndex-$slug-$dateStr.pdf';
+    final file = File(p.join(dir.path, fileName));
     await file.writeAsBytes(bytes);
     debugPrint('PDF saved to: ${file.path}');
     final result = await OpenFile.open(file.path);
