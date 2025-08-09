@@ -349,10 +349,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final accounts = _accountsByCategory[category.name] ?? [];
     const headerStyle = TextStyle(fontWeight: FontWeight.bold);
 
-    Widget _emptyState() => Center(
+    Widget _emptyState() => const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
+            children: [
               Icon(Icons.account_balance_wallet, size: 64, color: Colors.grey),
               SizedBox(height: 16),
               Text('لا توجد حسابات في هذه الفئة',
@@ -374,12 +374,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
           // ترويسة الجدول
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8),
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceVariant,
-              borderRadius: BorderRadius.circular(4),
-            ),
+            // Removed margin, padding, and background color
             child: Directionality(
               textDirection: TextDirection.rtl,
               child: Row(children: [
