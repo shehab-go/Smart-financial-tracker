@@ -18,10 +18,6 @@ class CategoryListItem extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-          child: const Icon(Icons.category),
-        ),
         title: Text(
           category.name, 
           style: const TextStyle(fontWeight: FontWeight.bold)

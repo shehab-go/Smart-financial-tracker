@@ -176,11 +176,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       isScrollable: true,
       tabs: _state.categories
           .map((category) => Tab(
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.category),
-                  const SizedBox(width: 4),
-                  Text(category.name),
-                ]),
+                text: category.name,
               ))
           .toList(),
     );

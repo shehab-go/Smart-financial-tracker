@@ -27,6 +27,7 @@ class CategoryModel {
       CategoryModel(name: 'عام'),
       CategoryModel(name: 'مورد'),
       CategoryModel(name: 'عميل'),
+      CategoryModel(name: 'مصروفات'),
       CategoryModel(name: 'طعام'),
       CategoryModel(name: 'مواصلات'),
       CategoryModel(name: 'إيجار'),

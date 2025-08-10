@@ -31,11 +31,7 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
             final currentCategory = categories[tabController.index];
             return Align(
               alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                textDirection: TextDirection.rtl,
-                children: [Text(currentCategory.name), const SizedBox(width: 8), const Icon(Icons.category)],
-              ),
+              child: Text(currentCategory.name),
             );
           }
           return const Text('إدارة الأموال الشخصية');
