@@ -113,7 +113,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       builder: (context) => AlertDialog(
         title: const Text('حذف الفئة'),
         content: Text(
-          'هل أنت متأكد من حذف فئة "${category.nameArabic}"؟\n\n'
+          'هل أنت متأكد من حذف فئة "${category.name}"؟\n\n'
           'سيتم حذف جميع الحسابات والمعاملات المرتبطة بهذه الفئة.'
         ),
         actions: [

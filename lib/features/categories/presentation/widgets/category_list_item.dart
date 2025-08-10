@@ -20,15 +20,11 @@ class CategoryListItem extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-          child: Text(category.icon, style: const TextStyle(fontSize: 20)),
+          child: const Icon(Icons.category),
         ),
         title: Text(
-          category.nameArabic, 
-          style: const TextStyle(fontWeight: FontWeight.bold)
-        ),
-        subtitle: Text(
           category.name, 
-          style: TextStyle(color: Colors.grey[600])
+          style: const TextStyle(fontWeight: FontWeight.bold)
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,

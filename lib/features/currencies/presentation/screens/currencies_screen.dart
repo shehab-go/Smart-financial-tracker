@@ -94,48 +94,27 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                           itemCount: _currencies.length,
                           itemBuilder: (context, index) {
                             final currency = _currencies[index];
-                            final isDefault = currency.isDefault;
                             return Card(
                               margin: const EdgeInsets.only(bottom: 8),
-                              elevation: isDefault ? 4 : 1,
-                              color: isDefault ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
                               child: ListTile(
                                 leading: CircleAvatar(
-                                  backgroundColor: isDefault ? Theme.of(context).primaryColor : Theme.of(context).primaryColor.withOpacity(0.1),
+                                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
                                   child: Text(
                                     currency.symbol,
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: isDefault ? Colors.white : Theme.of(context).primaryColor,
+                                      color: Theme.of(context).primaryColor,
                                     ),
                                   ),
                                 ),
-                                title: Row(
-                                  children: [
-                                    Text(currency.nameArabic, style: TextStyle(fontWeight: FontWeight.bold, color: isDefault ? Theme.of(context).primaryColor : null)),
-                                    if (isDefault) ...[
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(12)),
-                                        child: const Text('افتراضي', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                                subtitle: Text('${currency.name} (${currency.code})', style: TextStyle(color: Colors.grey[600])),
+                                title: Text(currency.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: Text(currency.symbol, style: TextStyle(color: Colors.grey[600])),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    if (!isDefault)
-                                      IconButton(
-                                        icon: const Icon(Icons.star_border, color: Colors.orange),
-                                        onPressed: () => _setDefaultCurrency(currency),
-                                        tooltip: 'تعيين كافتراضي',
-                                      ),
                                     IconButton(icon: Icon(Icons.edit, color: Theme.of(context).primaryColor), onPressed: () => _editCurrency(currency)),
-                                    IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: isDefault ? null : () => _deleteCurrency(currency)),
+                                    IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _deleteCurrency(currency)),
                                   ],
                                 ),
                               ),
@@ -155,9 +134,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
   void _showCurrencyDialog({CurrencyModel? currency}) {
     final isEditing = currency != null;
     final nameController = TextEditingController(text: currency?.name ?? '');
-    final nameArabicController = TextEditingController(text: currency?.nameArabic ?? '');
     final symbolController = TextEditingController(text: currency?.symbol ?? '');
-    final codeController = TextEditingController(text: currency?.code ?? '');
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -171,31 +148,15 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  controller: nameArabicController,
-                  decoration: const InputDecoration(labelText: 'اسم العملة بالعربية', border: OutlineInputBorder(), prefixIcon: Icon(Icons.translate), hintText: 'ريال سعودي'),
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'يرجى إدخال اسم العملة بالعربية' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'اسم العملة بالإنجليزية', border: OutlineInputBorder(), prefixIcon: Icon(Icons.abc), hintText: 'Saudi Riyal'),
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'يرجى إدخال اسم العملة بالإنجليزية' : null,
+                  decoration: const InputDecoration(labelText: 'اسم العملة', border: OutlineInputBorder(), prefixIcon: Icon(Icons.translate), hintText: 'ريال سعودي'),
+                  validator: (value) => (value == null || value.trim().isEmpty) ? 'يرجى إدخال اسم العملة' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: symbolController,
                   decoration: const InputDecoration(labelText: 'رمز العملة', border: OutlineInputBorder(), prefixIcon: Icon(Icons.currency_exchange), hintText: 'ر.س'),
                   validator: (value) => (value == null || value.trim().isEmpty) ? 'يرجى إدخال رمز العملة' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: codeController,
-                  decoration: const InputDecoration(labelText: 'كود العملة (ISO)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.code), hintText: 'SAR'),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) return 'يرجى إدخال كود العملة';
-                    if (value.trim().length != 3) return 'كود العملة يجب أن يكون 3 أحرف';
-                    return null;
-                  },
                 ),
               ],
             ),
@@ -210,10 +171,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                   final newCurrency = CurrencyModel(
                     id: currency?.id,
                     name: nameController.text.trim(),
-                    nameArabic: nameArabicController.text.trim(),
                     symbol: symbolController.text.trim(),
-                    code: codeController.text.trim().toUpperCase(),
-                    isDefault: currency?.isDefault ?? false,
                   );
                   if (isEditing) {
                     await DatabaseHelper().updateCurrency(newCurrency);
@@ -243,47 +201,14 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
     );
   }
 
-  void _setDefaultCurrency(CurrencyModel currency) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('تعيين العملة الافتراضية'),
-        content: Text('هل تريد تعيين "${currency.nameArabic}" كعملة افتراضية؟'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                await DatabaseHelper().setDefaultCurrency(currency.id!);
-                Navigator.pop(context);
-                _loadCurrencies();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('تم تعيين العملة الافتراضية بنجاح'), backgroundColor: Colors.green),
-                  );
-                }
-              } catch (e) {
-                Navigator.pop(context);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('خطأ: $e'), backgroundColor: Colors.red),
-                  );
-                }
-              }
-            },
-            child: const Text('تعيين'),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   void _deleteCurrency(CurrencyModel currency) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('حذف العملة'),
-        content: Text('هل أنت متأكد من حذف عملة "${currency.nameArabic}"؟'),
+        content: Text('هل أنت متأكد من حذف عملة "${currency.name}"؟'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
           ElevatedButton(

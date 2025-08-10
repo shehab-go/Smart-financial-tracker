@@ -12,23 +12,17 @@ class CategoryDialog extends StatefulWidget {
 
 class _CategoryDialogState extends State<CategoryDialog> {
   late final TextEditingController _nameController;
-  late final TextEditingController _nameArabicController;
-  late final TextEditingController _iconController;
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.category?.name ?? '');
-    _nameArabicController = TextEditingController(text: widget.category?.nameArabic ?? '');
-    _iconController = TextEditingController(text: widget.category?.icon ?? '');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _nameArabicController.dispose();
-    _iconController.dispose();
     super.dispose();
   }
 
@@ -44,39 +38,14 @@ class _CategoryDialogState extends State<CategoryDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
-              controller: _nameArabicController,
-              decoration: const InputDecoration(
-                labelText: 'اسم الفئة بالعربية', 
-                border: OutlineInputBorder(), 
-                prefixIcon: Icon(Icons.translate)
-              ),
-              validator: (value) => (value == null || value.trim().isEmpty) 
-                  ? 'يرجى إدخال اسم الفئة بالعربية' 
-                  : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
-                labelText: 'اسم الفئة بالإنجليزية', 
+                labelText: 'اسم الفئة', 
                 border: OutlineInputBorder(), 
-                prefixIcon: Icon(Icons.abc)
+                prefixIcon: Icon(Icons.category)
               ),
               validator: (value) => (value == null || value.trim().isEmpty) 
-                  ? 'يرجى إدخال اسم الفئة بالإنجليزية' 
-                  : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _iconController,
-              decoration: const InputDecoration(
-                labelText: 'رمز الفئة (إيموجي)', 
-                border: OutlineInputBorder(), 
-                prefixIcon: Icon(Icons.emoji_emotions), 
-                hintText: '🏠 🚗 🍽️ 💼'
-              ),
-              validator: (value) => (value == null || value.trim().isEmpty) 
-                  ? 'يرجى إدخال رمز للفئة' 
+                  ? 'يرجى إدخال اسم الفئة' 
                   : null,
             ),
           ],
@@ -100,8 +69,6 @@ class _CategoryDialogState extends State<CategoryDialog> {
       final category = CategoryModel(
         id: widget.category?.id,
         name: _nameController.text.trim(),
-        nameArabic: _nameArabicController.text.trim(),
-        icon: _iconController.text.trim(),
       );
       Navigator.pop(context, category);
     }

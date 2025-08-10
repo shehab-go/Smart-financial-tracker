@@ -31,8 +31,8 @@ Offline-first personal finance ledger (Arabic UI) built with Flutter. Create acc
 
 ## Database (SQLite)
 Tables:
-- `categories(id, name UNIQUE, nameArabic, icon)`
-- `currencies(id, name, nameArabic, symbol, code UNIQUE, isDefault INTEGER)`
+- `categories(id, name UNIQUE, name, icon)`
+- `currencies(id, name, name, symbol, code UNIQUE, isDefault INTEGER)`
 - `accounts(id, name, category, createdDate INTEGER, currencyCode TEXT DEFAULT 'LOC', phone TEXT)`
 - `transactions(id, accountId, amount REAL, type TEXT, category TEXT, date INTEGER, description TEXT, FK accountId → accounts.id ON DELETE CASCADE)`
 

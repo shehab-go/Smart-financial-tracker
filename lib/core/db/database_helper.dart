@@ -22,9 +22,8 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 3,
+      version: 1,
       onCreate: _createDatabase,
-      onUpgrade: _upgradeDatabase,
     );
   }
 
@@ -33,9 +32,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE,
-        nameArabic TEXT NOT NULL,
-        icon TEXT NOT NULL
+        name TEXT NOT NULL UNIQUE
       )
     ''');
 
@@ -44,10 +41,7 @@ class DatabaseHelper {
       CREATE TABLE currencies (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        nameArabic TEXT NOT NULL,
-        symbol TEXT NOT NULL,
-        code TEXT NOT NULL UNIQUE,
-        isDefault INTEGER NOT NULL DEFAULT 0
+        symbol TEXT NOT NULL
       )
     ''');
 
@@ -90,32 +84,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<void> _upgradeDatabase(Database db, int oldVersion, int newVersion) async {
-    // Version 2: add currencies table and seed default currencies
-    if (oldVersion < 2) {
-      await db.execute('''
-        CREATE TABLE currencies (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          nameArabic TEXT NOT NULL,
-          symbol TEXT NOT NULL,
-          code TEXT NOT NULL UNIQUE,
-          isDefault INTEGER NOT NULL DEFAULT 0
-        )
-      ''');
 
-      final defaultCurrencies = CurrencyModel.getDefaultCurrencies();
-      for (CurrencyModel currency in defaultCurrencies) {
-        await db.insert('currencies', currency.toMap());
-      }
-    }
-
-    // Version 3: add currencyCode & phone to accounts
-    if (oldVersion < 3) {
-      await db.execute("ALTER TABLE accounts ADD COLUMN currencyCode TEXT DEFAULT 'LOC'");
-      await db.execute("ALTER TABLE accounts ADD COLUMN phone TEXT");
-    }
-  }
 
   // Category operations
   Future<List<CategoryModel>> getCategories() async {
@@ -183,35 +152,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<CurrencyModel?> getDefaultCurrency() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'currencies',
-      where: 'isDefault = ?',
-      whereArgs: [1],
-      limit: 1,
-    );
-    if (maps.isNotEmpty) {
-      return CurrencyModel.fromMap(maps.first);
-    }
-    return null;
-  }
 
-  Future<int> setDefaultCurrency(int currencyId) async {
-    final db = await database;
-    // First, remove default from all currencies
-    await db.update(
-      'currencies',
-      {'isDefault': 0},
-    );
-    // Then set the new default
-    return await db.update(
-      'currencies',
-      {'isDefault': 1},
-      where: 'id = ?',
-      whereArgs: [currencyId],
-    );
-  }
 
   // Account operations
   Future<List<AccountModel>> getAccounts() async {

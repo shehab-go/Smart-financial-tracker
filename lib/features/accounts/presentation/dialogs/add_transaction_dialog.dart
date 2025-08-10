@@ -32,7 +32,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
   DateTime _selectedDate = DateTime.now();
   String _selectedType = 'debit';
-  String _selectedCurrencyCode = 'LOC';
+
   List<CurrencyModel> _currencies = [];
   bool _isLoading = false;
 
@@ -43,9 +43,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   void initState() {
     super.initState();
     _initCurrency();
-    if (!_isNewAccount) {
-      _selectedCurrencyCode = widget.accountCurrencyCode ?? 'LOC';
-    }
+
     if (_isEditing) {
       final t = widget.transaction!;
       _amountController.text = t.amount.toString();
@@ -60,9 +58,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     if (mounted) {
       setState(() {
         _currencies = list;
-        if (_selectedCurrencyCode.isEmpty && list.isNotEmpty) {
-          _selectedCurrencyCode = list.firstWhere((c) => c.isDefault, orElse: () => list.first).code;
-        }
+
       });
     }
   }
@@ -95,7 +91,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           final account = AccountModel(
             name: _accountNameController.text.trim(),
             category: widget.category,
-            currencyCode: _selectedCurrencyCode,
+            currencyCode: _currencies.isNotEmpty ? _currencies.first.symbol : 'LOC',
             phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
             createdDate: DateTime.now(),
           );
@@ -209,15 +205,16 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   }
 
   Widget _buildCurrencyDropdown() {
-    final uniqueMap = _currencies.fold<Map<String, CurrencyModel>>({}, (map, c) {
-      map.putIfAbsent(c.code, () => c);
+    final uniqueMap = _currencies.fold<Map<String, CurrencyModel>>({}, (map,c) {
+      map.putIfAbsent(c.symbol, () => c);
       return map;
     });
     final items = uniqueMap.values
-        .map((c) => DropdownMenuItem(value: c.code, child: Text(c.nameArabic)))
-        .toList();
+        .map(
+          (c) => DropdownMenuItem(value: c.symbol, child: Text(c.name)
+          )).toList();
 
-    String selected = _selectedCurrencyCode;
+    String selected = _currencies.isNotEmpty ? _currencies.first.symbol : 'LOC';
     if (!uniqueMap.containsKey(selected)) {
       selected = uniqueMap.keys.first;
     }
@@ -226,14 +223,14 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       value: selected,
       decoration: const InputDecoration(hintText: 'العملة'),
       items: items,
-      onChanged: (val) => setState(() => _selectedCurrencyCode = val ?? 'LOC'),
+      onChanged: (val) => {}, // Currency selection disabled for simplicity
     );
   }
 
   Widget _buildCurrencyReadonly() {
-    final curr = _currencies.firstWhere((c) => c.code == _selectedCurrencyCode, orElse: () => CurrencyModel.defaultLocal());
+    final curr = _currencies.isNotEmpty ? _currencies.first : CurrencyModel.defaultLocal();
     return TextFormField(
-      initialValue: curr.nameArabic,
+      initialValue: curr.name,
       enabled: false,
       decoration: const InputDecoration(hintText: 'العملة'),
     );

@@ -34,7 +34,7 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 textDirection: TextDirection.rtl,
-                children: [Text(currentCategory.nameArabic), const SizedBox(width: 8), Text(currentCategory.icon)],
+                children: [Text(currentCategory.name), const SizedBox(width: 8), const Icon(Icons.category)],
               ),
             );
           }
