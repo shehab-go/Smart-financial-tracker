@@ -11,12 +11,6 @@ class CategoryHeader extends StatelessWidget {
       color: Theme.of(context).primaryColor.withOpacity(0.1),
       child: Column(
         children: [
-          Icon(
-            Icons.category,
-            size: 48,
-            color: Theme.of(context).primaryColor,
-          ),
-          const SizedBox(height: 8),
           Text(
             'إدارة فئات الحسابات',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(

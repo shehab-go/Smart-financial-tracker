@@ -11,6 +11,8 @@ class CategoryEmptyState extends StatelessWidget {
         children: [
           Icon(Icons.category_outlined, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
+          Icon(Icons.category_outlined, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
           Text(
             'لا توجد فئات', 
             style: Theme.of(context).textTheme.titleMedium?.copyWith(

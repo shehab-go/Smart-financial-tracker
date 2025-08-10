@@ -41,8 +41,7 @@ class _CategoryDialogState extends State<CategoryDialog> {
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'اسم الفئة', 
-                border: OutlineInputBorder(), 
-                prefixIcon: Icon(Icons.category)
+                border: OutlineInputBorder()
               ),
               validator: (value) => (value == null || value.trim().isEmpty) 
                   ? 'يرجى إدخال اسم الفئة' 
