@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/home.dart';
+import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
 
 void main() {
   runApp(const PersonalFinanceApp());
