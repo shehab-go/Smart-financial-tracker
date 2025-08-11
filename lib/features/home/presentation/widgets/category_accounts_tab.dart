@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:debit_credit_app/core/models/account.dart';
 import 'package:debit_credit_app/core/models/category.dart';
-import 'package:debit_credit_app/features/home/presentation/widgets/accounts_header_row.dart';
 import 'package:debit_credit_app/features/home/presentation/widgets/account_card_tile.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 
@@ -11,7 +10,6 @@ class CategoryAccountsTab extends StatelessWidget {
   final Set<int> selectedAccountIds;
   final void Function(AccountModel) onTapAccount;
   final void Function(AccountModel) onLongPressAccount;
-  final void Function(AccountModel) onAddTransaction;
 
   const CategoryAccountsTab({
     super.key,
@@ -20,46 +18,31 @@ class CategoryAccountsTab extends StatelessWidget {
     required this.selectedAccountIds,
     required this.onTapAccount,
     required this.onLongPressAccount,
-    required this.onAddTransaction,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: AppTheme.backgroundColor,
-      child: Column(
-        children: [
-          Container(
-            color: Colors.white,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: AccountsHeaderRow(),
+      child: accounts.isEmpty
+          ? const _EmptyState()
+          : Directionality(
+              textDirection: TextDirection.rtl,
+              child: ListView.builder(
+                padding: const EdgeInsets.only(top: 8, bottom: 16),
+                itemCount: accounts.length,
+                itemBuilder: (context, index) {
+                  final account = accounts[index];
+                  final selected = selectedAccountIds.contains(account.id);
+                  return AccountCardTile(
+                    account: account,
+                    selected: selected,
+                    onTap: () => onTapAccount(account),
+                    onLongPress: () => onLongPressAccount(account),
+                  );
+                },
+              ),
             ),
-          ),
-          Expanded(
-            child: accounts.isEmpty
-                ? const _EmptyState()
-                : Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.only(top: 8, bottom: 16),
-                      itemCount: accounts.length,
-                      itemBuilder: (context, index) {
-                        final account = accounts[index];
-                        final selected = selectedAccountIds.contains(account.id);
-                        return AccountCardTile(
-                          account: account,
-                          selected: selected,
-                          onTap: () => onTapAccount(account),
-                          onLongPress: () => onLongPressAccount(account),
-                          onAddTransaction: () => onAddTransaction(account),
-                        );
-                      },
-                    ),
-                  ),
-          ),
-        ],
-      ),
     );
   }
 }

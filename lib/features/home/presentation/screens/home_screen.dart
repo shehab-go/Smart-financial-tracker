@@ -8,6 +8,7 @@ import 'package:debit_credit_app/features/accounts/presentation/dialogs/add_tran
 import 'package:debit_credit_app/features/home/presentation/widgets/report_bottom_sheet.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:debit_credit_app/features/home/presentation/widgets/category_accounts_tab.dart';
+import 'package:debit_credit_app/features/home/presentation/widgets/accounts_header_row.dart';
 import 'package:debit_credit_app/features/home/presentation/widgets/home_selection_app_bar.dart';
 import 'package:debit_credit_app/features/home/presentation/widgets/home_default_app_bar.dart';
 import 'package:debit_credit_app/features/home/application/home_report_coordinator.dart';
@@ -129,14 +130,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (result == true) await _loadData();
   }
 
-  Future<void> _addTransactionForAccount(AccountModel account) async {
-    final result = await showDialog<bool>(
-          context: context,
-          builder: (context) => AddTransactionDialog(accountId: account.id, category: account.category),
-        ) ??
-        false;
-    if (result == true) await _loadData();
-  }
+
 
   Widget _buildCategoryTab(CategoryModel category) {
     final accounts = _state.accountsByCategory[category.name] ?? [];
@@ -152,7 +146,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
       onLongPressAccount: _toggleAccountSelect,
-      onAddTransaction: _addTransactionForAccount,
     );
   }
 
@@ -212,9 +205,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               categories: _state.categories,
               bottom: tabBar,
             ),
-      body: TabBarView(
-        controller: _tabController,
-        children: _state.categories.map((category) => _buildCategoryTab(category)).toList(),
+      body: Column(
+        children: [
+          Container(
+            color: Colors.white,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: AccountsHeaderRow(),
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: _state.categories.map((category) => _buildCategoryTab(category)).toList(),
+            ),
+          ),
+        ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: Container(
