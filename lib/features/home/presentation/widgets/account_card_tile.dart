@@ -20,42 +20,27 @@ class AccountCardTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color:
-              selected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: AppTheme.cardShadow,
-          border: selected
-              ? Border.all(color: AppTheme.primaryColor, width: 2)
-              : Border.all(color: Colors.grey.shade200),
+          color: selected ? AppTheme.primaryColor.withOpacity(0.08) : Colors.transparent,
         ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            onLongPress: onLongPress,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                onLongPress: onLongPress,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Directionality(
                 textDirection: TextDirection.rtl,
                 child: Row(
                   children: [
-                    // Name column (flex: 3)
+                    // Name column (flex: 6)
                     Expanded(
-                      flex: 3,
+                      flex: 6,
                       child: Row(
                         children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               account.name,
@@ -72,21 +57,7 @@ class AccountCardTile extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // Currency column (flex: 2)
-                    Expanded(
-                      flex: 2,
-                      child: Center(
-                        child: Text(
-                          account.currencyCode,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
-                      ),
-                    ),
+                    const SizedBox(width: 16),
                     // Debit column (flex: 2)
                     Expanded(
                       flex: 2,
@@ -103,6 +74,7 @@ class AccountCardTile extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 16),
                     // Credit column (flex: 2)
                     Expanded(
                       flex: 2,
@@ -119,16 +91,32 @@ class AccountCardTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Empty space for alignment
-                    const Expanded(
-                      flex: 1,
-                      child: SizedBox(),
+                    const SizedBox(width: 16),
+                    // Currency column (flex: 2)
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        account.currencyCode,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-        ));
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          height: 1,
+          color: Colors.grey.shade300,
+        ),
+      ],
+    ));
   }
 }

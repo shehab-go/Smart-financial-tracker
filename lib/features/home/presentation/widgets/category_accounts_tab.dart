@@ -23,13 +23,13 @@ class CategoryAccountsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppTheme.backgroundColor,
+      color: Colors.white,
       child: accounts.isEmpty
           ? const _EmptyState()
           : Directionality(
               textDirection: TextDirection.rtl,
               child: ListView.builder(
-                padding: const EdgeInsets.only(top: 8, bottom: 16),
+                padding: EdgeInsets.zero,
                 itemCount: accounts.length,
                 itemBuilder: (context, index) {
                   final account = accounts[index];

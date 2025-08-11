@@ -14,38 +14,40 @@ class AccountsHeaderRow extends StatelessWidget {
     
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        padding:  EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          border:  Border(
-            bottom: BorderSide(
-              color: AppTheme.dividerColor,
-              width: 1,
-            ),
-          ),
-        ),
-        child: Row(
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
           children: [
             Expanded(
-              flex: 3,
+              flex: 6,
               child: Text('الاسم', style: headerStyle),
             ),
-            Expanded(
-              flex: 2,
-              child: Center(child: Text('العملة', style: headerStyle)),
-            ),
+            const SizedBox(width: 16),
             Expanded(
               flex: 2,
               child: Center(child: Text('عليه', style: headerStyle)),
             ),
+            const SizedBox(width: 16),
             Expanded(
               flex: 2,
               child: Center(child: Text('له', style: headerStyle)),
             ),
-            const Expanded(flex: 1, child: SizedBox()),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 2,
+              child: Text('العملة', style: headerStyle),
+            ),
           ],
         ),
       ),
-    );
+      Container(
+        height: 1,
+        color: AppTheme.dividerColor,
+      ),
+    ],
+  ),
+);
   }
 }

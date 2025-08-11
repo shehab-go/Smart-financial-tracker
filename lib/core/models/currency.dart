@@ -41,7 +41,7 @@ class CurrencyModel {
   static CurrencyModel defaultLocal() {
     return CurrencyModel(
       name: 'محلي',
-      symbol: '¤',
+      symbol: 'م.ح',
     );
   }
 
@@ -49,7 +49,7 @@ class CurrencyModel {
     return [
       CurrencyModel(
         name: 'محلي',
-        symbol: '¤',
+        symbol: 'م.ح',
       ),
       CurrencyModel(
         name: 'ريال سعودي',
