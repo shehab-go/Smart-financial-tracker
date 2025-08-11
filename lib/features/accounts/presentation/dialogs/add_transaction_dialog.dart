@@ -418,7 +418,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                     child: TextButton(
                       onPressed: () => Navigator.of(context).pop(false),
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 0),
+                        minimumSize: const Size(0, 48),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(color: AppTheme.dividerColor),
@@ -454,7 +455,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
                           padding: const EdgeInsets.symmetric(vertical: 0),
-                          minimumSize: const Size(0, 32),
+                          minimumSize: const Size(0, 48),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -470,8 +471,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                               )
                             : Text(
                                 'حفظ',
-                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                  
+                                style: Theme.of(context).textTheme.labelLarge?.copyWith(                                  
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
