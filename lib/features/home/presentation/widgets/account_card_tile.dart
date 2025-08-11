@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart' hide TextDirection; // Corrected line
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:debit_credit_app/core/models/account.dart';
+import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 class AccountCardTile extends StatelessWidget {
   final AccountModel account;
@@ -20,86 +21,194 @@ class AccountCardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: Container(
-          color: selected ? Colors.blue.withOpacity(0.2) : null,
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-          child: Directionality(
-            textDirection: TextDirection.rtl, // This will now work correctly
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          account.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+    return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color:
+              selected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AppTheme.cardShadow,
+          border: selected
+              ? Border.all(color: AppTheme.primaryColor, width: 2)
+              : Border.all(color: Colors.grey.shade200),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Directionality(
+                textDirection: TextDirection.rtl,
+                child: Column(
+                  children: [
+                    // Header row with name and transaction count
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  account.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${account.transactionCount} معاملة',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
                         ),
-                        child: Text(
-                          account.transactionCount.toString(),
-                          style: const TextStyle(fontSize: 12, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Material(
+                          color: AppTheme.primaryColor,
+                          borderRadius: BorderRadius.circular(8),
+                          child: InkWell(
+                            onTap: onAddTransaction,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.add,
+                                size: 20,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(flex: 2, child: Center(child: Text(account.currencyCode))),
-                Expanded(
-                  flex: 2,
-                  child: Center(
-                    child: Text(
-                      NumberFormat('#,##0').format(account.totalDebit),
-                      style: const TextStyle(color: Colors.red),
+                      ],
                     ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Center(
-                    child: Text(
-                      NumberFormat('#,##0').format(account.totalCredit),
-                      style: const TextStyle(color: Colors.green),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Center(
-                    child: InkWell(
-                      onTap: onAddTransaction,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.secondaryContainer,
-                          shape: BoxShape.circle,
+                    const SizedBox(height: 16),
+                    // Financial summary row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'العملة',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      color: AppTheme.textSecondary,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                account.currencyCode,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Icon(Icons.add, size: 18, color: Theme.of(context).colorScheme.onSecondaryContainer),
-                      ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'عليه',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      color: AppTheme.textSecondary,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                NumberFormat('#,##0')
+                                    .format(account.totalDebit),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: AppTheme.debitColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'له',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      color: AppTheme.textSecondary,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                NumberFormat('#,##0')
+                                    .format(account.totalCredit),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: AppTheme.creditColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 }

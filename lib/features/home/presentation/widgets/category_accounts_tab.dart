@@ -3,6 +3,7 @@ import 'package:debit_credit_app/core/models/account.dart';
 import 'package:debit_credit_app/core/models/category.dart';
 import 'package:debit_credit_app/features/home/presentation/widgets/accounts_header_row.dart';
 import 'package:debit_credit_app/features/home/presentation/widgets/account_card_tile.dart';
+import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 class CategoryAccountsTab extends StatelessWidget {
   final CategoryModel category;
@@ -24,19 +25,24 @@ class CategoryAccountsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    return Container(
+      color: AppTheme.backgroundColor,
       child: Column(
         children: [
-          const SizedBox(height: 16),
-          const AccountsHeaderRow(),
-          const SizedBox(height: 8),
+          Container(
+            color: Colors.white,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: AccountsHeaderRow(),
+            ),
+          ),
           Expanded(
             child: accounts.isEmpty
                 ? const _EmptyState()
                 : Directionality(
                     textDirection: TextDirection.rtl,
                     child: ListView.builder(
+                      padding: const EdgeInsets.only(top: 8, bottom: 16),
                       itemCount: accounts.length,
                       itemBuilder: (context, index) {
                         final account = accounts[index];
@@ -63,16 +69,88 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.account_balance_wallet, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('لا توجد حسابات في هذه الفئة', style: TextStyle(fontSize: 18, color: Colors.grey)),
-          SizedBox(height: 8),
-          Text('اضغط على + لإضافة حساب جديد', style: TextStyle(fontSize: 14, color: Colors.grey)),
-        ],
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 64,
+                color: AppTheme.primaryColor.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'لا توجد حسابات في هذه الفئة',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: AppTheme.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'اضغط على زر + لإضافة حساب جديد',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.textSecondary.withOpacity(0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            Container(
+              decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {},
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'إضافة حساب',
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

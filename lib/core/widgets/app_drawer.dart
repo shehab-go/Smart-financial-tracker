@@ -5,6 +5,7 @@ import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_s
 import 'package:debit_credit_app/features/categories/presentation/screens/categories_screen.dart';
 import 'package:debit_credit_app/features/currencies/presentation/screens/currencies_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/backup_screen.dart';
+import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -25,56 +26,66 @@ class AppDrawer extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
+            Container(
+              height: 140,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Theme.of(context).primaryColor,
-                    Theme.of(context).primaryColor.withOpacity(0.8),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                gradient: AppTheme.primaryGradient,
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 45,
+                        height: 45,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_wallet,
+                          size: 24,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'إدارة الحسابات المالية',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      const Text(
+                        'تطبيق شامل لإدارة أموالك',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.account_balance_wallet,
-                    size: 48,
-                    color: Colors.white,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'إدارة الحسابات المالية',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'تطبيق شامل لإدارة أموالك',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
             ),
-            ListTile(
-              leading: Icon(Icons.home, color: Theme.of(context).primaryColor),
-              title: const Text('الرئيسية'),
-              onTap: () {
-                Navigator.pop(context);
-              },
+            const SizedBox(height: 4),
+            _buildDrawerItem(
+              context,
+              icon: Icons.home_rounded,
+              title: 'الرئيسية',
+              onTap: () => Navigator.pop(context),
             ),
-            const Divider(),
-            ListTile(
-              leading: Icon(Icons.backup, color: Theme.of(context).primaryColor),
-              title: const Text('النسخ الاحتياطية'),
-              subtitle: const Text('إنشاء أو استعادة قاعدة البيانات'),
+            _buildSectionDivider('إدارة البيانات'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.backup_rounded,
+              title: 'النسخ الاحتياطية',
+              subtitle: 'إنشاء أو استعادة قاعدة البيانات',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -83,10 +94,11 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
-            ListTile(
-              leading: Icon(Icons.category, color: Theme.of(context).primaryColor),
-              title: const Text('إدارة الفئات'),
-              subtitle: const Text('إضافة وتعديل فئات الحسابات'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.category_rounded,
+              title: 'إدارة الفئات',
+              subtitle: 'إضافة وتعديل فئات الحسابات',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -95,10 +107,11 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
-            ListTile(
-              leading: Icon(Icons.monetization_on, color: Theme.of(context).primaryColor),
-              title: const Text('إدارة العملات'),
-              subtitle: const Text('إضافة وتعديل العملات المستخدمة'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.monetization_on_rounded,
+              title: 'إدارة العملات',
+              subtitle: 'إضافة وتعديل العملات المستخدمة',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -107,20 +120,21 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
-            const Divider(),
-            ListTile(
-              leading: Icon(Icons.share, color: Theme.of(context).primaryColor),
-              title: const Text('مشاركة التطبيق'),
-              subtitle: const Text('شارك التطبيق مع الأصدقاء'),
+            _buildSectionDivider('أخرى'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.share_rounded,
+              title: 'مشاركة التطبيق',
+              subtitle: 'شارك التطبيق مع الأصدقاء',
               onTap: () {
                 Navigator.pop(context);
                 _shareApp();
               },
             ),
-            const Divider(),
-            ListTile(
-              leading: Icon(Icons.info, color: Theme.of(context).primaryColor),
-              title: const Text('حول التطبيق'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.info_rounded,
+              title: 'حول التطبيق',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -129,9 +143,10 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
-            ListTile(
-              leading: Icon(Icons.privacy_tip, color: Theme.of(context).primaryColor),
-              title: const Text('سياسة الخصوصية'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.privacy_tip_rounded,
+              title: 'سياسة الخصوصية',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -140,7 +155,75 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
+            const SizedBox(height: 8),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: Theme.of(context).primaryColor,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+        subtitle: subtitle != null
+            ? Text(
+                subtitle,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 11,
+                ),
+              )
+            : null,
+        onTap: onTap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionDivider(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey[600],
+          letterSpacing: 0.5,
         ),
       ),
     );

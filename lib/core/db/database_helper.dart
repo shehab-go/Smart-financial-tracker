@@ -4,6 +4,7 @@ import '../models/transaction.dart';
 import '../models/category.dart';
 import '../models/account.dart';
 import '../models/currency.dart';
+import 'migration_helper.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -22,8 +23,9 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDatabase,
+      onUpgrade: MigrationHelper.migrate,
     );
   }
 

@@ -7,6 +7,7 @@ import 'package:debit_credit_app/features/accounts/presentation/widgets/transact
 import 'package:debit_credit_app/core/widgets/app_drawer.dart';
 import 'package:debit_credit_app/features/accounts/presentation/dialogs/add_transaction_dialog.dart';
 import 'package:debit_credit_app/core/services/report_service.dart';
+import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -378,16 +379,61 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                 ),
                 Expanded(
                   child: _transactions.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.receipt_long, size: 64, color: Colors.grey),
-                              SizedBox(height: 16),
-                              Text('لا توجد معاملات لهذا الحساب', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                              SizedBox(height: 8),
-                              Text('اضغط على + لإضافة معاملة جديدة', style: TextStyle(fontSize: 14, color: Colors.grey)),
-                            ],
+                      ? Center(
+                          child: Container(
+                            margin: const EdgeInsets.all(32),
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              gradient: AppTheme.cardGradient,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: AppTheme.cardShadow,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryColor.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.receipt_long,
+                                    size: 64,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Text(
+                                  'لا توجد معاملات لهذا الحساب',
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: AppTheme.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'اضغط على + لإضافة معاملة جديدة',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 24),
+                                ElevatedButton.icon(
+                                  onPressed: _navigateToAddTransaction,
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('إضافة معاملة'),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         )
                       : ListView.builder(
@@ -408,9 +454,28 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
               ],
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToAddTransaction,
-        child: const Icon(Icons.add),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: AppTheme.primaryGradient,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: _navigateToAddTransaction,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 28,
+          ),
+        ),
       ),
     );
   }

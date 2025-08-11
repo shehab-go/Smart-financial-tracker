@@ -14,6 +14,7 @@ import 'package:debit_credit_app/features/home/application/home_report_coordinat
 import 'package:debit_credit_app/features/home/application/selection_controller.dart';
 import 'package:debit_credit_app/features/home/application/home_controller.dart';
 import 'package:debit_credit_app/features/home/application/home_state.dart';
+import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -216,14 +217,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         children: _state.categories.map((category) => _buildCategoryTab(category)).toList(),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (_tabController.index < _state.categories.length) {
-            final currentCategory = _state.categories[_tabController.index].name;
-            _navigateToCreateAccount(currentCategory);
-          }
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: AppTheme.primaryGradient,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: () {
+            if (_tabController.index < _state.categories.length) {
+              final currentCategory = _state.categories[_tabController.index].name;
+              _navigateToCreateAccount(currentCategory);
+            }
+          },
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 28,
+          ),
+        ),
       ),
     );
   }

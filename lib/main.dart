@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
+import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 void main() {
   runApp(const PersonalFinanceApp());
@@ -13,13 +14,7 @@ class PersonalFinanceApp extends StatelessWidget {
     return MaterialApp(
       title: 'حسابات يوميه',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.teal,
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
       home: const HomeScreen(),
     );
   }
