@@ -609,6 +609,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert),
                     tooltip: 'المزيد',
+                    position: PopupMenuPosition.under,
                     onSelected: (value) {
                       switch (value) {
                         case 'print':
