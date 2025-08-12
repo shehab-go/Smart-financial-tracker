@@ -6,48 +6,43 @@ class AccountsHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final headerStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
-      fontWeight: FontWeight.w600,
-      color: AppTheme.textSecondary,
-      letterSpacing: 0.5,
-    );
-    
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Row(
           children: [
             Expanded(
               flex: 6,
-              child: Text('الاسم', style: headerStyle),
+              child: Text('الاسم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
             ),
             const SizedBox(width: 16),
             Expanded(
               flex: 2,
-              child: Center(child: Text('عليه', style: headerStyle)),
+              child: Center(child: Text('عليه', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
             ),
             const SizedBox(width: 16),
             Expanded(
               flex: 2,
-              child: Center(child: Text('له', style: headerStyle)),
+              child: Center(child: Text('له', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
             ),
             const SizedBox(width: 16),
             Expanded(
               flex: 2,
-              child: Text('العملة', style: headerStyle),
+              child: Text('العملة', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
             ),
           ],
         ),
       ),
-      Container(
-        height: 1,
-        color: AppTheme.dividerColor,
-      ),
-    ],
-  ),
-);
+    );  
   }
 }

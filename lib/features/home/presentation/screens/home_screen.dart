@@ -212,13 +212,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
       body: Column(
         children: [
-          Container(
-            color: Colors.white,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: AccountsHeaderRow(),
-            ),
-          ),
+          const AccountsHeaderRow(),
           Expanded(
             child: TabBarView(
               controller: _tabController,

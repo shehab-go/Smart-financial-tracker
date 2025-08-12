@@ -20,18 +20,23 @@ class AccountCardTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.primaryColor.withOpacity(0.08) : Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: selected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey.shade300,
+            width: 1,
+          ),
         ),
-        child: Column(
-          children: [
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onTap,
-                onLongPress: onLongPress,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
               child: Directionality(
                 textDirection: TextDirection.rtl,
                 child: Row(
@@ -111,12 +116,7 @@ class AccountCardTile extends StatelessWidget {
             ),
           ),
         ),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          height: 1,
-          color: Colors.grey.shade300,
-        ),
-      ],
-    ));
+      );
+   
   }
 }
