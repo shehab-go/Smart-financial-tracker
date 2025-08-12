@@ -594,19 +594,10 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                               _currentAccount.name,
-                               style: const TextStyle(
-                                 fontSize: 18,
-                                 fontWeight: FontWeight.bold,
-                                 color: Colors.black87,
-                               ),
-                             ),
-                             const SizedBox(height: 4),
                              Text(
                                'العملة: ${_currentAccount.currencyCode}',
                                style: TextStyle(
-                                 fontSize: 12,
+                                 fontSize: 14,
                                  color: Colors.grey.shade600,
                                  fontWeight: FontWeight.w500,
                                ),
