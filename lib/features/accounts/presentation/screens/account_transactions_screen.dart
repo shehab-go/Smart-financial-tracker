@@ -693,7 +693,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                   ),
                 ],
               ),
-              backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+
             ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
