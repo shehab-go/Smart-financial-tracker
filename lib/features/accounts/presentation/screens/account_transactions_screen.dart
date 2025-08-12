@@ -48,16 +48,16 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
       if (currencies.isEmpty) {
         setState(() {
           _currencies = CurrencyModel.getDefaultCurrencies();
-          // Validate selected currency exists in the list
-          if (!_currencies.any((c) => c.symbol == _selectedCurrency)) {
+          // Only reset if the current currency is null or empty
+          if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
             _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.symbol : null;
           }
         });
       } else {
         setState(() {
           _currencies = currencies;
-          // Validate selected currency exists in the list
-          if (!_currencies.any((c) => c.symbol == _selectedCurrency)) {
+          // Only reset if the current currency is null or empty
+          if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
             _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.symbol : null;
           }
         });
@@ -65,8 +65,8 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
     } catch (e) {
       setState(() {
         _currencies = CurrencyModel.getDefaultCurrencies();
-        // Validate selected currency exists in the list
-        if (!_currencies.any((c) => c.symbol == _selectedCurrency)) {
+        // Only reset if the current currency is null or empty
+        if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
           _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.symbol : null;
         }
       });
@@ -319,6 +319,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
           builder: (context) => AddTransactionDialog(
             accountId: widget.account.id!,
             category: widget.account.category,
+            accountCurrencyCode: _currentAccount.currencyCode,
           ),
         ) ??
         false;
@@ -390,41 +391,35 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     }
   }
 
-  Widget _buildStatCard(String title, String amount, String currency, Color color, IconData icon) {
+  Widget _buildStatCard(String title, String amount, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 8),
           Text(
             title,
             style: TextStyle(
               color: color,
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             amount,
             style: TextStyle(
               color: color,
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
             ),
-          ),
-          Text(
-            currency,
-            style: TextStyle(
-              color: color.withOpacity(0.7),
-              fontSize: 10,
-            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -556,17 +551,10 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
             )
           : AppBar(
               titleSpacing: 0,
-              automaticallyImplyLeading: false,
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.of(context).pop(_currentAccount),
+                icon: const Icon(Icons.print),
+                onPressed: _generateReportForAccount,
               ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.print),
-                  onPressed: _generateReportForAccount,
-                ),
-              ],
               title: Align(
                 alignment: Alignment.centerRight,
                 child: Text(
@@ -603,14 +591,28 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                           _currentAccount.name,
-                           style: const TextStyle(
-                             fontSize: 18,
-                             fontWeight: FontWeight.bold,
-                             color: Colors.black87,
-                           ),
-                         ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                               _currentAccount.name,
+                               style: const TextStyle(
+                                 fontSize: 18,
+                                 fontWeight: FontWeight.bold,
+                                 color: Colors.black87,
+                               ),
+                             ),
+                             const SizedBox(height: 4),
+                             Text(
+                               'العملة: ${_currentAccount.currencyCode}',
+                               style: TextStyle(
+                                 fontSize: 12,
+                                 color: Colors.grey.shade600,
+                                 fontWeight: FontWeight.w500,
+                               ),
+                             ),
+                            ],
+                          ),
                           IconButton(
                             onPressed: _editAccountDetails,
                             icon: const Icon(Icons.edit, size: 20),
@@ -621,36 +623,30 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
                             child: _buildStatCard(
                                'له',
                                NumberFormat('#,##0').format(_totals['credit']),
-                               _currentAccount.currencyCode,
                                Colors.green,
-                               Icons.arrow_downward,
                              ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: _buildStatCard(
                                'عليه',
                                NumberFormat('#,##0').format(_totals['debit']),
-                               _currentAccount.currencyCode,
                                Colors.red,
-                               Icons.arrow_upward,
                              ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: _buildStatCard(
                                _totals['credit']! >= _totals['debit']! ? 'المتبقي له' : 'المتبقي عليه',
                                NumberFormat('#,##0').format((_totals['net']!).abs()),
-                               _currentAccount.currencyCode,
                                _totals['credit']! >= _totals['debit']! ? Colors.green : Colors.red,
-                               _totals['credit']! >= _totals['debit']! ? Icons.trending_up : Icons.trending_down,
                              ),
                           ),
                         ],

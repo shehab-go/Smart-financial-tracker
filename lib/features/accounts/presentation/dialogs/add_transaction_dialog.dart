@@ -60,7 +60,12 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     if (mounted) {
       setState(() {
         _currencies = list;
-
+        // Set the selected currency to the account's currency if available
+        if (widget.accountCurrencyCode != null && widget.accountCurrencyCode!.isNotEmpty) {
+          _selectedCurrency = widget.accountCurrencyCode;
+        } else if (_currencies.isNotEmpty) {
+          _selectedCurrency = _currencies.first.symbol;
+        }
       });
     }
   }
@@ -79,6 +84,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     int accountId = widget.accountId ?? -1;
+    
     try {
       if (_isEditing) {
         final updated = widget.transaction!.copyWith(
@@ -548,7 +554,17 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     final allCurrencies = _currencies.isEmpty 
         ? CurrencyModel.getDefaultCurrencies()
         : _currencies;
-    final curr = allCurrencies.isNotEmpty ? allCurrencies.first : CurrencyModel.defaultLocal();
+    
+    // Find the currency that matches the account's currency code
+    CurrencyModel curr;
+    if (widget.accountCurrencyCode != null && widget.accountCurrencyCode!.isNotEmpty) {
+      curr = allCurrencies.firstWhere(
+        (c) => c.symbol == widget.accountCurrencyCode,
+        orElse: () => allCurrencies.isNotEmpty ? allCurrencies.first : CurrencyModel.defaultLocal(),
+      );
+    } else {
+      curr = allCurrencies.isNotEmpty ? allCurrencies.first : CurrencyModel.defaultLocal();
+    }
     
     return TextFormField(
       initialValue: curr.name,
@@ -575,7 +591,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           firstDate: DateTime(2000),
           lastDate: DateTime(2100),
         );
-        if (picked != null) setState(() => _selectedDate = picked);
+        if (picked != null) {
+          setState(() => _selectedDate = picked);
+        }
       },
       child: Container(
         decoration: BoxDecoration(

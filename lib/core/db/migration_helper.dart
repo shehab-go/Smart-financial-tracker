@@ -3,7 +3,7 @@ import 'database_helper.dart';
 
 /// Helper class for managing database migrations
 class MigrationHelper {
-  static const int currentVersion = 3;
+  static const int currentVersion = 4;
   
   /// Migrate database from old version to new version
   static Future<void> migrate(Database db, int oldVersion, int newVersion) async {
@@ -12,6 +12,9 @@ class MigrationHelper {
     }
     if (oldVersion < 3) {
       await _migrateToV3(db);
+    }
+    if (oldVersion < 4) {
+      await _migrateToV4(db);
     }
   }
   
@@ -70,6 +73,71 @@ class MigrationHelper {
       print('Migration to v3 completed successfully');
     } catch (e) {
       print('Error during migration to v3: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 4: Fix date column type from TEXT to INTEGER
+  static Future<void> _migrateToV4(Database db) async {
+    try {
+      print('DEBUG: Starting migration to v4 - checking date column type');
+      // Check if date column is TEXT type
+      final result = await db.rawQuery('PRAGMA table_info(transactions)');
+      print('DEBUG: Current transactions table structure: $result');
+      final dateColumn = result.firstWhere((column) => column['name'] == 'date', orElse: () => {});
+      print('DEBUG: Date column info: $dateColumn');
+      
+      if (dateColumn.isNotEmpty && dateColumn['type'] == 'TEXT') {
+        print('DEBUG: Date column is TEXT, proceeding with migration');
+        // Create new transactions table with correct schema
+        await db.execute('''
+          CREATE TABLE transactions_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            accountId INTEGER NOT NULL,
+            amount REAL NOT NULL,
+            type TEXT NOT NULL,
+            category TEXT NOT NULL,
+            date INTEGER NOT NULL,
+            description TEXT,
+            dueDate INTEGER,
+            interestRate REAL,
+            guarantor TEXT,
+            status INTEGER DEFAULT 0,
+            reminderEnabled INTEGER DEFAULT 1,
+            reminderDaysBefore INTEGER DEFAULT 3,
+            FOREIGN KEY (accountId) REFERENCES accounts (id) ON DELETE CASCADE
+          )
+        ''');
+        
+        // Copy data from old table, converting date from TEXT to INTEGER
+        // Only copy columns that exist in the old table
+        await db.execute('''
+          INSERT INTO transactions_new (id, accountId, amount, type, category, date, description)
+          SELECT id, accountId, amount, type, category, 
+                 CASE 
+                   WHEN date GLOB '[0-9]*' THEN CAST(date AS INTEGER)
+                   ELSE strftime('%s', date) * 1000
+                 END as date,
+                 description
+          FROM transactions
+        ''');
+        
+        // Drop old table and rename new one
+        await db.execute('DROP TABLE transactions');
+        await db.execute('ALTER TABLE transactions_new RENAME TO transactions');
+        
+        print('DEBUG: Fixed date column type from TEXT to INTEGER');
+        
+        // Verify the new table structure
+        final newResult = await db.rawQuery('PRAGMA table_info(transactions)');
+        print('DEBUG: New transactions table structure: $newResult');
+      } else {
+        print('DEBUG: Date column is already INTEGER type, no migration needed');
+      }
+      
+      print('DEBUG: Migration to v4 completed successfully');
+    } catch (e) {
+      print('Error during migration to v4: $e');
       rethrow;
     }
   }
