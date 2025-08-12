@@ -527,40 +527,171 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      endDrawer: const AppDrawer(),
       appBar: _selectionMode
           ? AppBar(
-              leading: IconButton(icon: const Icon(Icons.close), onPressed: _clearSelection),
-              title: Text('تم تحديد ${_selectedIds.length}') ,
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _clearSelection,
+                tooltip: 'إلغاء التحديد',
+              ),
+              title: Text('تم تحديد ${_selectedIds.length}'),
               actions: [
-                IconButton(icon: const Icon(Icons.select_all), onPressed: () {
-                  setState(() {
-                    if (_selectedIds.length == _transactions.length) {
-                      _selectedIds.clear();
-                    } else {
-                      _selectedIds
-                        ..clear()
-                        ..addAll(_transactions.map((e) => e.id!).whereType<int>());
+                IconButton(
+                  icon: Icon(_selectedIds.length == _transactions.length 
+                      ? Icons.deselect 
+                      : Icons.select_all),
+                  onPressed: () {
+                    setState(() {
+                      if (_selectedIds.length == _transactions.length) {
+                        _selectedIds.clear();
+                      } else {
+                        _selectedIds
+                          ..clear()
+                          ..addAll(_transactions.map((e) => e.id!).whereType<int>());
+                      }
+                    });
+                  },
+                  tooltip: _selectedIds.length == _transactions.length 
+                      ? 'إلغاء تحديد الكل' 
+                      : 'تحديد الكل',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: _deleteSelected,
+                  tooltip: 'حذف المحدد',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.share),
+                  onPressed: _shareSelected,
+                  tooltip: 'مشاركة',
+                ),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  tooltip: 'المزيد',
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'print':
+                        _printSelected();
+                        break;
+                      case 'export':
+                        // TODO: Implement export selected functionality
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('سيتم إضافة وظيفة تصدير المحدد قريباً')),
+                        );
+                        break;
                     }
-                  });
-                }),
-                IconButton(icon: const Icon(Icons.delete), onPressed: _deleteSelected),
-                IconButton(icon: const Icon(Icons.print), onPressed: _printSelected),
-                IconButton(icon: const Icon(Icons.share), onPressed: _shareSelected),
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'print',
+                      child: ListTile(
+                        leading: Icon(Icons.print),
+                        title: Text('طباعة المحدد'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'export',
+                      child: ListTile(
+                        leading: Icon(Icons.file_download),
+                        title: Text('تصدير المحدد'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             )
           : AppBar(
               titleSpacing: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.print),
-                onPressed: _generateReportForAccount,
-              ),
-              title: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  widget.account.name,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              automaticallyImplyLeading: false,
+              title: Row(
+                children: [
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    tooltip: 'المزيد',
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'print':
+                          _generateReportForAccount();
+                          break;
+                        case 'export':
+                          // TODO: Implement export functionality
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('سيتم إضافة وظيفة التصدير قريباً')),
+                          );
+                          break;
+                        case 'settings':
+                          _editAccountDetails();
+                          break;
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'print',
+                        child: ListTile(
+                          leading: Icon(Icons.print),
+                          title: Text('طباعة التقرير'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'export',
+                        child: ListTile(
+                          leading: Icon(Icons.file_download),
+                          title: Text('تصدير البيانات'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'settings',
+                        child: ListTile(
+                          leading: Icon(Icons.settings),
+                          title: Text('إعدادات الحساب'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: _editAccountDetails,
+                    tooltip: 'تعديل الحساب',
+                  ),
+                  const Spacer(),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.blue.shade300),
+                        ),
+                        child: Text(
+                          _currentAccount.currencyCode,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.blue.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.account.name,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: () => Navigator.of(context).pop(),
+                        tooltip: 'رجوع',
+                      ),
+                    ],
+                  ),
+                ],
               ),
               backgroundColor: Theme.of(context).colorScheme.inversePrimary,
             ),
@@ -588,33 +719,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                   ),
                   child: Column(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                             Text(
-                               'العملة: ${_currentAccount.currencyCode}',
-                               style: TextStyle(
-                                 fontSize: 14,
-                                 color: Colors.grey.shade600,
-                                 fontWeight: FontWeight.w500,
-                               ),
-                             ),
-                            ],
-                          ),
-                          IconButton(
-                            onPressed: _editAccountDetails,
-                            icon: const Icon(Icons.edit, size: 20),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.blue.withOpacity(0.1),
-                              foregroundColor: Colors.blue,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
+
                       Row(
                         children: [
                           Expanded(
@@ -639,6 +744,37 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                                NumberFormat('#,##0').format((_totals['net']!).abs()),
                                _totals['credit']! >= _totals['debit']! ? Colors.green : Colors.red,
                              ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Quick Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _navigateToAddTransaction,
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text('إضافة معاملة'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                side: BorderSide(color: Colors.blue.shade300),
+                                foregroundColor: Colors.blue.shade700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _generateReportForAccount,
+                              icon: const Icon(Icons.assessment, size: 18),
+                              label: const Text('عرض التقرير'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                side: BorderSide(color: Colors.green.shade300),
+                                foregroundColor: Colors.green.shade700,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -731,30 +867,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                 ),
               ],
             ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: _navigateToAddTransaction,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 28,
-          ),
-        ),
-      ),
+
     );  
   }
 }
