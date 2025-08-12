@@ -499,7 +499,6 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                      ),
                    ),
                  ),
-                 const Expanded(child: Divider()),
                ],
              ),
            ),
@@ -635,19 +634,19 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
-                      const PopupMenuItem(
-                        value: 'export',
-                        child: ListTile(
-                          leading: Icon(Icons.file_download),
-                          title: Text('تصدير البيانات'),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
+                      // const PopupMenuItem(
+                      //   value: 'export',
+                      //   child: ListTile(
+                      //     leading: Icon(Icons.file_download),
+                      //     title: Text('تصدير البيانات'),
+                      //     contentPadding: EdgeInsets.zero,
+                      //   ),
+                      // ),
                       const PopupMenuItem(
                         value: 'settings',
                         child: ListTile(
                           leading: Icon(Icons.settings),
-                          title: Text('إعدادات الحساب'),
+                          title: Text('تعديل الحساب'),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
@@ -750,20 +749,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                       const SizedBox(height: 16),
                       // Quick Action Buttons
                       Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _navigateToAddTransaction,
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text('إضافة معاملة'),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                side: BorderSide(color: Colors.blue.shade300),
-                                foregroundColor: Colors.blue.shade700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
+                        children: [                          
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: _generateReportForAccount,
@@ -776,6 +762,20 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                               ),
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _navigateToAddTransaction,
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text('إضافة معاملة'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                side: BorderSide(color: Colors.blue.shade300),
+                                foregroundColor: Colors.blue.shade700,
+                              ),
+                            ),
+                          ),
+                          
                         ],
                       ),
                     ],
@@ -794,11 +794,11 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                   ),
                   child: const Row(
                     children: [
-                      Expanded(flex: 3, child: Text('المبلغ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
+                      Expanded(flex: 3, child: Text('المبلغ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87), textAlign: TextAlign.left)),
                       SizedBox(width: 16),
-                      Expanded(flex: 4, child: Text('تفاصيل', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
+                      Expanded(flex: 4, child: Text('تفاصيل', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87), textAlign: TextAlign.center)),
                       SizedBox(width: 16),
-                      Expanded(flex: 3, child: Text('التاريخ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
+                      Expanded(flex: 3, child: Text('التاريخ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87), textAlign: TextAlign.right)),
                     ],
                   ),
                 ),

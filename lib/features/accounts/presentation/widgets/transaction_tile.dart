@@ -75,6 +75,7 @@ class TransactionTile extends StatelessWidget {
                     flex: 3,
                     child: Text(
                       formattedAmount,
+                      textAlign: TextAlign.left,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: amountColor,
                         fontWeight: FontWeight.w600,
