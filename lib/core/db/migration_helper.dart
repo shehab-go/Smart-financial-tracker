@@ -3,12 +3,15 @@ import 'database_helper.dart';
 
 /// Helper class for managing database migrations
 class MigrationHelper {
-  static const int currentVersion = 2;
+  static const int currentVersion = 3;
   
   /// Migrate database from old version to new version
   static Future<void> migrate(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await _migrateToV2(db);
+    }
+    if (oldVersion < 3) {
+      await _migrateToV3(db);
     }
   }
   
@@ -42,6 +45,9 @@ class MigrationHelper {
       // Add personId to accounts table
       await _addColumnIfNotExists(db, 'accounts', 'personId', 'INTEGER');
       
+      // Add currencyCode to accounts table if it doesn't exist
+      await _addColumnIfNotExists(db, 'accounts', 'currencyCode', 'TEXT NOT NULL DEFAULT "LOC"');
+      
       // Create indexes for better performance
       await _createIndexIfNotExists(db, 'idx_persons_name', 'persons', 'name');
       await _createIndexIfNotExists(db, 'idx_accounts_person', 'accounts', 'personId');
@@ -51,6 +57,19 @@ class MigrationHelper {
       print('Migration to v2 completed successfully');
     } catch (e) {
       print('Error during migration to v2: $e');
+      rethrow;
+    }
+  }
+  
+  /// Migration to version 3: Ensure currencyCode column exists
+  static Future<void> _migrateToV3(Database db) async {
+    try {
+      // Add currencyCode to accounts table if it doesn't exist
+      await _addColumnIfNotExists(db, 'accounts', 'currencyCode', 'TEXT NOT NULL DEFAULT "LOC"');
+      
+      print('Migration to v3 completed successfully');
+    } catch (e) {
+      print('Error during migration to v3: $e');
       rethrow;
     }
   }

@@ -144,7 +144,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               MaterialPageRoute(
                 builder: (context) => AccountTransactionsScreen(account: account),
               ),
-            ),
+            ).then((updatedAccount) {
+              if (updatedAccount != null && updatedAccount is AccountModel) {
+                // Update the specific account in the state instead of reloading all data
+                _loadData();
+              }
+            }),
       onLongPressAccount: _toggleAccountSelect,
     );
   }
