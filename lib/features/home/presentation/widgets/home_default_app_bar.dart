@@ -39,51 +39,40 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
         leading: Container(
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withOpacity(0.1),
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryColor,
+                AppTheme.primaryColor.withOpacity(0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryColor.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: IconButton(
-            icon: Icon(
-              Icons.assessment_rounded,
-              color: AppTheme.primaryColor,
+            icon: const Icon(
+              Icons.analytics_rounded,
+              color: Colors.white,
+              size: 24,
             ),
             tooltip: 'تقرير',
             onPressed: onShowReportOptions,
           ),
         ),
         titleSpacing: 16,
-        title: AnimatedBuilder(
-          animation: tabController,
-          builder: (context, child) {
-            if (tabController.index < categories.length) {
-              final currentCategory = categories[tabController.index];
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'إدارة الأموال الشخصية',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    currentCategory.name,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ],
-              );
-            }
-            return Text(
-              'إدارة الأموال الشخصية',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
-              ),
-            );
-          },
+        title: Text(
+          'إدارة الأموال الشخصية',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
+          ),
         ),
         actions: [
           Container(
