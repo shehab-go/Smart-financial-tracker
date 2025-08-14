@@ -3,7 +3,7 @@ import 'database_helper.dart';
 
 /// Helper class for managing database migrations
 class MigrationHelper {
-  static const int currentVersion = 4;
+  static const int currentVersion = 5;
   
   /// Migrate database from old version to new version
   static Future<void> migrate(Database db, int oldVersion, int newVersion) async {
@@ -15,6 +15,9 @@ class MigrationHelper {
     }
     if (oldVersion < 4) {
       await _migrateToV4(db);
+    }
+    if (oldVersion < 5) {
+      await _migrateToV5(db);
     }
   }
   
@@ -267,6 +270,32 @@ class MigrationHelper {
       print('Post-migration tasks completed');
     } catch (e) {
       print('Error in post-migration tasks: $e');
+    }
+  }
+
+  /// Migration to version 5: Add user profile table
+  static Future<void> _migrateToV5(Database db) async {
+    try {
+      // Create user profile table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS user_profile (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          fullName TEXT NOT NULL,
+          phone TEXT,
+          email TEXT,
+          address TEXT,
+          logoPath TEXT,
+          businessName TEXT,
+          tradingActivity TEXT,
+          createdDate INTEGER NOT NULL,
+          updatedDate INTEGER
+        )
+      ''');
+      
+      print('DEBUG: Migration to v5 completed successfully - User profile table created');
+    } catch (e) {
+      print('Error during migration to v5: $e');
+      rethrow;
     }
   }
 }

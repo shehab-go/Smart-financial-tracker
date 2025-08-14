@@ -4,6 +4,7 @@ import '../models/transaction.dart';
 import '../models/category.dart';
 import '../models/account.dart';
 import '../models/currency.dart';
+import '../models/user_profile.dart';
 import 'migration_helper.dart';
 
 class DatabaseHelper {
@@ -23,7 +24,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _createDatabase,
       onUpgrade: MigrationHelper.migrate,
     );
@@ -70,6 +71,22 @@ class DatabaseHelper {
         date INTEGER NOT NULL,
         description TEXT,
         FOREIGN KEY (accountId) REFERENCES accounts (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Create user profile table
+    await db.execute('''
+      CREATE TABLE user_profile (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fullName TEXT NOT NULL,
+        phone TEXT,
+        email TEXT,
+        address TEXT,
+        logoPath TEXT,
+        businessName TEXT,
+        tradingActivity TEXT,
+        createdDate INTEGER NOT NULL,
+        updatedDate INTEGER
       )
     ''');
 
@@ -345,6 +362,43 @@ class DatabaseHelper {
       'credit': totalCredit,
       'net': totalCredit - totalDebit,
     };
+  }
+
+  // User Profile operations
+  Future<UserProfile?> getUserProfile() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'user_profile',
+      limit: 1,
+    );
+    if (maps.isNotEmpty) {
+      return UserProfile.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<int> insertUserProfile(UserProfile profile) async {
+    final db = await database;
+    return await db.insert('user_profile', profile.toMap());
+  }
+
+  Future<int> updateUserProfile(UserProfile profile) async {
+    final db = await database;
+    return await db.update(
+      'user_profile',
+      profile.toMap(),
+      where: 'id = ?',
+      whereArgs: [profile.id],
+    );
+  }
+
+  Future<int> deleteUserProfile(int id) async {
+    final db = await database;
+    return await db.delete(
+      'user_profile',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<void> close() async {

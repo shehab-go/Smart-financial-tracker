@@ -7,9 +7,16 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import '../db/database_helper.dart';
+import '../models/user_profile.dart';
 
 class ReportService {
   static final Future<pw.Font> _arabicFontFuture = _loadArabicFont();
+
+  static Future<UserProfile?> _getUserProfile() async {
+    final dbHelper = DatabaseHelper();
+    return await dbHelper.getUserProfile();
+  }
 
   static Future<void> generateAndOpenPdf({
     required String title,
@@ -24,6 +31,8 @@ class ReportService {
       boldItalic: arabicFont,
     );
 
+    final userProfile = await _getUserProfile();
+
     pdf.addPage(
       pw.MultiPage(
         theme: theme,
@@ -32,6 +41,9 @@ class ReportService {
           pw.Directionality(
             textDirection: pw.TextDirection.rtl,
             child: pw.Column(children: [
+              // User Profile Header
+              if (userProfile != null) ..._buildProfileHeader(userProfile),
+              pw.SizedBox(height: 20),
               pw.Container(
                 alignment: pw.Alignment.centerRight,
                 child: pw.Text(title, style: pw.TextStyle(fontSize: 24), textDirection: pw.TextDirection.rtl),
@@ -92,6 +104,73 @@ class ReportService {
     debugPrint('PDF saved to: ${file.path}');
     final result = await OpenFile.open(file.path);
     debugPrint('OpenFile result: ${result.type}');
+  }
+
+  static List<pw.Widget> _buildProfileHeader(UserProfile profile) {
+    return [
+      pw.Container(
+        padding: const pw.EdgeInsets.all(16),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: PdfColors.grey300),
+          borderRadius: pw.BorderRadius.circular(8),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            if (profile.businessName?.isNotEmpty == true)
+              pw.Text(
+                profile.businessName!,
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+                textDirection: pw.TextDirection.rtl,
+              ),
+            if (profile.fullName?.isNotEmpty == true)
+              pw.Text(
+                profile.fullName!,
+                style: const pw.TextStyle(fontSize: 14),
+                textDirection: pw.TextDirection.rtl,
+              ),
+            if (profile.tradingActivity?.isNotEmpty == true)
+              pw.Text(
+                'النشاط التجاري: ${profile.tradingActivity}',
+                style: const pw.TextStyle(fontSize: 12),
+                textDirection: pw.TextDirection.rtl,
+              ),
+            pw.SizedBox(height: 8),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    if (profile.phone?.isNotEmpty == true)
+                      pw.Text(
+                        'الهاتف: ${profile.phone}',
+                        style: const pw.TextStyle(fontSize: 10),
+                        textDirection: pw.TextDirection.rtl,
+                      ),
+                    if (profile.email?.isNotEmpty == true)
+                      pw.Text(
+                        'البريد الإلكتروني: ${profile.email}',
+                        style: const pw.TextStyle(fontSize: 10),
+                        textDirection: pw.TextDirection.rtl,
+                      ),
+                  ],
+                ),
+                if (profile.address?.isNotEmpty == true)
+                  pw.Expanded(
+                    child: pw.Text(
+                      'العنوان: ${profile.address}',
+                      style: const pw.TextStyle(fontSize: 10),
+                      textDirection: pw.TextDirection.rtl,
+                      textAlign: pw.TextAlign.right,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ];
   }
 
   static Future<pw.Font> _loadArabicFont() async {

@@ -5,6 +5,7 @@ import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_s
 import 'package:debit_credit_app/features/categories/presentation/screens/categories_screen.dart';
 import 'package:debit_credit_app/features/currencies/presentation/screens/currencies_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/backup_screen.dart';
+import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -116,6 +117,19 @@ class AppDrawer extends StatelessWidget {
               icon: Icons.home_rounded,
               title: 'الرئيسية',
               onTap: () => Navigator.pop(context),
+            ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.person_rounded,
+              title: 'الملف الشخصي',
+              subtitle: 'إدارة بيانات المستخدم والشركة',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const UserProfileScreen()),
+                );
+              },
             ),
             _buildSectionDivider('إدارة البيانات'),
             _buildDrawerItem(
