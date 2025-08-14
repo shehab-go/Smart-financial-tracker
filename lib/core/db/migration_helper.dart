@@ -19,6 +19,9 @@ class MigrationHelper {
     if (oldVersion < 5) {
       await _migrateToV5(db);
     }
+    if (oldVersion < 6) {
+      await _migrateToV6(db);
+    }
   }
   
   /// Migration to version 2: Add lending management features
@@ -295,6 +298,19 @@ class MigrationHelper {
       print('DEBUG: Migration to v5 completed successfully - User profile table created');
     } catch (e) {
       print('Error during migration to v5: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 6: Add imagePaths column to transactions table
+  static Future<void> _migrateToV6(Database db) async {
+    try {
+      // Add imagePaths column to transactions table
+      await _addColumnIfNotExists(db, 'transactions', 'imagePaths', 'TEXT');
+      
+      print('DEBUG: Migration to v6 completed successfully - imagePaths column added to transactions table');
+    } catch (e) {
+      print('Error during migration to v6: $e');
       rethrow;
     }
   }

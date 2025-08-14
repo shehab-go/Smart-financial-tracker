@@ -58,7 +58,7 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           child: IconButton(
             icon: const Icon(
-              Icons.analytics_rounded,
+              Icons.description,
               color: Colors.white,
               size: 24,
             ),

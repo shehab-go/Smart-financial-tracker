@@ -6,6 +6,7 @@ class TransactionModel {
   final String category;
   final DateTime date;
   final String? description; // Optional description for the transaction
+  final List<String> imagePaths; // Image paths for transaction attachments
 
   TransactionModel({
     this.id,
@@ -15,6 +16,7 @@ class TransactionModel {
     required this.category,
     required this.date,
     this.description,
+    this.imagePaths = const [],
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +28,7 @@ class TransactionModel {
       'category': category,
       'date': date.millisecondsSinceEpoch,
       'description': description,
+      'imagePaths': imagePaths.join(','), // Store as comma-separated string
     };
   }
 
@@ -42,6 +45,9 @@ class TransactionModel {
           ? DateTime.fromMillisecondsSinceEpoch(map['date'])
           : DateTime.tryParse(map['date'].toString()) ?? DateTime.now(),
       description: map['description'],
+      imagePaths: map['imagePaths'] != null && map['imagePaths'].toString().isNotEmpty
+          ? map['imagePaths'].toString().split(',')
+          : [],
     );
   }
 
@@ -53,6 +59,7 @@ class TransactionModel {
     String? category,
     DateTime? date,
     String? description,
+    List<String>? imagePaths,
   }) {
     return TransactionModel(
       id: id ?? this.id,
@@ -62,6 +69,7 @@ class TransactionModel {
       category: category ?? this.category,
       date: date ?? this.date,
       description: description ?? this.description,
+      imagePaths: imagePaths ?? this.imagePaths,
     );
   }
 }

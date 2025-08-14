@@ -24,7 +24,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _createDatabase,
       onUpgrade: MigrationHelper.migrate,
     );
@@ -70,6 +70,7 @@ class DatabaseHelper {
         category TEXT NOT NULL,
         date INTEGER NOT NULL,
         description TEXT,
+        imagePaths TEXT,
         FOREIGN KEY (accountId) REFERENCES accounts (id) ON DELETE CASCADE
       )
     ''');

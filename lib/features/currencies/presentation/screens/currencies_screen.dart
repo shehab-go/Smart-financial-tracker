@@ -255,10 +255,11 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                 ),
               ],
             ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Container(
         decoration: BoxDecoration(
           gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(16),
+          shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
               color: AppTheme.primaryColor.withOpacity(0.4),
