@@ -158,6 +158,7 @@ class AccountTransactionsScreen extends StatefulWidget {
 
 class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   late AccountModel _currentAccount;
+  bool _accountUpdated = false;
 
   @override
   void initState() {
@@ -174,6 +175,12 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
       } else {
         _selectedIds.add(t.id!);
       }
+    });
+  }
+
+  void _markAccountAsUpdated() {
+    setState(() {
+      _accountUpdated = true;
     });
   }
 
@@ -200,7 +207,8 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
         await DatabaseHelper().deleteTransaction(id);
       }
       _clearSelection();
-      _loadTransactions();
+      await _loadTransactions();
+      _markAccountAsUpdated();
     }
   }
 
@@ -325,7 +333,8 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
         false;
 
     if (result == true) {
-      _loadTransactions();
+      await _loadTransactions();
+      _markAccountAsUpdated();
     }
   }
 
@@ -342,7 +351,8 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
         false;
 
     if (result == true) {
-      _loadTransactions();
+      await _loadTransactions();
+      _markAccountAsUpdated();
     }
   }
 
@@ -369,7 +379,8 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     if (confirmed == true) {
       try {
         await DatabaseHelper().deleteTransaction(transaction.id!);
-        _loadTransactions();
+        await _loadTransactions();
+        _markAccountAsUpdated();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -450,6 +461,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
               setState(() {
                 _currentAccount = updatedAccount;
               });
+              _markAccountAsUpdated();
               
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('تم تحديث بيانات الحساب بنجاح'), backgroundColor: Colors.green),
@@ -686,7 +698,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                       const SizedBox(width: 8),
                       IconButton(
                         icon: const Icon(Icons.arrow_forward),
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => Navigator.of(context).pop(_accountUpdated ? _currentAccount : null),
                         tooltip: 'رجوع',
                       ),
                     ],
