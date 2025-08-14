@@ -149,7 +149,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم حفظ البيانات بنجاح')),
         );
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true); // Return true to indicate successful save
       }
     } catch (e) {
       if (mounted) {
