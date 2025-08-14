@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:debit_credit_app/core/models/transaction.dart';
 import 'package:debit_credit_app/core/models/account.dart';
 import 'package:debit_credit_app/core/models/currency.dart';
@@ -17,7 +18,7 @@ import 'package:pdf/pdf.dart';
 
 class _AccountEditDialog extends StatefulWidget {
   final AccountModel account;
-  final Future<void> Function(String name, String currency) onSave;
+  final Future<void> Function(String name, String phone, String currency) onSave;
 
   const _AccountEditDialog({
     required this.account,
@@ -30,6 +31,7 @@ class _AccountEditDialog extends StatefulWidget {
 
 class _AccountEditDialogState extends State<_AccountEditDialog> {
   late TextEditingController _nameController;
+  late TextEditingController _phoneController;
   String? _selectedCurrency;
   List<CurrencyModel> _currencies = [];
   final _formKey = GlobalKey<FormState>();
@@ -38,6 +40,7 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.account.name);
+    _phoneController = TextEditingController(text: widget.account.phone ?? '');
     _selectedCurrency = widget.account.currencyCode;
     _loadCurrencies();
   }
@@ -73,9 +76,20 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
     }
   }
 
+  Future<void> _pickContact() async {
+    try {
+      final phoneContact = await FlutterContactPicker.pickPhoneContact();
+      final number = phoneContact.phoneNumber?.number;
+      if (number != null) {
+        setState(() => _phoneController.text = number);
+      }
+    } catch (_) {}
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -99,6 +113,30 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
                 ),
               ),
               validator: (value) => (value == null || value.trim().isEmpty) ? 'يرجى إدخال اسم الحساب' : null,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _phoneController,
+                    decoration: InputDecoration(
+                      labelText: 'رقم الهاتف (اختياري)',
+                      prefixIcon: const Icon(Icons.phone),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    keyboardType: TextInputType.phone,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _pickContact,
+                  icon: const Icon(Icons.contact_phone),
+                  tooltip: 'اختيار من جهات الاتصال',
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
@@ -133,7 +171,7 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
         ElevatedButton(
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
-                await widget.onSave(_nameController.text.trim(), _selectedCurrency!);
+                await widget.onSave(_nameController.text.trim(), _phoneController.text.trim(), _selectedCurrency!);
                 Navigator.of(context).pop();
               }
             },
@@ -442,7 +480,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
       context: context,
       builder: (context) => _AccountEditDialog(
         account: _currentAccount,
-        onSave: (name, currency) async {
+        onSave: (name, phone, currency) async {
           try {
             if (_currentAccount.id == null) {
               throw Exception('Account ID is null - cannot update');
@@ -451,6 +489,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
             // Create a new AccountModel with updated values
             final updatedAccount = _currentAccount.copyWith(
               name: name,
+              phone: phone.isEmpty ? null : phone,
               currencyCode: currency,
             );
             
@@ -691,9 +730,27 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        widget.account.name,
-                        overflow: TextOverflow.ellipsis,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _currentAccount.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          if (_currentAccount.phone != null && _currentAccount.phone!.isNotEmpty)
+                            Text(
+                              _currentAccount.phone!,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(width: 8),
                       IconButton(

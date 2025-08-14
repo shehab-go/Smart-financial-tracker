@@ -42,6 +42,15 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   bool get _isEditing => widget.transaction != null;
 
   @override
+  void dispose() {
+    _accountNameController.dispose();
+    _amountController.dispose();
+    _detailsController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     _initCurrency();
@@ -96,11 +105,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         await DatabaseHelper().updateTransaction(updated);
       } else {
         if (_isNewAccount) {
+          // Use default currency if none selected
           if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('يرجى اختيار العملة')),
-            );
-            return;
+            _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.symbol : 'USD';
           }
               
           final account = AccountModel(
@@ -346,12 +353,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          // Currency selection
-                           Expanded(
-                             flex: 1,
-                             child: _isNewAccount ? _buildCurrencyDropdown() : _buildCurrencyReadonly(),
-                           ),
+
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -370,7 +372,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Row(
+                      if (_isNewAccount) Row(
                         children: [
                           Expanded(
                             child: TextFormField(
