@@ -28,12 +28,12 @@ class AccountsHeaderRow extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               flex: 2,
-              child: Center(child: Text('عليه', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
+              child: Center(child: Text('عليك', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
             ),
             const SizedBox(width: 16),
             Expanded(
               flex: 2,
-              child: Center(child: Text('له', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
+              child: Center(child: Text('لك', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
             ),
             const SizedBox(width: 16),
             Expanded(

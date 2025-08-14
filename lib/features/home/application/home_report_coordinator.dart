@@ -25,7 +25,7 @@ class HomeReportCoordinator {
         .toList();
 
     final table = pw.Table.fromTextArray(
-      headers: [netHeaderLabel, 'عليه', 'له', 'الحساب'],
+      headers: [netHeaderLabel, 'عليك', 'لك', 'الحساب'],
       data: rows,
     );
 
@@ -55,7 +55,7 @@ class HomeReportCoordinator {
         .toList();
 
     final table = pw.Table.fromTextArray(
-      headers: [netHeaderLabelAll, 'عليه', 'له', 'الفئة', 'الحساب'],
+      headers: [netHeaderLabelAll, 'عليك', 'لك', 'الفئة', 'الحساب'],
       data: rows,
     );
 
@@ -78,7 +78,7 @@ class HomeReportCoordinator {
             ])
         .toList();
 
-    final table = pw.Table.fromTextArray(headers: ['الحساب', 'له', 'عليه'], data: rows);
+    final table = pw.Table.fromTextArray(headers: ['الحساب', 'لك', 'عليك'], data: rows);
 
     await ReportService.generateAndOpenPdf(
       title: 'حسابات مختارة',

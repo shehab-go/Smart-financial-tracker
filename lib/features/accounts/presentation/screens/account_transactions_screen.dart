@@ -221,7 +221,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
           t.type == 'credit' ? t.amount.toStringAsFixed(0) : '-',
           t.type == 'debit' ? t.amount.toStringAsFixed(0) : '-',
         ]).toList();
-    final table = pw.Table.fromTextArray(headers: ['التاريخ', 'تفاصيل', 'له', 'عليه'], data: rows);
+    final table = pw.Table.fromTextArray(headers: ['التاريخ', 'تفاصيل', 'لك', 'عليك'], data: rows);
     await ReportService.generateAndOpenPdf(
       title: 'معاملات مختارة - ${widget.account.name}',
       content: [table],
@@ -234,7 +234,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     final header = 'حساب: ${widget.account.name}';
     final lines = selectedTx
         .map((t) {
-          final label = t.type == 'debit' ? 'عليه' : 'له';
+          final label = t.type == 'debit' ? 'عليك' : 'لك';
           return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label ${t.amount.toStringAsFixed(0)} ${_currentAccount.currencyCode}';
         })
         .join('\n');
@@ -257,18 +257,18 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
         ]).toList();
 
     final table = pw.Table.fromTextArray(
-      headers: ['التاريخ', 'تفاصيل', 'له', 'عليه'],
+      headers: ['التاريخ', 'تفاصيل', 'لك', 'عليك'],
       data: rows,
       headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
       cellAlignment: pw.Alignment.center,
     );
 
-    final String netLabel = _totals['credit']! >= _totals['debit']! ? 'المتبقي له' : 'المتبقي عليه';
+    final String netLabel = _totals['credit']! >= _totals['debit']! ? 'المتبقي لك' : 'المتبقي عليك';
     final totalsRow = pw.Container(
       alignment: pw.Alignment.centerRight,
       padding: const pw.EdgeInsets.symmetric(vertical: 8),
       child: pw.Text(
-          'الإجمالي - له: ${_totals["credit"]!.toStringAsFixed(0)}  |  عليه: ${_totals["debit"]!.toStringAsFixed(0)}  |  $netLabel: ${_totals["net"]!.abs().toStringAsFixed(0)}',
+          'الإجمالي - لك: ${_totals["credit"]!.toStringAsFixed(0)}  |  عليك: ${_totals["debit"]!.toStringAsFixed(0)}  |  $netLabel: ${_totals["net"]!.abs().toStringAsFixed(0)}',
           textDirection: pw.TextDirection.rtl),
     );
 
@@ -736,7 +736,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                         children: [
                           Expanded(
                             child: _buildStatCard(
-                               'له',
+                               'لك',
                                NumberFormat('#,##0').format(_totals['credit']),
                                Colors.green,
                              ),
@@ -744,7 +744,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: _buildStatCard(
-                               'عليه',
+                               'عليك',
                                NumberFormat('#,##0').format(_totals['debit']),
                                Colors.red,
                              ),
@@ -752,7 +752,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: _buildStatCard(
-                               _totals['credit']! >= _totals['debit']! ? 'المتبقي له' : 'المتبقي عليه',
+                               _totals['credit']! >= _totals['debit']! ? 'المتبقي لك' : 'المتبقي عليك',
                                NumberFormat('#,##0').format((_totals['net']!).abs()),
                                _totals['credit']! >= _totals['debit']! ? Colors.green : Colors.red,
                              ),

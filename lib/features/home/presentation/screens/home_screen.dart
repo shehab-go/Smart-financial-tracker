@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         .where((a) => _selection.contains(a.id))
         .toList();
     final lines = sel
-        .map((a) => '${a.name}: له ${a.totalCredit.toStringAsFixed(0)} - عليه ${a.totalDebit.toStringAsFixed(0)}')
+        .map((a) => '${a.name}: لك ${a.totalCredit.toStringAsFixed(0)} - عليك ${a.totalDebit.toStringAsFixed(0)}')
         .join('\n');
     Share.share(lines, subject: 'حسابات مختارة');
   }
