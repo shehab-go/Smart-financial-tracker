@@ -241,20 +241,21 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         children: [
                           // Transaction type selection
                           Expanded(
-                            flex: 2,
+                            flex: 1,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
                                     Expanded(
+                                      flex: 1,
                                       child: Container(
                                         decoration: BoxDecoration(
                                           border: Border.all(
                                             color: _selectedType == 'debit'
                                                 ? AppTheme.debitColor
                                                 : AppTheme.dividerColor,
-                                            width: 2,
+                                            // width: 2,
                                           ),
                                           borderRadius: BorderRadius.circular(12),
                                           color: _selectedType == 'debit'
@@ -264,7 +265,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                         child: InkWell(
                                           onTap: () => setState(() => _selectedType = 'debit'),
                                           child: Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                            padding: const EdgeInsets.symmetric(vertical: 6),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
@@ -276,13 +277,13 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                                   visualDensity: VisualDensity.compact,
                                                 ),
-                                                const SizedBox(width: 2),
-                                                Icon(
-                                                  Icons.arrow_upward,
-                                                  color: AppTheme.debitColor,
-                                                  size: 14,
-                                                ),
-                                                const SizedBox(width: 2),
+                                                // const SizedBox(width: 2),
+                                                // Icon(
+                                                //   Icons.arrow_upward,
+                                                //   color: AppTheme.debitColor,
+                                                //   size: 14,
+                                                // ),
+                                                // const SizedBox(width: 2),
                                                 Text(
                                                   'عليك',
                                                   style: TextStyle(
@@ -299,13 +300,14 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                     ),
                                     const SizedBox(width: 4),
                                     Expanded(
+                                      flex: 1,
                                       child: Container(
                                         decoration: BoxDecoration(
                                           border: Border.all(
                                             color: _selectedType == 'credit'
                                                 ? AppTheme.creditColor
                                                 : AppTheme.dividerColor,
-                                            width: 2,
+                                            // width: 2,
                                           ),
                                           borderRadius: BorderRadius.circular(12),
                                           color: _selectedType == 'credit'
@@ -315,7 +317,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                         child: InkWell(
                                           onTap: () => setState(() => _selectedType = 'credit'),
                                           child: Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                            padding: const EdgeInsets.symmetric(vertical: 6),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
@@ -327,13 +329,13 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                                   visualDensity: VisualDensity.compact,
                                                 ),
-                                                const SizedBox(width: 2),
-                                                Icon(
-                                                  Icons.arrow_downward,
-                                                  color: AppTheme.creditColor,
-                                                  size: 14,
-                                                ),
-                                                const SizedBox(width: 2),
+                                                // const SizedBox(width: 2),
+                                                // Icon(
+                                                //   Icons.arrow_downward,
+                                                //   color: AppTheme.creditColor,
+                                                //   size: 14,
+                                                // ),
+                                                // const SizedBox(width: 2),
                                                 Text(
                                                   'لك',
                                                   style: TextStyle(
@@ -353,11 +355,29 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                               ],
                             ),
                           ),
-
+                          // Currency selection - only show when creating new account
+                          if (_isNewAccount) ...[
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 1,
+                              child: _buildCurrencyDropdown(),
+                            ),
+                          ],
+                          // Date picker - show in same row when not creating new account
+                          if (!_isNewAccount) ...[
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 1,
+                              child: _buildDatePicker(context),
+                            ),
+                          ],
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      _buildDatePicker(context),
+                      // Date picker - show on separate line when creating new account
+                      if (_isNewAccount) ...[
+                        const SizedBox(height: 16),
+                        _buildDatePicker(context),
+                      ],
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _detailsController,
@@ -606,10 +626,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           decoration: InputDecoration(
           hintText: 'التاريخ',
           prefixIcon: const Icon(Icons.calendar_today),
-          suffixIcon: const Icon(Icons.arrow_drop_down),
+          // suffixIcon: const Icon(Icons.arrow_drop_down),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
+            horizontal: 8,
             vertical: 8,
           ),
         ),
