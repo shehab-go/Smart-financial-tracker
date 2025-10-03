@@ -110,7 +110,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() => _state = _state.copyWith(isLoading: true));
     try {
       final newState = await _controller.load();
+      
+      // Preserve current tab index when reloading data
+      int currentIndex = 0;
+      try {
+        if (!_tabController.indexIsChanging) {
+          currentIndex = _tabController.index;
+        }
+        // Dispose old controller
+        _tabController.dispose();
+      } catch (e) {
+        // TabController not initialized yet, use default index 0
+      }
+      
       _tabController = TabController(length: newState.categories.length, vsync: this);
+      
+      // Restore tab index if it's still valid
+      if (currentIndex < newState.categories.length) {
+        _tabController.index = currentIndex;
+      }
+      
       setState(() => _state = newState);
     } catch (e) {
       setState(() => _state = _state.copyWith(isLoading: false));
