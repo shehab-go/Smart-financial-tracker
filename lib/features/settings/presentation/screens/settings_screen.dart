@@ -41,11 +41,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // User Profile Section
             _buildSectionCard(
               title: 'الملف الشخصي',
@@ -294,7 +296,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             
             const SizedBox(height: 16),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -476,19 +479,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
           fontSize: 13,
         ),
       ),
-      trailing: DropdownButton<String>(
-        value: value,
-        items: items.map((String item) {
-          return DropdownMenuItem<String>(
-            value: item,
-            child: Text(item),
-          );
-        }).toList(),
-        onChanged: onChanged,
-        underline: Container(),
-        style: const TextStyle(
-          color: AppTheme.textPrimary,
-          fontSize: 14,
+      trailing: Directionality(
+        textDirection: TextDirection.rtl,
+        child: DropdownButton<String>(
+          value: value,
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: onChanged,
+          underline: Container(),
+          style: const TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 14,
+          ),
         ),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),

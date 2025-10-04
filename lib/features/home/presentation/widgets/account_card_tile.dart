@@ -41,48 +41,23 @@ class AccountCardTile extends StatelessWidget {
                 textDirection: TextDirection.rtl,
                 child: Row(
                   children: [
-                    // Name column (flex: 6)
+                    // Name column (flex: 3)
                     Expanded(
-                      flex: 6,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              account.name,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary,
-                                  ),
+                      flex: 3,
+                      child: Text(
+                        account.name,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textPrimary,
                             ),
-                          ),
-                        ],
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    // Debit column (flex: 2)
-                    Expanded(
-                      flex: 2,
-                      child: Center(
-                        child: Text(
-                          NumberFormat('#,##0').format(account.totalDebit),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                color: AppTheme.debitColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 8),
                     // Credit column (flex: 2)
                     Expanded(
                       flex: 2,
@@ -101,21 +76,49 @@ class AccountCardTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    // Currency column (flex: 2)
+                    const SizedBox(width: 8),
+                    // Debit column (flex: 2)
                     Expanded(
                       flex: 2,
-                      child: Text(
-                        account.currencyName,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(
+                      child: Center(
+                        child: Text(
+                          NumberFormat('#,##0').format(account.totalDebit),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: AppTheme.debitColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Currency column (flex: 1) - moved to end
+                    Expanded(
+                      flex: 1,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: Text(
+                            account.currencyName,
+                            style: TextStyle(
+                              color: Colors.blue.shade700,
+                              fontSize: 10,
                               fontWeight: FontWeight.w500,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       ),
                     ),
                   ],

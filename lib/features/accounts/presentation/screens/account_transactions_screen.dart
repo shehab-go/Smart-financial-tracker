@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:debit_credit_app/core/models/transaction.dart';
 import 'package:debit_credit_app/core/models/account.dart';
@@ -169,25 +169,28 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
               maxLines: 2,
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedCurrency,
-              decoration: InputDecoration(
-                labelText: 'العملة',
-                prefixIcon: const Icon(Icons.currency_exchange),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+            Directionality(
+              textDirection: TextDirection.rtl,
+              child: DropdownButtonFormField<String>(
+                value: _selectedCurrency,
+                decoration: InputDecoration(
+                  labelText: 'العملة',
+                  prefixIcon: const Icon(Icons.currency_exchange),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                items: _currencies.map((currency) => DropdownMenuItem<String>(
+                  value: currency.name,
+                        child: Text(currency.name),
+                )).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCurrency = value;
+                  });
+                },
+                validator: (value) => (value == null || value.isEmpty) ? 'يرجى اختيار العملة' : null,
               ),
-              items: _currencies.map((currency) => DropdownMenuItem<String>(
-                value: currency.name,
-                      child: Text(currency.name),
-              )).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedCurrency = value;
-                });
-              },
-              validator: (value) => (value == null || value.isEmpty) ? 'يرجى اختيار العملة' : null,
             ),
             ],
           ),

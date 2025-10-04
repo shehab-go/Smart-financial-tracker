@@ -751,49 +751,52 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           )
         )).toList();
 
-    return DropdownButtonFormField<String>(
-      value: _selectedCurrency,
-      decoration: InputDecoration(
-        hintText: 'العملة',
-        hintStyle: TextStyle(
-          fontSize: 16,
-          color: AppTheme.textSecondary.withOpacity(0.7),
-        ),
-        border: UnderlineInputBorder(
-          borderSide: BorderSide(
-            color: AppTheme.dividerColor.withOpacity(0.5),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: DropdownButtonFormField<String>(
+        value: _selectedCurrency,
+        decoration: InputDecoration(
+          hintText: 'العملة',
+          hintStyle: TextStyle(
+            fontSize: 16,
+            color: AppTheme.textSecondary.withOpacity(0.7),
           ),
-        ),
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(
-            color: AppTheme.dividerColor.withOpacity(0.3),
+          border: UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: AppTheme.dividerColor.withOpacity(0.5),
+            ),
           ),
-        ),
-        focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(
-            color: AppTheme.primaryColor,
-            width: 2,
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: AppTheme.dividerColor.withOpacity(0.3),
+            ),
           ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: AppTheme.primaryColor,
+              width: 2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+          isDense: false,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
-        isDense: false,
+        items: items,
+        onChanged: (val) => setState(() => _selectedCurrency = val),
+        isExpanded: true,
+        style: TextStyle(
+          fontSize: 14,
+          color: AppTheme.textPrimary,
+        ),
+        menuMaxHeight: 200,
+        dropdownColor: Colors.white,
+        alignment: AlignmentDirectional.centerStart,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'يرجى اختيار العملة';
+          }
+          return null;
+        },
       ),
-      items: items,
-      onChanged: (val) => setState(() => _selectedCurrency = val),
-      isExpanded: true,
-      style: TextStyle(
-        fontSize: 14,
-        color: AppTheme.textPrimary,
-      ),
-      menuMaxHeight: 200,
-      dropdownColor: Colors.white,
-      alignment: AlignmentDirectional.centerStart,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'يرجى اختيار العملة';
-        }
-        return null;
-      },
     );
   }
 

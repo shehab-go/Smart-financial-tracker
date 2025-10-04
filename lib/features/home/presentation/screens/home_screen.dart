@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:debit_credit_app/core/models/account.dart';
 import 'package:debit_credit_app/core/models/category.dart';
 import 'package:debit_credit_app/core/widgets/app_drawer.dart';
@@ -151,7 +151,7 @@ class HomeScreenState extends State<HomeScreen> {
                       final category = _state.categories[index];
                       final accounts = _state.accountsByCategory[category.name] ?? [];
                       return SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.only(left: 8, right: 8, top: 8, bottom: 16),
                         child: _buildSimpleCategoryCard(category, accounts),
                       );
                     },
@@ -216,11 +216,11 @@ class HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCategoryNavigation() {
     return Container(
-      height: 60,
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      height: 40,
+      margin: const EdgeInsets.only(top: 8, bottom: 0),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         itemCount: _state.categories.length,
         itemBuilder: (context, index) {
           final category = _state.categories[index];
@@ -235,31 +235,27 @@ class HomeScreenState extends State<HomeScreen> {
                );
              },
             child: Container(
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              height: 24,
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primaryColor : Colors.white,
-                borderRadius: BorderRadius.circular(25),
+                color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
-                  width: 1,
+                  width: 1.5,
                 ),
-                boxShadow: isSelected ? [
-                  BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ] : null,
               ),
-              child: Text(
-                 category.name,
-                 style: TextStyle(
-                   color: isSelected ? Colors.white : AppTheme.textPrimary,
-                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                   fontSize: 14,
+              child: Center(
+                child: Text(
+                   category.name,
+                   style: TextStyle(
+                     color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
+                     fontWeight: FontWeight.bold,
+                     fontSize: 12,
+                   ),
                  ),
-               ),
+              ),
             ),
           );
         },
@@ -302,91 +298,81 @@ class HomeScreenState extends State<HomeScreen> {
         children: [
           // Category Header
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Expanded(
-                      child: Text(
-                        category.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                    ),
                     IconButton(
                       icon: const Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
                       onPressed: () => _navigateToCreateAccount(category.name),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                // Column Headers
-                Row(
-                  children: [
-                    // Account Name Header
-                    const Expanded(
-                      flex: 3,
-                      child: Text(
-                        'اسم الحساب',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textSecondary,
-                          fontWeight: FontWeight.w500,
+                const SizedBox(height: 4),
+                // Column Headers - RTL Layout
+                Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Row(
+                    children: [
+                      // Account Name Header
+                      const Expanded(
+                        flex: 3,
+                        child: Text(
+                          'اسم الحساب',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    // For You Header
-                    Expanded(
-                      flex: 2,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.green.withOpacity(0.3)),
-                          ),
-                          child: const Text(
+                      // For You Header
+                      const Expanded(
+                        flex: 2,
+                        child: Center(
+                          child: Text(
                             'لك',
                             style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.green,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    // On You Header
-                    Expanded(
-                      flex: 2,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.red.withOpacity(0.3)),
-                          ),
-                          child: const Text(
+                      // On You Header
+                      const Expanded(
+                        flex: 2,
+                        child: Center(
+                          child: Text(
                             'عليك',
                             style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.red,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    // Space for arrow icon
-                    const SizedBox(width: 16),
-                  ],
+                      // Currency Header (moved to end)
+                      const Expanded(
+                        flex: 1,
+                        child: Center(
+                          child: Text(
+                            'العملة',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -441,30 +427,8 @@ class HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.category_rounded,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    category.name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ),
                 IconButton(
                   icon: const Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
                   onPressed: () => _navigateToCreateAccount(category.name),
@@ -508,57 +472,79 @@ class HomeScreenState extends State<HomeScreen> {
       ).then((_) => loadData()),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Row(
-          children: [
-            // Account Name Column
-             Expanded(
-               flex: 3,
-               child: Text(
-                 account.name,
-                 style: const TextStyle(
-                   fontWeight: FontWeight.w600,
-                   color: AppTheme.textPrimary,
-                   fontSize: 14,
-                 ),
-                 maxLines: 1,
-                 overflow: TextOverflow.ellipsis,
-               ),
-             ),
-             // For You (Credit) Column
-             Expanded(
-               flex: 2,
-               child: Center(
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Row(
+            children: [
+              // Account Name Column
+               Expanded(
+                 flex: 3,
                  child: Text(
-                   '${NumberFormat('#,##0').format(account.totalCredit)}',
+                   account.name,
                    style: const TextStyle(
-                     color: AppTheme.creditColor,
-                     fontSize: 12,
                      fontWeight: FontWeight.w600,
+                     color: AppTheme.textPrimary,
+                     fontSize: 14,
+                   ),
+                   maxLines: 1,
+                   overflow: TextOverflow.ellipsis,
+                 ),
+               ),
+               // For You (Credit) Column
+               Expanded(
+                 flex: 2,
+                 child: Center(
+                   child: Text(
+                     '${NumberFormat('#,##0').format(account.totalCredit)}',
+                     style: const TextStyle(
+                       color: AppTheme.creditColor,
+                       fontSize: 12,
+                       fontWeight: FontWeight.w600,
+                     ),
                    ),
                  ),
                ),
-             ),
-             // On You (Debit) Column
-             Expanded(
-               flex: 2,
-               child: Center(
-                 child: Text(
-                   '${NumberFormat('#,##0').format(account.totalDebit)}',
-                   style: const TextStyle(
-                     color: AppTheme.debitColor,
-                     fontSize: 12,
-                     fontWeight: FontWeight.w600,
+               // On You (Debit) Column
+               Expanded(
+                 flex: 2,
+                 child: Center(
+                   child: Text(
+                     '${NumberFormat('#,##0').format(account.totalDebit)}',
+                     style: const TextStyle(
+                       color: AppTheme.debitColor,
+                       fontSize: 12,
+                       fontWeight: FontWeight.w600,
+                     ),
                    ),
                  ),
                ),
-             ),
-            // Arrow Icon
-            const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: AppTheme.textTertiary,
-            ),
-          ],
+               // Currency Column (moved to end)
+               Expanded(
+                 flex: 1,
+                 child: Center(
+                   child: Container(
+                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                     decoration: BoxDecoration(
+                       color: Colors.blue.shade50,
+                       borderRadius: BorderRadius.circular(8),
+                       border: Border.all(color: Colors.blue.shade200),
+                     ),
+                     child: Text(
+                       account.currencyName,
+                       style: TextStyle(
+                         color: Colors.blue.shade700,
+                         fontSize: 10,
+                         fontWeight: FontWeight.w500,
+                       ),
+                       maxLines: 1,
+                       overflow: TextOverflow.ellipsis,
+                       textAlign: TextAlign.center,
+                     ),
+                   ),
+                 ),
+               ),
+            ],
+          ),
         ),
       ),
     );
@@ -573,28 +559,31 @@ class HomeScreenState extends State<HomeScreen> {
           maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
         padding: const EdgeInsets.all(20),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'اختر الفئة لإضافة حساب جديد',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'اختر الفئة لإضافة حساب جديد',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              ..._state.categories.map((category) => ListTile(
-                title: Text(category.name),
-                onTap: () {
-                  Navigator.pop(context);
-                  _navigateToCreateAccount(category.name);
-                },
-              )).toList(),
-            ],
+                const SizedBox(height: 16),
+                ..._state.categories.map((category) => ListTile(
+                  title: Text(category.name),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _navigateToCreateAccount(category.name);
+                  },
+                )).toList(),
+              ],
+            ),
           ),
         ),
       ),
