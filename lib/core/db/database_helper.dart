@@ -55,7 +55,9 @@ class DatabaseHelper {
         category TEXT NOT NULL,
         createdDate INTEGER NOT NULL,
         currencyName TEXT NOT NULL DEFAULT 'محلي',
-        phone TEXT
+        phone TEXT,
+        address TEXT,
+        workDetails TEXT
       )
     ''');
 

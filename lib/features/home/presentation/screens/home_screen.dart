@@ -25,6 +25,10 @@ class HomeScreenState extends State<HomeScreen> {
   final HomeController _controller = HomeController();
   HomeState _state = HomeState.initial();
   StreamSubscription<CategoryEvent>? _categoryEventSubscription;
+  
+  // State for category navigation
+  int _selectedCategoryIndex = 0;
+  late PageController _pageController;
 
   void _showReportOptions() {
     showModalBottomSheet(
@@ -54,6 +58,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     loadData();
     // Listen for category events
     _categoryEventSubscription = CategoryEventBus().events.listen((event) {
@@ -76,6 +81,13 @@ class HomeScreenState extends State<HomeScreen> {
             .showSnackBar(SnackBar(content: Text('خطأ في تحميل البيانات: $e'), backgroundColor: Colors.red));
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _categoryEventSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _navigateToCreateAccount(String category) async {
@@ -121,20 +133,31 @@ class HomeScreenState extends State<HomeScreen> {
       ),
       body: _state.categories.isEmpty
           ? _buildEmptyState()
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Categories Section
-                  ..._state.categories.map((category) => Column(
-                    children: [
-                      _buildCategoryCard(category),
-                      const SizedBox(height: 16),
-                    ],
-                  )).toList(),
-                ],
-              ),
+          : Column(
+              children: [
+                // Horizontal Category Navigation
+                _buildCategoryNavigation(),
+                // Swipeable Category Content
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _selectedCategoryIndex = index;
+                      });
+                    },
+                    itemCount: _state.categories.length,
+                    itemBuilder: (context, index) {
+                      final category = _state.categories[index];
+                      final accounts = _state.accountsByCategory[category.name] ?? [];
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: _buildSimpleCategoryCard(category, accounts),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
       floatingActionButton: _state.categories.isNotEmpty
           ? FloatingActionButton(
@@ -190,6 +213,212 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
 
+
+  Widget _buildCategoryNavigation() {
+    return Container(
+      height: 60,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _state.categories.length,
+        itemBuilder: (context, index) {
+          final category = _state.categories[index];
+          final isSelected = index == _selectedCategoryIndex;
+          
+          return GestureDetector(
+             onTap: () {
+               _pageController.animateToPage(
+                 index,
+                 duration: const Duration(milliseconds: 300),
+                 curve: Curves.easeInOut,
+               );
+             },
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: isSelected ? AppTheme.primaryColor : Colors.white,
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(
+                  color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+                  width: 1,
+                ),
+                boxShadow: isSelected ? [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ] : null,
+              ),
+              child: Text(
+                 category.name,
+                 style: TextStyle(
+                   color: isSelected ? Colors.white : AppTheme.textPrimary,
+                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                   fontSize: 14,
+                 ),
+               ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSelectedCategoryContent() {
+    if (_state.categories.isEmpty) return const SizedBox();
+    
+    // Ensure selected index is within bounds
+    if (_selectedCategoryIndex >= _state.categories.length) {
+      _selectedCategoryIndex = 0;
+    }
+    
+    final selectedCategory = _state.categories[_selectedCategoryIndex];
+    final accounts = _state.accountsByCategory[selectedCategory.name] ?? [];
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: _buildSimpleCategoryCard(selectedCategory, accounts),
+    );
+  }
+
+  Widget _buildSimpleCategoryCard(CategoryModel category, List<AccountModel> accounts) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Category Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        category.name,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
+                      onPressed: () => _navigateToCreateAccount(category.name),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Column Headers
+                Row(
+                  children: [
+                    // Account Name Header
+                    const Expanded(
+                      flex: 3,
+                      child: Text(
+                        'اسم الحساب',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    // For You Header
+                    Expanded(
+                      flex: 2,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.green.withOpacity(0.3)),
+                          ),
+                          child: const Text(
+                            'لك',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // On You Header
+                    Expanded(
+                      flex: 2,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          ),
+                          child: const Text(
+                            'عليك',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.red,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Space for arrow icon
+                    const SizedBox(width: 16),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Category Content
+          const Divider(height: 1, color: Colors.grey),
+          if (accounts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.backgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'لا توجد حسابات في هذه الفئة',
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          else
+            ...accounts.map((account) => _buildAccountTile(account)).toList(),
+        ],
+      ),
+    );
+  }
 
   Widget _buildCategoryCard(CategoryModel category) {
     final accounts = _state.accountsByCategory[category.name] ?? [];
@@ -271,58 +500,67 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildAccountTile(AccountModel account) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Icon(
-          Icons.person_rounded,
-          color: AppTheme.primaryColor,
-          size: 20,
-        ),
-      ),
-      title: Text(
-        account.name,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          color: AppTheme.textPrimary,
-        ),
-      ),
-      subtitle: Row(
-        children: [
-          Text(
-            'لك: ${NumberFormat('#,##0').format(account.totalCredit)}',
-            style: const TextStyle(
-              color: AppTheme.creditColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            'عليك: ${NumberFormat('#,##0').format(account.totalDebit)}',
-            style: const TextStyle(
-              color: AppTheme.debitColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-      trailing: const Icon(
-        Icons.arrow_forward_ios,
-        size: 16,
-        color: AppTheme.textTertiary,
-      ),
+    return InkWell(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => AccountTransactionsScreen(account: account),
         ),
       ).then((_) => loadData()),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          children: [
+            // Account Name Column
+             Expanded(
+               flex: 3,
+               child: Text(
+                 account.name,
+                 style: const TextStyle(
+                   fontWeight: FontWeight.w600,
+                   color: AppTheme.textPrimary,
+                   fontSize: 14,
+                 ),
+                 maxLines: 1,
+                 overflow: TextOverflow.ellipsis,
+               ),
+             ),
+             // For You (Credit) Column
+             Expanded(
+               flex: 2,
+               child: Center(
+                 child: Text(
+                   '${NumberFormat('#,##0').format(account.totalCredit)}',
+                   style: const TextStyle(
+                     color: AppTheme.creditColor,
+                     fontSize: 12,
+                     fontWeight: FontWeight.w600,
+                   ),
+                 ),
+               ),
+             ),
+             // On You (Debit) Column
+             Expanded(
+               flex: 2,
+               child: Center(
+                 child: Text(
+                   '${NumberFormat('#,##0').format(account.totalDebit)}',
+                   style: const TextStyle(
+                     color: AppTheme.debitColor,
+                     fontSize: 12,
+                     fontWeight: FontWeight.w600,
+                   ),
+                 ),
+               ),
+             ),
+            // Arrow Icon
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: AppTheme.textTertiary,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -350,18 +588,6 @@ class HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 16),
               ..._state.categories.map((category) => ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.category_rounded,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                ),
                 title: Text(category.name),
                 onTap: () {
                   Navigator.pop(context);
@@ -375,9 +601,4 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  @override
-  void dispose() {
-    _categoryEventSubscription?.cancel();
-    super.dispose();
-  }
 }
