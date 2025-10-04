@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class HomeSelectionAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int selectedCount;
@@ -26,6 +27,11 @@ class HomeSelectionAppBar extends StatelessWidget implements PreferredSizeWidget
     return AppBar(
       leading: IconButton(icon: const Icon(Icons.close), onPressed: onClearSelection),
       title: Text('تم تحديد $selectedCount'),
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
       actions: [
         IconButton(icon: const Icon(Icons.select_all), tooltip: 'تحديد الكل', onPressed: onSelectAll),
         IconButton(icon: const Icon(Icons.delete), onPressed: onDelete),
