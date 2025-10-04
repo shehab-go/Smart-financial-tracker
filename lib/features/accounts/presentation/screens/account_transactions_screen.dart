@@ -715,6 +715,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
+                          constraints: const BoxConstraints(maxWidth: 80),
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.blue.shade100,
@@ -723,6 +724,9 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                           ),
                           child: Text(
                             _currentAccount.currencyName,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.blue.shade700,

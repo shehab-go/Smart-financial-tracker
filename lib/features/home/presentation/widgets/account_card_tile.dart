@@ -50,6 +50,7 @@ class AccountCardTile extends StatelessWidget {
                             child: Text(
                               account.name,
                               overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium
@@ -69,6 +70,8 @@ class AccountCardTile extends StatelessWidget {
                       child: Center(
                         child: Text(
                           NumberFormat('#,##0').format(account.totalDebit),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium
@@ -86,6 +89,8 @@ class AccountCardTile extends StatelessWidget {
                       child: Center(
                         child: Text(
                           NumberFormat('#,##0').format(account.totalCredit),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium
@@ -102,6 +107,9 @@ class AccountCardTile extends StatelessWidget {
                       flex: 2,
                       child: Text(
                         account.currencyName,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium

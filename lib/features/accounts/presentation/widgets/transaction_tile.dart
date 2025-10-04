@@ -64,6 +64,8 @@ class TransactionTile extends StatelessWidget {
                     child: Text(
                       transaction.description ?? 'بدون وصف',
                       overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      softWrap: false,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppTheme.textPrimary,
                       ),
@@ -76,6 +78,8 @@ class TransactionTile extends StatelessWidget {
                     child: Text(
                       formattedAmount,
                       textAlign: TextAlign.left,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: amountColor,
                         fontWeight: FontWeight.w600,
