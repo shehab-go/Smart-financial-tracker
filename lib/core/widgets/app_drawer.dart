@@ -7,6 +7,7 @@ import 'package:debit_credit_app/features/categories/presentation/screens/catego
 import 'package:debit_credit_app/features/currencies/presentation/screens/currencies_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
+import 'package:debit_credit_app/features/settings/presentation/screens/settings_screen.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
@@ -289,6 +290,19 @@ class _AppDrawerState extends State<AppDrawer> {
                   },
                 ),
                 _buildSectionDivider('أخرى'),
+                _buildDrawerItem(
+                  context,
+                  icon: Icons.settings_rounded,
+                  title: 'الإعدادات',
+                  subtitle: 'إعدادات التطبيق والتفضيلات',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                    );
+                  },
+                ),
                 _buildDrawerItem(
                   context,
                   icon: Icons.share_rounded,
