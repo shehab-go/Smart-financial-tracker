@@ -4,6 +4,8 @@ class AccountModel {
   final String category;
   final String currencyName;
   final String? phone;
+  final String? address;
+  final String? workDetails;
   // Calculated fields (not stored in accounts table directly)
   final int transactionCount;
   final double totalDebit;
@@ -16,6 +18,8 @@ class AccountModel {
     required this.category,
     String this.currencyName = 'محلي',
     this.phone,
+    this.address,
+    this.workDetails,
     required this.createdDate,
     this.transactionCount = 0,
     this.totalDebit = 0.0,
@@ -31,6 +35,8 @@ class AccountModel {
       'category': category,
       'currencyName': currencyName,
       'phone': phone,
+      'address': address,
+      'workDetails': workDetails,
       'createdDate': createdDate.millisecondsSinceEpoch,
     };
   }
@@ -44,6 +50,8 @@ class AccountModel {
       category: map['category'],
       currencyName: map['currencyName'] ?? 'محلي',
       phone: map['phone'],
+      address: map['address'],
+      workDetails: map['workDetails'],
       createdDate: DateTime.fromMillisecondsSinceEpoch(map['createdDate']),
       transactionCount: (map['transactionCount'] ?? 0) is int ? map['transactionCount'] ?? 0 : int.tryParse(map['transactionCount'].toString()) ?? 0,
       totalDebit: (map['totalDebit'] ?? 0.0) is num ? (map['totalDebit'] ?? 0.0).toDouble() : double.tryParse(map['totalDebit'].toString()) ?? 0.0,
@@ -57,6 +65,8 @@ class AccountModel {
     String? category,
     String? currencyName,
     String? phone,
+    String? address,
+    String? workDetails,
     DateTime? createdDate,
     int? transactionCount,
     double? totalDebit,
@@ -68,6 +78,8 @@ class AccountModel {
       category: category ?? this.category,
       currencyName: currencyName ?? this.currencyName,
       phone: phone ?? this.phone,
+      address: address ?? this.address,
+      workDetails: workDetails ?? this.workDetails,
       createdDate: createdDate ?? this.createdDate,
       transactionCount: transactionCount ?? this.transactionCount,
       totalDebit: totalDebit ?? this.totalDebit,

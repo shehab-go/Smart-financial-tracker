@@ -18,7 +18,7 @@ import 'package:pdf/pdf.dart';
 
 class _AccountEditDialog extends StatefulWidget {
   final AccountModel account;
-  final Future<void> Function(String name, String phone, String currency) onSave;
+  final Future<void> Function(String name, String phone, String currency, String address, String workDetails) onSave;
 
   const _AccountEditDialog({
     required this.account,
@@ -32,6 +32,8 @@ class _AccountEditDialog extends StatefulWidget {
 class _AccountEditDialogState extends State<_AccountEditDialog> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
+  late TextEditingController _addressController;
+  late TextEditingController _workDetailsController;
   String? _selectedCurrency;
   List<CurrencyModel> _currencies = [];
   final _formKey = GlobalKey<FormState>();
@@ -41,6 +43,8 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
     super.initState();
     _nameController = TextEditingController(text: widget.account.name);
     _phoneController = TextEditingController(text: widget.account.phone ?? '');
+    _addressController = TextEditingController(text: widget.account.address ?? '');
+    _workDetailsController = TextEditingController(text: widget.account.workDetails ?? '');
     _selectedCurrency = widget.account.currencyName;
     _loadCurrencies();
   }
@@ -90,6 +94,8 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _addressController.dispose();
+    _workDetailsController.dispose();
     super.dispose();
   }
 
@@ -139,6 +145,30 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
               ],
             ),
             const SizedBox(height: 16),
+            TextFormField(
+              controller: _addressController,
+              decoration: InputDecoration(
+                labelText: 'العنوان (اختياري)',
+                prefixIcon: const Icon(Icons.location_on),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _workDetailsController,
+              decoration: InputDecoration(
+                labelText: 'تفاصيل العمل (اختياري)',
+                prefixIcon: const Icon(Icons.work),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _selectedCurrency,
               decoration: InputDecoration(
@@ -171,7 +201,13 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
         ElevatedButton(
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
-                await widget.onSave(_nameController.text.trim(), _phoneController.text.trim(), _selectedCurrency!);
+                await widget.onSave(
+                  _nameController.text.trim(), 
+                  _phoneController.text.trim(), 
+                  _selectedCurrency!, 
+                  _addressController.text.trim(),
+                  _workDetailsController.text.trim()
+                );
                 Navigator.of(context).pop();
               }
             },
@@ -480,7 +516,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
       context: context,
       builder: (context) => _AccountEditDialog(
         account: _currentAccount,
-        onSave: (name, phone, currency) async {
+        onSave: (name, phone, currency, address, workDetails) async {
           try {
             if (_currentAccount.id == null) {
               throw Exception('Account ID is null - cannot update');
@@ -491,6 +527,8 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
               name: name,
               phone: phone.isEmpty ? null : phone,
               currencyName: currency,
+              address: address.isEmpty ? null : address,
+              workDetails: workDetails.isEmpty ? null : workDetails,
             );
             
             // Save to database

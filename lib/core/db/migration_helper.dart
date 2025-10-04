@@ -13,7 +13,7 @@ import 'database_helper.dart';
 /// - Detailed logging is provided for debugging and monitoring
 class MigrationHelper {
   /// Current database schema version
-  static const int currentVersion = 6;
+  static const int currentVersion = 7;
   
   // Constants for default values and common strings
   static const String defaultCurrencyName = 'محلي';
@@ -65,6 +65,10 @@ class MigrationHelper {
       if (oldVersion < 6) {
         print('[MigrationHelper] Applying migration to version 6');
         await _migrateToV6(db);
+      }
+      if (oldVersion < 7) {
+        print('[MigrationHelper] Applying migration to version 7');
+        await _migrateToV7(db);
       }
       
       print('[MigrationHelper] Database migration completed successfully');
@@ -434,6 +438,22 @@ class MigrationHelper {
       print('[MigrationHelper] Migration to v6 completed successfully - imagePaths column added to transactions table');
     } catch (e) {
       print('[MigrationHelper] ERROR: Migration to v6 failed: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 7: Add address and workDetails columns to accounts table
+  static Future<void> _migrateToV7(Database db) async {
+    try {
+      // Add address column to accounts table
+      await _addColumnIfNotExists(db, 'accounts', 'address', 'TEXT');
+      
+      // Add workDetails column to accounts table
+      await _addColumnIfNotExists(db, 'accounts', 'workDetails', 'TEXT');
+      
+      print('[MigrationHelper] Migration to v7 completed successfully - address and workDetails columns added to accounts table');
+    } catch (e) {
+      print('[MigrationHelper] ERROR: Migration to v7 failed: $e');
       rethrow;
     }
   }
