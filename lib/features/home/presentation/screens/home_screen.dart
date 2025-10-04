@@ -8,12 +8,7 @@ import 'package:debit_credit_app/features/accounts/presentation/screens/account_
 import 'package:debit_credit_app/features/accounts/presentation/dialogs/add_transaction_dialog.dart';
 import 'package:debit_credit_app/features/home/presentation/widgets/report_bottom_sheet.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:debit_credit_app/features/home/presentation/widgets/category_accounts_tab.dart';
-import 'package:debit_credit_app/features/home/presentation/widgets/accounts_header_row.dart';
-import 'package:debit_credit_app/features/home/presentation/widgets/home_selection_app_bar.dart';
-import 'package:debit_credit_app/features/home/presentation/widgets/home_default_app_bar.dart';
 import 'package:debit_credit_app/features/home/application/home_report_coordinator.dart';
-import 'package:debit_credit_app/features/home/application/selection_controller.dart';
 import 'package:debit_credit_app/features/home/application/home_controller.dart';
 import 'package:debit_credit_app/features/home/application/home_state.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
@@ -26,54 +21,10 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => HomeScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  final SelectionController _selection = SelectionController();
+class HomeScreenState extends State<HomeScreen> {
   final HomeController _controller = HomeController();
   HomeState _state = HomeState.initial();
   StreamSubscription<CategoryEvent>? _categoryEventSubscription;
-
-  void _toggleAccountSelect(AccountModel acc) {
-    _selection.toggle(acc.id);
-    setState(() {});
-  }
-
-  void _clearAccountSelect() {
-    _selection.clear();
-    setState(() {});
-  }
-
-  Future<void> _deleteSelectedAccounts() async {
-    if (!_selection.isActive) return;
-    final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (c) => AlertDialog(
-            title: const Text('تأكيد الحذف'),
-            content: Text('سيتم حذف ${_selection.count} حساب ومعاملاته. هل تريد المتابعة؟'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('إلغاء')),
-              TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('حذف', style: TextStyle(color: Colors.red))),
-            ],
-          ),
-        ) ??
-        false;
-    if (!confirmed) return;
-
-    await _controller.deleteAccounts(_selection.ids);
-    _clearAccountSelect();
-    await loadData();
-  }
-
-  void _shareSelectedAccounts() {
-    if (!_selection.isActive) return;
-    final sel = _state.categories
-        .expand((cat) => _state.accountsByCategory[cat.name] ?? [])
-        .where((a) => _selection.contains(a.id))
-        .toList();
-    final lines = sel
-        .map((a) => '${a.name}: لك ${a.totalCredit.toStringAsFixed(0)} - عليك ${a.totalDebit.toStringAsFixed(0)}')
-        .join('\n');
-    Share.share(lines, subject: 'حسابات مختارة');
-  }
 
   void _showReportOptions() {
     showModalBottomSheet(
@@ -86,8 +37,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _generateReportForCurrentCategory() async {
-    if (_tabController.index >= _state.categories.length) return;
-    final cat = _state.categories[_tabController.index];
+    if (_state.categories.isEmpty) return;
+    final cat = _state.categories.first;
     final accounts = _state.accountsByCategory[cat.name] ?? [];
     await HomeReportCoordinator.generateCategoryReport(category: cat, accounts: accounts);
   }
@@ -100,14 +51,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     await HomeReportCoordinator.generateAllAccountsReport(allAccounts: allAccounts);
   }
 
-  late TabController _tabController;
-  bool get _accSelectionMode => _selection.isActive;
-
   @override
   void initState() {
     super.initState();
-    // Initialize TabController with at least 1 tab to prevent errors
-    _tabController = TabController(length: 1, vsync: this);
     loadData();
     // Listen for category events
     _categoryEventSubscription = CategoryEventBus().events.listen((event) {
@@ -122,33 +68,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() => _state = _state.copyWith(isLoading: true));
     try {
       final newState = await _controller.load();
-      
-      // Preserve current tab index when reloading data
-      int currentIndex = 0;
-      try {
-        if (_tabController.length > 0 && !_tabController.indexIsChanging) {
-          currentIndex = _tabController.index;
-        }
-      } catch (e) {
-        // TabController might have issues, use default index 0
-      }
-      
-      // Safely dispose old controller
-      try {
-        _tabController.dispose();
-      } catch (e) {
-        // Controller might already be disposed
-      }
-
-      // Create new controller with proper length
-      final categoryCount = newState.categories.length;
-      _tabController = TabController(length: categoryCount > 0 ? categoryCount : 1, vsync: this);
-      
-      // Restore tab index if it's still valid
-      if (newState.categories.isNotEmpty && currentIndex < newState.categories.length) {
-        _tabController.index = currentIndex;
-      }
-      
       setState(() => _state = newState);
     } catch (e) {
       setState(() => _state = _state.copyWith(isLoading: false));
@@ -168,131 +87,288 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (result == true) await loadData();
   }
 
-
-
-  Widget _buildCategoryTab(CategoryModel category) {
-    final accounts = _state.accountsByCategory[category.name] ?? [];
-    return CategoryAccountsTab(
-      category: category,
-      accounts: accounts,
-      selectedAccountIds: _selection.ids,
-      onTapAccount: (account) => _accSelectionMode
-          ? _toggleAccountSelect(account)
-          : Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => AccountTransactionsScreen(account: account),
-              ),
-            ).then((updatedAccount) {
-              if (updatedAccount != null && updatedAccount is AccountModel) {
-                // Update the specific account in the state instead of reloading all data
-                loadData();
-              }
-            }),
-      onLongPressAccount: _toggleAccountSelect,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_state.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (_state.categories.isEmpty) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('إدارة الأموال الشخصية'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        ),
-        body: const Center(child: Text('لا توجد فئات متاحة')),
-      );
-    }
-
-    final tabBar = TabBar(
-      controller: _tabController,
-      isScrollable: true,
-      tabs: _state.categories
-          .map((category) => Tab(
-                text: category.name,
-              ))
-          .toList(),
-    );
-
     return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
       endDrawer: const AppDrawer(),
-      appBar: _accSelectionMode
-          ? HomeSelectionAppBar(
-              selectedCount: _selection.count,
-              onClearSelection: _clearAccountSelect,
-              onSelectAll: () {
-                final allIds = _state.categories
-                    .expand((c) => _state.accountsByCategory[c.name] ?? [])
-                    .map((e) => e.id!)
-                    .whereType<int>();
-                setState(() => _selection.toggleSelectAll(allIds));
-              },
-              onDelete: _deleteSelectedAccounts,
-              onPrint: () async {
-                final selected = _state.categories
-                    .expand((cat) => _state.accountsByCategory[cat.name] ?? [])
-                    .where((a) => _selection.contains(a.id))
-                    .cast<AccountModel>()
-                    .toList();
-                await HomeReportCoordinator.generateSelectedAccountsReport(selected: selected);
-              },
-              onShare: _shareSelectedAccounts,
-            )
-          : HomeDefaultAppBar(
-              onShowReportOptions: _showReportOptions,
-              tabController: _tabController,
-              categories: _state.categories,
-              bottom: tabBar,
-            ),
-      body: Column(
-        children: [
-          const AccountsHeaderRow(),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: _state.categories.map((category) => _buildCategoryTab(category)).toList(),
+      appBar: AppBar(
+        title: const Text(
+          'إدارة الأموال الشخصية',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.assessment_rounded, color: AppTheme.primaryColor),
+            onPressed: _showReportOptions,
+          ),
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu, color: AppTheme.primaryColor),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
             ),
           ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+      body: _state.categories.isEmpty
+          ? _buildEmptyState()
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Categories Section
+                  ..._state.categories.map((category) => Column(
+                    children: [
+                      _buildCategoryCard(category),
+                      const SizedBox(height: 16),
+                    ],
+                  )).toList(),
+                ],
+              ),
+            ),
+      floatingActionButton: _state.categories.isNotEmpty
+          ? FloatingActionButton(
+              onPressed: () => _showAddAccountDialog(),
+              backgroundColor: AppTheme.primaryColor,
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 64,
+                color: AppTheme.primaryColor.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'لا توجد فئات متاحة',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'قم بإنشاء فئات لبدء إدارة حساباتك',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
-        child: FloatingActionButton(
-          onPressed: () {
-            // Check if we have categories and TabController is initialized
-            if (_state.categories.isNotEmpty && _tabController.length > 0) {
-              final currentIndex = _tabController.index;
-              if (currentIndex < _state.categories.length) {
-                final currentCategory = _state.categories[currentIndex].name;
-                _navigateToCreateAccount(currentCategory);
-              }
-            } else if (_state.categories.isNotEmpty) {
-              // Fallback to first category if TabController has issues
-              final currentCategory = _state.categories.first.name;
-              _navigateToCreateAccount(currentCategory);
-            }
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 28,
+      ),
+    );
+  }
+
+
+
+  Widget _buildCategoryCard(CategoryModel category) {
+    final accounts = _state.accountsByCategory[category.name] ?? [];
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.category_rounded,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    category.name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
+                  onPressed: () => _navigateToCreateAccount(category.name),
+                ),
+              ],
+            ),
+          ),
+          if (accounts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.backgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'لا توجد حسابات في هذه الفئة',
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          else
+            ...accounts.map((account) => _buildAccountTile(account)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccountTile(AccountModel account) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(
+          Icons.person_rounded,
+          color: AppTheme.primaryColor,
+          size: 20,
+        ),
+      ),
+      title: Text(
+        account.name,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          color: AppTheme.textPrimary,
+        ),
+      ),
+      subtitle: Row(
+        children: [
+          Text(
+            'لك: ${NumberFormat('#,##0').format(account.totalCredit)}',
+            style: const TextStyle(
+              color: AppTheme.creditColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            'عليك: ${NumberFormat('#,##0').format(account.totalDebit)}',
+            style: const TextStyle(
+              color: AppTheme.debitColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+      trailing: const Icon(
+        Icons.arrow_forward_ios,
+        size: 16,
+        color: AppTheme.textTertiary,
+      ),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => AccountTransactionsScreen(account: account),
+        ),
+      ).then((_) => loadData()),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+    );
+  }
+
+  void _showAddAccountDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        padding: const EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'اختر الفئة لإضافة حساب جديد',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ..._state.categories.map((category) => ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.category_rounded,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                ),
+                title: Text(category.name),
+                onTap: () {
+                  Navigator.pop(context);
+                  _navigateToCreateAccount(category.name);
+                },
+              )).toList(),
+            ],
           ),
         ),
       ),
@@ -301,7 +377,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _tabController.dispose();
     _categoryEventSubscription?.cancel();
     super.dispose();
   }
