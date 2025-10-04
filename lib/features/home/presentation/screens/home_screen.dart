@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:debit_credit_app/core/models/account.dart';
@@ -16,18 +17,20 @@ import 'package:debit_credit_app/features/home/application/selection_controller.
 import 'package:debit_credit_app/features/home/application/home_controller.dart';
 import 'package:debit_credit_app/features/home/application/home_state.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+import 'package:debit_credit_app/core/events/category_events.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final SelectionController _selection = SelectionController();
   final HomeController _controller = HomeController();
   HomeState _state = HomeState.initial();
+  StreamSubscription<CategoryEvent>? _categoryEventSubscription;
 
   void _toggleAccountSelect(AccountModel acc) {
     _selection.toggle(acc.id);
@@ -57,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     await _controller.deleteAccounts(_selection.ids);
     _clearAccountSelect();
-    await _loadData();
+    await loadData();
   }
 
   void _shareSelectedAccounts() {
@@ -103,10 +106,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // Initialize TabController with at least 1 tab to prevent errors
+    _tabController = TabController(length: 1, vsync: this);
+    loadData();
+    // Listen for category events
+    _categoryEventSubscription = CategoryEventBus().events.listen((event) {
+      // Refresh data when categories change
+      loadData();
+    });
   }
 
-  Future<void> _loadData() async {
+
+
+  Future<void> loadData() async {
     setState(() => _state = _state.copyWith(isLoading: true));
     try {
       final newState = await _controller.load();
@@ -114,19 +126,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // Preserve current tab index when reloading data
       int currentIndex = 0;
       try {
-        if (!_tabController.indexIsChanging) {
+        if (_tabController.length > 0 && !_tabController.indexIsChanging) {
           currentIndex = _tabController.index;
         }
-        // Dispose old controller
-        _tabController.dispose();
       } catch (e) {
-        // TabController not initialized yet, use default index 0
+        // TabController might have issues, use default index 0
       }
       
-      _tabController = TabController(length: newState.categories.length, vsync: this);
+      // Safely dispose old controller
+      try {
+        _tabController.dispose();
+      } catch (e) {
+        // Controller might already be disposed
+      }
+
+      // Create new controller with proper length
+      final categoryCount = newState.categories.length;
+      _tabController = TabController(length: categoryCount > 0 ? categoryCount : 1, vsync: this);
       
       // Restore tab index if it's still valid
-      if (currentIndex < newState.categories.length) {
+      if (newState.categories.isNotEmpty && currentIndex < newState.categories.length) {
         _tabController.index = currentIndex;
       }
       
@@ -146,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           builder: (context) => AddTransactionDialog(accountId: null, category: category),
         ) ??
         false;
-    if (result == true) await _loadData();
+    if (result == true) await loadData();
   }
 
 
@@ -166,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ).then((updatedAccount) {
               if (updatedAccount != null && updatedAccount is AccountModel) {
                 // Update the specific account in the state instead of reloading all data
-                _loadData();
+                loadData();
               }
             }),
       onLongPressAccount: _toggleAccountSelect,
@@ -255,8 +274,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         child: FloatingActionButton(
           onPressed: () {
-            if (_tabController.index < _state.categories.length) {
-              final currentCategory = _state.categories[_tabController.index].name;
+            // Check if we have categories and TabController is initialized
+            if (_state.categories.isNotEmpty && _tabController.length > 0) {
+              final currentIndex = _tabController.index;
+              if (currentIndex < _state.categories.length) {
+                final currentCategory = _state.categories[currentIndex].name;
+                _navigateToCreateAccount(currentCategory);
+              }
+            } else if (_state.categories.isNotEmpty) {
+              // Fallback to first category if TabController has issues
+              final currentCategory = _state.categories.first.name;
               _navigateToCreateAccount(currentCategory);
             }
           },
@@ -275,6 +302,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _tabController.dispose();
+    _categoryEventSubscription?.cancel();
     super.dispose();
   }
 }

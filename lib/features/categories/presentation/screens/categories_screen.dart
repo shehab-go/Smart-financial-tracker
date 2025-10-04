@@ -15,6 +15,7 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
   late final CategoriesController _controller;
+  bool _hasChanges = false;
 
   @override
   void initState() {
@@ -31,6 +32,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     super.dispose();
   }
 
+
+
   void _onStateChanged() {
     if (mounted) {
       setState(() {});
@@ -41,17 +44,28 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget build(BuildContext context) {
     final state = _controller.state;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('إدارة الفئات'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _controller.loadCategories,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (!didPop) {
+          Navigator.of(context).pop(_hasChanges);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('إدارة الفئات'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop(_hasChanges),
           ),
-        ],
-      ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () => _controller.loadCategories(),
+            ),
+          ],
+        ),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -79,8 +93,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         onPressed: _addCategory,
         child: const Icon(Icons.add),
       ),
+    ),
     );
   }
+
+
 
   void _addCategory() => _showCategoryDialog();
 
@@ -96,9 +113,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       try {
         if (category != null) {
           await _controller.updateCategory(result);
+          _hasChanges = true;
           _showSuccessMessage('تم تعديل الفئة بنجاح');
         } else {
           await _controller.addCategory(result);
+          _hasChanges = true;
           _showSuccessMessage('تم إضافة الفئة بنجاح');
         }
       } catch (e) {
@@ -130,6 +149,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               Navigator.pop(context);
               try {
                 await _controller.deleteCategory(category.id!);
+                _hasChanges = true;
                 if (mounted) {
                   _showSuccessMessage('تم حذف الفئة بنجاح');
                 }

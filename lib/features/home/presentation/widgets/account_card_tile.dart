@@ -22,7 +22,7 @@ class AccountCardTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: selected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
+        color: selected ? AppTheme.primaryColor.withOpacity(0.1) : Theme.of(context).cardColor,
         border: Border(
           bottom: BorderSide(
             color: Colors.grey.shade300,
@@ -101,7 +101,7 @@ class AccountCardTile extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: Text(
-                        account.currencyCode,
+                        account.currencyName,
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium

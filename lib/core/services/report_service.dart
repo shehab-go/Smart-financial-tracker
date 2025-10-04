@@ -148,12 +148,6 @@ class ReportService {
                         style: const pw.TextStyle(fontSize: 10),
                         textDirection: pw.TextDirection.rtl,
                       ),
-                    if (profile.email?.isNotEmpty == true)
-                      pw.Text(
-                        'البريد الإلكتروني: ${profile.email}',
-                        style: const pw.TextStyle(fontSize: 10),
-                        textDirection: pw.TextDirection.rtl,
-                      ),
                   ],
                 ),
                 if (profile.address?.isNotEmpty == true)

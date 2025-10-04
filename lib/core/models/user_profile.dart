@@ -2,7 +2,6 @@ class UserProfile {
   final int? id;
   final String fullName;
   final String? phone;
-  final String? email;
   final String? address;
   final String? logoPath; // Path to profile photo/logo
   final String? businessName;
@@ -14,7 +13,6 @@ class UserProfile {
     this.id,
     required this.fullName,
     this.phone,
-    this.email,
     this.address,
     this.logoPath,
     this.businessName,
@@ -28,7 +26,6 @@ class UserProfile {
       'id': id,
       'fullName': fullName,
       'phone': phone,
-      'email': email,
       'address': address,
       'logoPath': logoPath,
       'businessName': businessName,
@@ -43,7 +40,6 @@ class UserProfile {
       id: map['id'],
       fullName: map['fullName'] ?? '',
       phone: map['phone'],
-      email: map['email'],
       address: map['address'],
       logoPath: map['logoPath'],
       businessName: map['businessName'],
@@ -59,7 +55,6 @@ class UserProfile {
     int? id,
     String? fullName,
     String? phone,
-    String? email,
     String? address,
     String? logoPath,
     String? businessName,
@@ -71,7 +66,6 @@ class UserProfile {
       id: id ?? this.id,
       fullName: fullName ?? this.fullName,
       phone: phone ?? this.phone,
-      email: email ?? this.email,
       address: address ?? this.address,
       logoPath: logoPath ?? this.logoPath,
       businessName: businessName ?? this.businessName,
@@ -83,6 +77,6 @@ class UserProfile {
 
   @override
   String toString() {
-    return 'UserProfile{id: $id, fullName: $fullName, phone: $phone, email: $email, businessName: $businessName, tradingActivity: $tradingActivity}';
+    return 'UserProfile{id: $id, fullName: $fullName, phone: $phone, businessName: $businessName, tradingActivity: $tradingActivity}';
   }
 }

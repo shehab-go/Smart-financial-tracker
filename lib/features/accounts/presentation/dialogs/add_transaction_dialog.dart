@@ -117,7 +117,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         if (widget.accountCurrencyCode != null && widget.accountCurrencyCode!.isNotEmpty) {
           _selectedCurrency = widget.accountCurrencyCode;
         } else if (_currencies.isNotEmpty) {
-          _selectedCurrency = _currencies.first.symbol;
+          _selectedCurrency = _currencies.first.name;
         }
       });
     }
@@ -168,13 +168,13 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         if (_isNewAccount) {
           // Use default currency if none selected
           if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
-            _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.symbol : 'USD';
+            _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.name : 'دولار أمريكي';
           }
               
           final account = AccountModel(
             name: _accountNameController.text.trim(),
             category: widget.category,
-            currencyCode: _selectedCurrency!,
+            currencyName: _selectedCurrency!,
             phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
             createdDate: DateTime.now(),
           );
@@ -735,13 +735,13 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         : _currencies;
         
     final uniqueMap = allCurrencies.fold<Map<String, CurrencyModel>>({}, (map,c) {
-      map.putIfAbsent(c.symbol, () => c);
+      map.putIfAbsent(c.name, () => c);
       return map;
     });
     
     final items = uniqueMap.values
         .map((c) => DropdownMenuItem<String>(
-          value: c.symbol, 
+          value: c.name, 
           child: Text(
             c.name, 
             style: TextStyle(
@@ -806,7 +806,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     CurrencyModel curr;
     if (widget.accountCurrencyCode != null && widget.accountCurrencyCode!.isNotEmpty) {
       curr = allCurrencies.firstWhere(
-        (c) => c.symbol == widget.accountCurrencyCode,
+        (c) => c.name == widget.accountCurrencyCode,
         orElse: () => allCurrencies.isNotEmpty ? allCurrencies.first : CurrencyModel.defaultLocal(),
       );
     } else {

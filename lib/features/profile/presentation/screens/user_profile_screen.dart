@@ -18,7 +18,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
   final _addressController = TextEditingController();
   final _businessNameController = TextEditingController();
   final _tradingActivityController = TextEditingController();
@@ -38,7 +37,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   void dispose() {
     _fullNameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
     _addressController.dispose();
     _businessNameController.dispose();
     _tradingActivityController.dispose();
@@ -53,7 +51,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           _currentProfile = profile;
           _fullNameController.text = profile.fullName;
           _phoneController.text = profile.phone ?? '';
-          _emailController.text = profile.email ?? '';
           _addressController.text = profile.address ?? '';
           _businessNameController.text = profile.businessName ?? '';
           _tradingActivityController.text = profile.tradingActivity ?? '';
@@ -130,7 +127,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         id: _currentProfile?.id,
         fullName: _fullNameController.text.trim(),
         phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-        email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
         address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
         logoPath: _logoPath,
         businessName: _businessNameController.text.trim().isEmpty ? null : _businessNameController.text.trim(),
@@ -285,17 +281,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             tooltip: 'اختيار من جهات الاتصال',
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'البريد الإلكتروني',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.email),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 16),
 

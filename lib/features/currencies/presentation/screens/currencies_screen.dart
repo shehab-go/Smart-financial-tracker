@@ -199,7 +199,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      currency.symbol,
+                                      currency.name,
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -215,12 +215,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                                     color: AppTheme.textPrimary,
                                   ),
                                 ),
-                                subtitle: Text(
-                                  'الرمز: ${currency.symbol}',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                ),
+                                subtitle: null,
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -288,7 +283,6 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
   void _showCurrencyDialog({CurrencyModel? currency}) {
     final isEditing = currency != null;
     final nameController = TextEditingController(text: currency?.name ?? '');
-    final symbolController = TextEditingController(text: currency?.symbol ?? '');
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -355,19 +349,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                         ),
                         validator: (value) => (value == null || value.trim().isEmpty) ? 'يرجى إدخال اسم العملة' : null,
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: symbolController,
-                        decoration: InputDecoration(
-                          labelText: 'رمز العملة',
-                          hintText: 'ر.س',
-                          prefixIcon: const Icon(Icons.currency_exchange),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        validator: (value) => (value == null || value.trim().isEmpty) ? 'يرجى إدخال رمز العملة' : null,
-                      ),
+
                       const SizedBox(height: 24),
                       // Action buttons
                       Row(
@@ -393,7 +375,6 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                                     final newCurrency = CurrencyModel(
                                       id: currency?.id,
                                       name: nameController.text.trim(),
-                                      symbol: symbolController.text.trim(),
                                     );
                                     if (isEditing) {
                                       await DatabaseHelper().updateCurrency(newCurrency);
@@ -463,8 +444,13 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
               } catch (e) {
                 Navigator.pop(context);
                 if (mounted) {
+                  String errorMessage = e.toString();
+                  // Clean up the error message if it contains 'Exception: '
+                  if (errorMessage.startsWith('Exception: ')) {
+                    errorMessage = errorMessage.substring(11);
+                  }
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('خطأ في حذف العملة: $e'), backgroundColor: Colors.red),
+                    SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
                   );
                 }
               }

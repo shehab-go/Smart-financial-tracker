@@ -43,8 +43,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE currencies (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        symbol TEXT NOT NULL
+        name TEXT NOT NULL
       )
     ''');
 
@@ -55,7 +54,7 @@ class DatabaseHelper {
         name TEXT NOT NULL,
         category TEXT NOT NULL,
         createdDate INTEGER NOT NULL,
-        currencyCode TEXT NOT NULL DEFAULT 'LOC',
+        currencyName TEXT NOT NULL DEFAULT 'محلي',
         phone TEXT
       )
     ''');
@@ -81,7 +80,6 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         fullName TEXT NOT NULL,
         phone TEXT,
-        email TEXT,
         address TEXT,
         logoPath TEXT,
         businessName TEXT,
@@ -130,7 +128,48 @@ class DatabaseHelper {
     );
   }
 
+  Future<bool> hasCategoryRelatedRecords(int categoryId) async {
+    final db = await database;
+    
+    // Get category name first
+    final categoryResult = await db.query(
+      'categories',
+      where: 'id = ?',
+      whereArgs: [categoryId],
+    );
+    
+    if (categoryResult.isEmpty) return false;
+    
+    final categoryName = categoryResult.first['name'] as String;
+    
+    // Check for accounts in this category
+    final accountResult = await db.query(
+      'accounts',
+      where: 'category = ?',
+      whereArgs: [categoryName],
+      limit: 1,
+    );
+    
+    if (accountResult.isNotEmpty) return true;
+    
+    // Check for transactions in this category
+    final transactionResult = await db.query(
+      'transactions',
+      where: 'category = ?',
+      whereArgs: [categoryName],
+      limit: 1,
+    );
+    
+    return transactionResult.isNotEmpty;
+  }
+
   Future<int> deleteCategory(int id) async {
+    // Check if category has related records
+    final hasRelatedRecords = await hasCategoryRelatedRecords(id);
+    if (hasRelatedRecords) {
+      throw Exception('لا يمكن حذف هذه الفئة لأنها تحتوي على حسابات أو معاملات مرتبطة بها');
+    }
+    
     final db = await database;
     return await db.delete(
       'categories',
@@ -163,7 +202,38 @@ class DatabaseHelper {
     );
   }
 
+  Future<bool> hasCurrencyRelatedRecords(int currencyId) async {
+    final db = await database;
+    
+    // Get currency name first
+    final currencyResult = await db.query(
+      'currencies',
+      where: 'id = ?',
+      whereArgs: [currencyId],
+    );
+    
+    if (currencyResult.isEmpty) return false;
+    
+    final currencyName = currencyResult.first['name'] as String;
+    
+    // Check for accounts using this currency
+    final accountResult = await db.query(
+      'accounts',
+      where: 'currencyName = ?',
+      whereArgs: [currencyName],
+      limit: 1,
+    );
+    
+    return accountResult.isNotEmpty;
+  }
+
   Future<int> deleteCurrency(int id) async {
+    // Check if currency has related records
+    final hasRelatedRecords = await hasCurrencyRelatedRecords(id);
+    if (hasRelatedRecords) {
+      throw Exception('لا يمكن حذف هذه العملة لأنها مستخدمة في حسابات موجودة');
+    }
+    
     final db = await database;
     return await db.delete(
       'currencies',

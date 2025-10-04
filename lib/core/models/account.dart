@@ -2,7 +2,7 @@ class AccountModel {
   final int? id;
   final String name;
   final String category;
-  final String currencyCode;
+  final String currencyName;
   final String? phone;
   // Calculated fields (not stored in accounts table directly)
   final int transactionCount;
@@ -14,7 +14,7 @@ class AccountModel {
     this.id,
     required this.name,
     required this.category,
-    String this.currencyCode = 'LOC',
+    String this.currencyName = 'محلي',
     this.phone,
     required this.createdDate,
     this.transactionCount = 0,
@@ -29,7 +29,7 @@ class AccountModel {
       'id': id,
       'name': name,
       'category': category,
-      'currencyCode': currencyCode,
+      'currencyName': currencyName,
       'phone': phone,
       'createdDate': createdDate.millisecondsSinceEpoch,
     };
@@ -42,7 +42,7 @@ class AccountModel {
       id: map['id'],
       name: map['name'],
       category: map['category'],
-      currencyCode: map['currencyCode'] ?? 'LOC',
+      currencyName: map['currencyName'] ?? 'محلي',
       phone: map['phone'],
       createdDate: DateTime.fromMillisecondsSinceEpoch(map['createdDate']),
       transactionCount: (map['transactionCount'] ?? 0) is int ? map['transactionCount'] ?? 0 : int.tryParse(map['transactionCount'].toString()) ?? 0,
@@ -55,7 +55,7 @@ class AccountModel {
     int? id,
     String? name,
     String? category,
-    String? currencyCode,
+    String? currencyName,
     String? phone,
     DateTime? createdDate,
     int? transactionCount,
@@ -66,7 +66,7 @@ class AccountModel {
       id: id ?? this.id,
       name: name ?? this.name,
       category: category ?? this.category,
-      currencyCode: currencyCode ?? this.currencyCode,
+      currencyName: currencyName ?? this.currencyName,
       phone: phone ?? this.phone,
       createdDate: createdDate ?? this.createdDate,
       transactionCount: transactionCount ?? this.transactionCount,

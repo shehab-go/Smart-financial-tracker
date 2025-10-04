@@ -41,7 +41,7 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
     super.initState();
     _nameController = TextEditingController(text: widget.account.name);
     _phoneController = TextEditingController(text: widget.account.phone ?? '');
-    _selectedCurrency = widget.account.currencyCode;
+    _selectedCurrency = widget.account.currencyName;
     _loadCurrencies();
   }
 
@@ -53,7 +53,7 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
           _currencies = CurrencyModel.getDefaultCurrencies();
           // Only reset if the current currency is null or empty
           if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
-            _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.symbol : null;
+            _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.name : null;
           }
         });
       } else {
@@ -61,7 +61,7 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
           _currencies = currencies;
           // Only reset if the current currency is null or empty
           if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
-            _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.symbol : null;
+            _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.name : null;
           }
         });
       }
@@ -70,7 +70,7 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
         _currencies = CurrencyModel.getDefaultCurrencies();
         // Only reset if the current currency is null or empty
         if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
-          _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.symbol : null;
+          _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.name : null;
         }
       });
     }
@@ -149,8 +149,8 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
                 ),
               ),
               items: _currencies.map((currency) => DropdownMenuItem<String>(
-                value: currency.symbol,
-                child: Text('${currency.name} (${currency.symbol})'),
+                value: currency.name,
+                      child: Text(currency.name),
               )).toList(),
               onChanged: (value) {
                 setState(() {
@@ -273,7 +273,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     final lines = selectedTx
         .map((t) {
           final label = t.type == 'debit' ? 'عليك' : 'لك';
-          return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label ${t.amount.toStringAsFixed(0)} ${_currentAccount.currencyCode}';
+          return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label ${t.amount.toStringAsFixed(0)} ${_currentAccount.currencyName}';
         })
         .join('\n');
     Share.share('$header\n$lines', subject: 'معاملات مختارة - ${widget.account.name}');
@@ -365,7 +365,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
           builder: (context) => AddTransactionDialog(
             accountId: widget.account.id!,
             category: widget.account.category,
-            accountCurrencyCode: _currentAccount.currencyCode,
+            accountCurrencyCode: _currentAccount.currencyName,
           ),
         ) ??
         false;
@@ -382,7 +382,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
           builder: (context) => AddTransactionDialog(
             accountId: widget.account.id!,
             category: widget.account.category,
-            accountCurrencyCode: _currentAccount.currencyCode,
+            accountCurrencyCode: _currentAccount.currencyName,
             transaction: transaction,
           ),
         ) ??
@@ -490,7 +490,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
             final updatedAccount = _currentAccount.copyWith(
               name: name,
               phone: phone.isEmpty ? null : phone,
-              currencyCode: currency,
+              currencyName: currency,
             );
             
             // Save to database
@@ -709,56 +709,61 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                     onPressed: _editAccountDetails,
                     tooltip: 'تعديل الحساب',
                   ),
-                  const Spacer(),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.blue.shade300),
-                        ),
-                        child: Text(
-                          _currentAccount.currencyCode,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.blue.shade700,
-                            fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.blue.shade300),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _currentAccount.name,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                          child: Text(
+                            _currentAccount.currencyName,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade700,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          if (_currentAccount.phone != null && _currentAccount.phone!.isNotEmpty)
-                            Text(
-                              _currentAccount.phone!,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _currentAccount.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.arrow_forward),
-                        onPressed: () => Navigator.of(context).pop(_accountUpdated ? _currentAccount : null),
-                        tooltip: 'رجوع',
-                      ),
-                    ],
+                              if (_currentAccount.phone != null && _currentAccount.phone!.isNotEmpty)
+                                Text(
+                                  _currentAccount.phone!,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_forward),
+                          onPressed: () => Navigator.of(context).pop(_accountUpdated ? _currentAccount : null),
+                          tooltip: 'رجوع',
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

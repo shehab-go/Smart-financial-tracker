@@ -7,6 +7,7 @@ import 'package:debit_credit_app/features/categories/presentation/screens/catego
 import 'package:debit_credit_app/features/currencies/presentation/screens/currencies_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
+import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/models/user_profile.dart';
@@ -53,15 +54,10 @@ class _AppDrawerState extends State<AppDrawer> {
       textDirection: TextDirection.rtl,
       child: Drawer(
         backgroundColor: Colors.grey.shade50,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topRight: Radius.circular(0),
-            bottomRight: Radius.circular(0),
-            topLeft: Radius.circular(20),
-            bottomLeft: Radius.circular(20),
-          ),
-        ),
         elevation: 16,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
@@ -91,6 +87,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     ],
                   ),
                   child: SafeArea(
+                    bottom: false, // Allow bottom content to extend
                     child: Padding(
                       padding: const EdgeInsets.all(20),
                       child: _isLoading
@@ -111,16 +108,13 @@ class _AppDrawerState extends State<AppDrawer> {
                                        height: 60,
                                        decoration: BoxDecoration(
                                          color: Colors.white.withOpacity(0.2),
-                                         borderRadius: BorderRadius.circular(16),
                                          border: Border.all(
                                            color: Colors.white.withOpacity(0.3),
                                            width: 2,
                                          ),
                                        ),
                                        child: _userProfile?.logoPath != null
-                                            ? ClipRRect(
-                                                borderRadius: BorderRadius.circular(14),
-                                                child: Image.file(
+                                            ? Image.file(
                                                   File(_userProfile!.logoPath!),
                                                   fit: BoxFit.cover,
                                                   errorBuilder: (context, error, stackTrace) {
@@ -130,8 +124,7 @@ class _AppDrawerState extends State<AppDrawer> {
                                                       color: Colors.white,
                                                     );
                                                   },
-                                                ),
-                                              )
+                                                )
                                             : const Icon(
                                                 Icons.person_rounded,
                                                 size: 30,
@@ -187,9 +180,10 @@ class _AppDrawerState extends State<AppDrawer> {
                                        margin: const EdgeInsets.only(left: 8),
                                        child: Material(
                                          color: Colors.white.withOpacity(0.2),
-                                         borderRadius: BorderRadius.circular(12),
+                                         shape: const RoundedRectangleBorder(
+                                           borderRadius: BorderRadius.zero,
+                                         ),
                                          child: InkWell(
-                                           borderRadius: BorderRadius.circular(12),
                                            onTap: () async {
                                              final result = await Navigator.push(
                                                context,
@@ -213,8 +207,7 @@ class _AppDrawerState extends State<AppDrawer> {
                                      ),
                                    ],
                                  ),
-                                if (_userProfile?.phone?.isNotEmpty == true ||
-                                    _userProfile?.email?.isNotEmpty == true) ...[
+                                if (_userProfile?.phone?.isNotEmpty == true) ...[
                                   const SizedBox(height: 16),
                                   if (_userProfile?.phone?.isNotEmpty == true)
                                     Padding(
@@ -237,29 +230,6 @@ class _AppDrawerState extends State<AppDrawer> {
                                           ),
                                         ],
                                       ),
-                                    ),
-                                  if (_userProfile?.email?.isNotEmpty == true)
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.email_rounded,
-                                          size: 16,
-                                          color: Colors.white.withOpacity(0.9),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            _userProfile!.email!,
-                                            style: TextStyle(
-                                              color: Colors.white.withOpacity(0.9),
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
                                     ),
                                 ],
                               ],
@@ -372,7 +342,6 @@ class _AppDrawerState extends State<AppDrawer> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -382,10 +351,11 @@ class _AppDrawerState extends State<AppDrawer> {
         ],
       ),
       child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).cardColor,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           splashColor: AppTheme.primaryColor.withOpacity(0.1),
           highlightColor: AppTheme.primaryColor.withOpacity(0.05),
@@ -405,7 +375,6 @@ class _AppDrawerState extends State<AppDrawer> {
                         AppTheme.primaryColor.withOpacity(0.05),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: AppTheme.primaryColor.withOpacity(0.1),
                       width: 1,
@@ -468,7 +437,6 @@ class _AppDrawerState extends State<AppDrawer> {
             height: 20,
             decoration: BoxDecoration(
               gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(width: 12),

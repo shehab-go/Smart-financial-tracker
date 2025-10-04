@@ -22,17 +22,19 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 4,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: AppBar(
+      child: SafeArea(
+        top: false, // Don't add padding for status bar
+        child: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
         centerTitle: false,
@@ -94,6 +96,7 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ],
         bottom: bottom,
+        ),
       ),
     );
   }
