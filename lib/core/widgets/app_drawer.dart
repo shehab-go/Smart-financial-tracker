@@ -5,7 +5,7 @@ import 'package:debit_credit_app/features/about/presentation/screens/about_scree
 import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_screen.dart';
 import 'package:debit_credit_app/features/categories/presentation/screens/categories_screen.dart';
 import 'package:debit_credit_app/features/currencies/presentation/screens/currencies_screen.dart';
-import 'package:debit_credit_app/features/backup/presentation/screens/backup_screen.dart';
+import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
@@ -253,12 +253,12 @@ class _AppDrawerState extends State<AppDrawer> {
                   context,
                   icon: Icons.backup_rounded,
                   title: 'النسخ الاحتياطية',
-                  subtitle: 'إنشاء أو استعادة قاعدة البيانات',
+                  subtitle: 'إنشاء أو استعادة قاعدة البيانات مع الحماية المتقدمة',
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const BackupScreen()),
+                      MaterialPageRoute(builder: (context) => const EnhancedBackupScreen()),
                     );
                   },
                 ),

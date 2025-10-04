@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 class AccountsHeaderRow extends StatelessWidget {
   const AccountsHeaderRow({super.key});
@@ -17,7 +16,7 @@ class AccountsHeaderRow extends StatelessWidget {
           ),
         ),
       ),
-      child: Directionality(
+      child:const Directionality(
         textDirection: TextDirection.rtl,
         child: Row(
           children: [
@@ -25,17 +24,17 @@ class AccountsHeaderRow extends StatelessWidget {
               flex: 6,
               child: Text('الاسم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
             ),
-            const SizedBox(width: 16),
+             SizedBox(width: 16),
             Expanded(
               flex: 2,
               child: Center(child: Text('عليك', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
             ),
-            const SizedBox(width: 16),
+             SizedBox(width: 16),
             Expanded(
               flex: 2,
               child: Center(child: Text('لك', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
             ),
-            const SizedBox(width: 16),
+             SizedBox(width: 16),
             Expanded(
               flex: 2,
               child: Text('العملة', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
