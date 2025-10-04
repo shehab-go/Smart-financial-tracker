@@ -53,12 +53,30 @@ class _AppDrawerState extends State<AppDrawer> {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Drawer(
-        backgroundColor: Colors.grey.shade50,
-        elevation: 16,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(4, 0),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(2, 0),
+            ),
+          ],
         ),
+        child: Drawer(
+          backgroundColor: const Color(0xFFF8FAFC),
+          elevation: 0,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(24),
+              bottomRight: Radius.circular(24),
+            ),
+          ),
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
@@ -242,7 +260,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             SliverList(
               delegate: SliverChildListDelegate([
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 _buildDrawerItem(
                   context,
                   icon: Icons.home_rounded,
@@ -337,13 +355,15 @@ class _AppDrawerState extends State<AppDrawer> {
                     );
                   },
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 24),
               ]),
             ),
           ],
         ),
       ),
-    );
+        ),
+      );
+    
   }
 
   Widget _buildDrawerItem(
@@ -354,50 +374,57 @@ class _AppDrawerState extends State<AppDrawer> {
     required VoidCallback onTap,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
             color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Material(
-        color: Theme.of(context).cardColor,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
-        ),
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
           splashColor: AppTheme.primaryColor.withOpacity(0.1),
           highlightColor: AppTheme.primaryColor.withOpacity(0.05),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 52,
+                  height: 52,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        AppTheme.primaryColor.withOpacity(0.1),
-                        AppTheme.primaryColor.withOpacity(0.05),
+                        AppTheme.primaryColor.withOpacity(0.15),
+                        AppTheme.primaryColor.withOpacity(0.08),
                       ],
                     ),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      width: 1,
+                      color: AppTheme.primaryColor.withOpacity(0.12),
+                      width: 1.5,
                     ),
                   ),
                   child: Icon(
                     icon,
                     color: AppTheme.primaryColor,
-                    size: 24,
+                    size: 26,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -411,27 +438,35 @@ class _AppDrawerState extends State<AppDrawer> {
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                           color: AppTheme.textPrimary,
-                          letterSpacing: 0.2,
+                          letterSpacing: 0.3,
                         ),
                       ),
                       if (subtitle != null) ...[
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 4),
                         Text(
                           subtitle,
                           style: TextStyle(
                             color: AppTheme.textSecondary,
                             fontSize: 13,
                             fontWeight: FontWeight.w400,
+                            height: 1.3,
                           ),
                         ),
                       ],
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: AppTheme.textSecondary.withOpacity(0.6),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
               ],
             ),
@@ -443,37 +478,54 @@ class _AppDrawerState extends State<AppDrawer> {
 
   Widget _buildSectionDivider(String title) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+      margin: const EdgeInsets.fromLTRB(20, 28, 20, 16),
       child: Row(
         children: [
           Container(
-            width: 4,
-            height: 20,
+            width: 5,
+            height: 24,
             decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppTheme.primaryColor,
+                  AppTheme.primaryColor.withOpacity(0.7),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(3),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Text(
             title,
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
               color: AppTheme.textPrimary,
-              letterSpacing: 0.8,
+              letterSpacing: 0.5,
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Container(
-              height: 1,
+              height: 1.5,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.primaryColor.withOpacity(0.3),
+                    AppTheme.primaryColor.withOpacity(0.4),
+                    AppTheme.primaryColor.withOpacity(0.1),
                     Colors.transparent,
                   ],
                 ),
+                borderRadius: BorderRadius.circular(1),
               ),
             ),
           ),
