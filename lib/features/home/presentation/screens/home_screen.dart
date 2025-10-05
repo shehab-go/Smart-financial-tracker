@@ -303,10 +303,10 @@ class HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCategoryWithStickyHeader(CategoryModel category, List<AccountModel> accounts) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.only(left: 8, right: 8, top: 2, bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -315,134 +315,106 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      child: CustomScrollView(
-        slivers: [
-          // Sticky Header
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: StickyHeaderDelegate(
-              minHeight: 60,
-              maxHeight: 60,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Section
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                const SizedBox(height: 4),
+                Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Row(
+                    children: [
+                      // Account Name Header
+                       const Expanded(
+                         flex: 6,
+                         child: Text(
+                           'اسم الحساب',
+                           style: TextStyle(
+                             fontSize: 14,
+                             color: AppTheme.textSecondary,
+                           ),
+                         ),
+                       ),
+                       // Debit Header
+                       const Expanded(
+                         flex: 2,
+                         child: Center(
+                           child: Text(
+                             'عليك',
+                             style: TextStyle(
+                               fontSize: 14,
+                               color: AppTheme.textSecondary,
+                             ),
+                           ),
+                         ),
+                       ),
+                       // Credit Header
+                       const Expanded(
+                         flex: 2,
+                         child: Center(
+                           child: Text(
+                             'لك',
+                             style: TextStyle(
+                               fontSize: 14,
+                               color: AppTheme.textSecondary,
+                             ),
+                           ),
+                         ),
+                       ),
+                       // Currency Header
+                       const Expanded(
+                         flex: 2,
+                         child: Text(
+                           'العملة',
+                           style: TextStyle(
+                             fontSize: 14,
+                             color: AppTheme.textSecondary,
+                           ),
+                         ),
+                       ),
+                    ],
                   ),
                 ),
-              child: Column(
-                children: [
-                  // Header Section
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 4),
-                        Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: Row(
-                            children: [
-                              // Account Name Header
-                              const Expanded(
-                                flex: 3,
-                                child: Text(
-                                  'اسم الحساب',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                ),
-                              ),
-                              // For You Header
-                              const Expanded(
-                                flex: 2,
-                                child: Center(
-                                  child: Text(
-                                    'لك',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: AppTheme.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // On You Header
-                              const Expanded(
-                                flex: 2,
-                                child: Center(
-                                  child: Text(
-                                    'عليك',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: AppTheme.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Currency Header
-                              const Expanded(
-                                flex: 1,
-                                child: Center(
-                                  child: Text(
-                                    'العملة',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: AppTheme.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Colors.grey),
+          // Accounts list - Scrollable
+          Expanded(
+            child: accounts.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.backgroundColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'لا توجد حسابات في هذه الفئة',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 14,
                         ),
-                      ],
+                        textAlign: TextAlign.center,
+                      ),
                     ),
+                  )
+                : ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      ...accounts.map((account) => _buildAccountTile(account)).toList(),
+                      const SizedBox(height: 16),
+                    ],
                   ),
-                  const Divider(height: 1, color: Colors.grey),
-                ],
-              ),
-            ),
           ),
-        ),
-        // Content
-        if (accounts.isEmpty)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.backgroundColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'لا توجد حسابات في هذه الفئة',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          )
-        else
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                if (index < accounts.length) {
-                  return _buildAccountTile(accounts[index]);
-                } else {
-                  return const SizedBox(height: 16);
-                }
-              },
-              childCount: accounts.length + 1,
-            ),
-          ),
-      ],
-    ),
+        ],
+      ),
     );
   }
 
