@@ -142,8 +142,7 @@ class HomeScreenState extends State<HomeScreen> {
         title: const Text(
           'إدارة الأموال الشخصية',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
+            fontSize: 14,
           ),
         ),
         backgroundColor: Colors.white,
@@ -219,8 +218,7 @@ class HomeScreenState extends State<HomeScreen> {
             const Text(
               'لا توجد فئات متاحة',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+                fontSize: 14,
                 color: AppTheme.textSecondary,
               ),
               textAlign: TextAlign.center,
@@ -229,6 +227,7 @@ class HomeScreenState extends State<HomeScreen> {
             const Text(
               'قم بإنشاء فئات لبدء إدارة حساباتك',
               style: TextStyle(
+                fontSize: 14,
                 color: AppTheme.textSecondary,
               ),
               textAlign: TextAlign.center,
@@ -278,8 +277,7 @@ class HomeScreenState extends State<HomeScreen> {
                    category.name,
                    style: TextStyle(
                      color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
-                     fontWeight: FontWeight.bold,
-                     fontSize: 12,
+                     fontSize: 14,
                    ),
                  ),
               ),
@@ -344,7 +342,6 @@ class HomeScreenState extends State<HomeScreen> {
                               style: TextStyle(
                                 fontSize: 14,
                                 color: AppTheme.textSecondary,
-                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
@@ -355,9 +352,8 @@ class HomeScreenState extends State<HomeScreen> {
                               child: Text(
                                 'لك',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   color: AppTheme.textSecondary,
-                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -369,9 +365,8 @@ class HomeScreenState extends State<HomeScreen> {
                               child: Text(
                                 'عليك',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   color: AppTheme.textSecondary,
-                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -383,9 +378,8 @@ class HomeScreenState extends State<HomeScreen> {
                               child: Text(
                                 'العملة',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   color: AppTheme.textSecondary,
-                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -486,7 +480,6 @@ class HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             color: AppTheme.textSecondary,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -497,9 +490,8 @@ class HomeScreenState extends State<HomeScreen> {
                           child: Text(
                             'لك',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 14,
                               color: AppTheme.textSecondary,
-                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -511,9 +503,8 @@ class HomeScreenState extends State<HomeScreen> {
                           child: Text(
                             'عليك',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 14,
                               color: AppTheme.textSecondary,
-                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -525,9 +516,8 @@ class HomeScreenState extends State<HomeScreen> {
                           child: Text(
                             'العملة',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 14,
                               color: AppTheme.textSecondary,
-                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -643,7 +633,6 @@ class HomeScreenState extends State<HomeScreen> {
                  child: Text(
                    account.name,
                    style: const TextStyle(
-                     fontWeight: FontWeight.w600,
                      color: AppTheme.textPrimary,
                      fontSize: 14,
                    ),
@@ -659,8 +648,7 @@ class HomeScreenState extends State<HomeScreen> {
                      '${NumberFormat('#,##0').format(account.totalCredit)}',
                      style: const TextStyle(
                        color: AppTheme.creditColor,
-                       fontSize: 12,
-                       fontWeight: FontWeight.w600,
+                       fontSize: 14,
                      ),
                    ),
                  ),
@@ -673,8 +661,7 @@ class HomeScreenState extends State<HomeScreen> {
                      '${NumberFormat('#,##0').format(account.totalDebit)}',
                      style: const TextStyle(
                        color: AppTheme.debitColor,
-                       fontSize: 12,
-                       fontWeight: FontWeight.w600,
+                       fontSize: 14,
                      ),
                    ),
                  ),
@@ -683,24 +670,15 @@ class HomeScreenState extends State<HomeScreen> {
                Expanded(
                  flex: 1,
                  child: Center(
-                   child: Container(
-                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                     decoration: BoxDecoration(
-                       color: Colors.blue.shade50,
-                       borderRadius: BorderRadius.circular(8),
-                       border: Border.all(color: Colors.blue.shade200),
+                   child: Text(
+                     account.currencyName,
+                     style: const TextStyle(
+                       color: AppTheme.textSecondary,
+                       fontSize: 14,
                      ),
-                     child: Text(
-                       account.currencyName,
-                       style: TextStyle(
-                         color: Colors.blue.shade700,
-                         fontSize: 10,
-                         fontWeight: FontWeight.w500,
-                       ),
-                       maxLines: 1,
-                       overflow: TextOverflow.ellipsis,
-                       textAlign: TextAlign.center,
-                     ),
+                     maxLines: 1,
+                     overflow: TextOverflow.ellipsis,
+                     textAlign: TextAlign.center,
                    ),
                  ),
                ),
