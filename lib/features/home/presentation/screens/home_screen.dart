@@ -14,6 +14,36 @@ import 'package:debit_credit_app/features/home/application/home_state.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/events/category_events.dart';
 
+class StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  StickyHeaderDelegate({
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => minHeight;
+
+  @override
+  double get maxExtent => maxHeight;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(StickyHeaderDelegate oldDelegate) {
+    return maxHeight != oldDelegate.maxHeight ||
+        minHeight != oldDelegate.minHeight ||
+        child != oldDelegate.child;
+  }
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -150,10 +180,7 @@ class HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       final category = _state.categories[index];
                       final accounts = _state.accountsByCategory[category.name] ?? [];
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.only(left: 8, right: 8, top: 8, bottom: 16),
-                        child: _buildSimpleCategoryCard(category, accounts),
-                      );
+                      return _buildCategoryWithStickyHeader(category, accounts);
                     },
                   ),
                 ),
@@ -161,7 +188,7 @@ class HomeScreenState extends State<HomeScreen> {
             ),
       floatingActionButton: _state.categories.isNotEmpty
           ? FloatingActionButton(
-              onPressed: () => _showAddAccountDialog(),
+              onPressed: () => _navigateToCreateAccount(_state.categories[_selectedCategoryIndex].name),
               backgroundColor: AppTheme.primaryColor,
               child: const Icon(Icons.add, color: Colors.white),
             )
@@ -217,7 +244,7 @@ class HomeScreenState extends State<HomeScreen> {
   Widget _buildCategoryNavigation() {
     return Container(
       height: 40,
-      margin: const EdgeInsets.only(top: 8, bottom: 0),
+      margin: const EdgeInsets.only(top: 8, bottom: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -280,6 +307,149 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildCategoryWithStickyHeader(CategoryModel category, List<AccountModel> accounts) {
+    return CustomScrollView(
+      slivers: [
+        // Sticky Header
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: StickyHeaderDelegate(
+            minHeight: 60,
+            maxHeight: 60,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 4),
+                    Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Row(
+                        children: [
+                          // Account Name Header
+                          const Expanded(
+                            flex: 3,
+                            child: Text(
+                              'اسم الحساب',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          // For You Header
+                          const Expanded(
+                            flex: 2,
+                            child: Center(
+                              child: Text(
+                                'لك',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // On You Header
+                          const Expanded(
+                            flex: 2,
+                            child: Center(
+                              child: Text(
+                                'عليك',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Currency Header
+                          const Expanded(
+                            flex: 1,
+                            child: Center(
+                              child: Text(
+                                'العملة',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: Colors.grey),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Content
+        SliverToBoxAdapter(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                if (accounts.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.backgroundColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'لا توجد حسابات في هذه الفئة',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  )
+                else
+                  ...accounts.map((account) => _buildAccountTile(account)).toList(),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSimpleCategoryCard(CategoryModel category, List<AccountModel> accounts) {
     return Container(
       decoration: BoxDecoration(
@@ -302,15 +472,6 @@ class HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
-                      onPressed: () => _navigateToCreateAccount(category.name),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 4),
                 // Column Headers - RTL Layout
                 Directionality(
@@ -550,44 +711,6 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showAddAccountDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.7,
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Directionality(
-          textDirection: TextDirection.rtl,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'اختر الفئة لإضافة حساب جديد',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ..._state.categories.map((category) => ListTile(
-                  title: Text(category.name),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _navigateToCreateAccount(category.name);
-                  },
-                )).toList(),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+
 
 }
