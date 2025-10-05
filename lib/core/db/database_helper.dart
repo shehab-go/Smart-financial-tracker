@@ -5,6 +5,7 @@ import '../models/category.dart';
 import '../models/account.dart';
 import '../models/currency.dart';
 import '../models/user_profile.dart';
+import '../models/expense.dart';
 import 'migration_helper.dart';
 
 class DatabaseHelper {
@@ -24,7 +25,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 7,
+      version: 9,
       onCreate: _createDatabase,
       onUpgrade: MigrationHelper.migrate,
     );
@@ -86,6 +87,20 @@ class DatabaseHelper {
         logoPath TEXT,
         businessName TEXT,
         tradingActivity TEXT,
+        createdDate INTEGER NOT NULL,
+        updatedDate INTEGER
+      )
+    ''');
+
+    // Create expenses table
+    await db.execute('''
+      CREATE TABLE expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        amount REAL NOT NULL,
+        detail TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'مصروفات',
+        currency TEXT NOT NULL DEFAULT 'محلي',
         createdDate INTEGER NOT NULL,
         updatedDate INTEGER
       )
@@ -472,6 +487,62 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  // Expense operations
+  Future<List<ExpenseModel>> getExpenses() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'expenses',
+      orderBy: 'createdDate DESC',
+    );
+    return List.generate(maps.length, (i) {
+      return ExpenseModel.fromMap(maps[i]);
+    });
+  }
+
+  Future<ExpenseModel?> getExpenseById(int id) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'expenses',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (maps.isNotEmpty) {
+      return ExpenseModel.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<int> insertExpense(ExpenseModel expense) async {
+    final db = await database;
+    return await db.insert('expenses', expense.toMap());
+  }
+
+  Future<int> updateExpense(ExpenseModel expense) async {
+    final db = await database;
+    return await db.update(
+      'expenses',
+      expense.toMap(),
+      where: 'id = ?',
+      whereArgs: [expense.id],
+    );
+  }
+
+  Future<int> deleteExpense(int id) async {
+    final db = await database;
+    return await db.delete(
+      'expenses',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<double> getTotalExpenses() async {
+    final db = await database;
+    final result = await db.rawQuery('SELECT SUM(amount) as total FROM expenses');
+    return result.first['total'] as double? ?? 0.0;
   }
 
   Future<void> close() async {

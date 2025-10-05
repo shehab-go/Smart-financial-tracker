@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:debit_credit_app/core/widgets/main_navigation.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize date formatting for Arabic locale
+  await initializeDateFormatting('ar', null);
   
   // Configure system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
@@ -42,7 +46,7 @@ class PersonalFinanceApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      home: const HomeScreen(),
+      home: const MainNavigation(),
     );
   }
 }

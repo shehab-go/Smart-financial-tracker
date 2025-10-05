@@ -300,7 +300,7 @@ class HomeScreenState extends State<HomeScreen> {
     final accounts = _state.accountsByCategory[selectedCategory.name] ?? [];
     
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(top: 8, bottom: 16),
       child: _buildSimpleCategoryCard(selectedCategory, accounts),
     );
   }
@@ -561,6 +561,7 @@ class HomeScreenState extends State<HomeScreen> {
     final accounts = _state.accountsByCategory[category.name] ?? [];
     
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -575,6 +576,7 @@ class HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Section with Add Button
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -587,6 +589,76 @@ class HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+          // Table Header Section
+          if (accounts.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Column(
+                children: [
+                  const SizedBox(height: 4),
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Row(
+                      children: [
+                        // Account Name Header
+                        const Expanded(
+                          flex: 3,
+                          child: Text(
+                            'اسم الحساب',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                        // For You Header
+                        const Expanded(
+                          flex: 2,
+                          child: Center(
+                            child: Text(
+                              'لك',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // On You Header
+                        const Expanded(
+                          flex: 2,
+                          child: Center(
+                            child: Text(
+                              'عليك',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Currency Header
+                        const Expanded(
+                          flex: 1,
+                          child: Center(
+                            child: Text(
+                              'العملة',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: Colors.grey),
+          ],
+          // Content Section
           if (accounts.isEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -623,6 +695,14 @@ class HomeScreenState extends State<HomeScreen> {
       ).then((_) => loadData()),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Color(0xFFE0E0E0),
+              width: 0.5,
+            ),
+          ),
+        ),
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: Row(

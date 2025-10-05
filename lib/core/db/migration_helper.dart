@@ -13,7 +13,7 @@ import 'database_helper.dart';
 /// - Detailed logging is provided for debugging and monitoring
 class MigrationHelper {
   /// Current database schema version
-  static const int currentVersion = 7;
+  static const int currentVersion = 9;
   
   // Constants for default values and common strings
   static const String defaultCurrencyName = 'محلي';
@@ -69,6 +69,14 @@ class MigrationHelper {
       if (oldVersion < 7) {
         print('[MigrationHelper] Applying migration to version 7');
         await _migrateToV7(db);
+      }
+      if (oldVersion < 8) {
+        print('[MigrationHelper] Applying migration to version 8');
+        await _migrateToV8(db);
+      }
+      if (oldVersion < 9) {
+        print('[MigrationHelper] Applying migration to version 9');
+        await _migrateToV9(db);
       }
       
       print('[MigrationHelper] Database migration completed successfully');
@@ -457,94 +465,40 @@ class MigrationHelper {
       rethrow;
     }
   }
-}
 
-/// Extension methods for DatabaseHelper to support new features
-extension DatabaseHelperExtension on DatabaseHelper {
-  /// Get lending summary statistics
-  Future<Map<String, dynamic>> getLendingSummary() async {
-    final db = await database;
-    
-    final result = await db.rawQuery('''
-      SELECT 
-        COALESCE(SUM(CASE WHEN type = 'debit' THEN amount ELSE 0 END), 0) as totalLent,
-        COALESCE(SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END), 0) as totalReceived,
-        COUNT(CASE WHEN type = 'debit' AND (status = 0 OR status IS NULL) THEN 1 END) as activeLoans,
-        COUNT(CASE WHEN type = 'debit' AND dueDate < ? AND (status = 0 OR status IS NULL) THEN 1 END) as overdueLoans
-      FROM transactions
-    ''', [DateTime.now().millisecondsSinceEpoch]);
-    
-    return result.first;
+  /// Migration to version 8: Add expense tracking feature
+  static Future<void> _migrateToV8(Database db) async {
+    try {
+      // Create expenses table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS expenses (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          amount REAL NOT NULL,
+          detail TEXT NOT NULL,
+          createdDate INTEGER NOT NULL,
+          updatedDate INTEGER
+        )
+      ''');
+      
+      print('[MigrationHelper] Successfully created expenses table');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV8: $e');
+      rethrow;
+    }
   }
-  
-  /// Get top borrowers by outstanding amount
-  Future<List<Map<String, dynamic>>> getTopBorrowers({int limit = 5}) async {
-    final db = await database;
-    
-    final result = await db.rawQuery('''
-      SELECT p.*, 
-             COALESCE(SUM(CASE WHEN t.type = 'debit' THEN t.amount ELSE -t.amount END), 0) as currentBalance
-      FROM persons p
-      LEFT JOIN accounts a ON a.personId = p.id
-      LEFT JOIN transactions t ON t.accountId = a.id
-      GROUP BY p.id
-      HAVING currentBalance > 0
-      ORDER BY currentBalance DESC
-      LIMIT ?
-    ''', [limit]);
-    
-    return result;
-  }
-  
-  /// Get upcoming payments within specified days
-  Future<List<Map<String, dynamic>>> getUpcomingPayments({int days = 7}) async {
-    final db = await database;
-    
-    final endDate = DateTime.now().add(Duration(days: days)).millisecondsSinceEpoch;
-    
-    final result = await db.rawQuery('''
-      SELECT t.*, a.name as accountName, p.name as personName
-      FROM transactions t
-      JOIN accounts a ON a.id = t.accountId
-      LEFT JOIN persons p ON p.id = a.personId
-      WHERE t.type = 'debit' 
-        AND t.dueDate IS NOT NULL 
-        AND t.dueDate <= ?
-        AND (t.status = 0 OR t.status IS NULL)
-      ORDER BY t.dueDate ASC
-    ''', [endDate]);
-    
-    return result;
-  }
-  
-  /// Link account to person
-  Future<void> linkAccountToPerson(int accountId, int personId) async {
-    final db = await database;
-    await db.update(
-      'accounts',
-      {'personId': personId},
-      where: 'id = ?',
-      whereArgs: [accountId],
-    );
-  }
-  
-  /// Get person with calculated statistics
-  Future<Map<String, dynamic>?> getPersonWithStats(int personId) async {
-    final db = await database;
-    
-    final result = await db.rawQuery('''
-      SELECT p.*, 
-             COALESCE(SUM(CASE WHEN t.type = 'debit' THEN t.amount ELSE 0 END), 0) as totalBorrowed,
-             COALESCE(SUM(CASE WHEN t.type = 'credit' THEN t.amount ELSE 0 END), 0) as totalRepaid,
-             COALESCE(SUM(CASE WHEN t.type = 'debit' THEN t.amount ELSE -t.amount END), 0) as currentBalance,
-             COUNT(DISTINCT t.id) as lendingHistory
-      FROM persons p
-      LEFT JOIN accounts a ON a.personId = p.id
-      LEFT JOIN transactions t ON t.accountId = a.id
-      WHERE p.id = ?
-      GROUP BY p.id
-    ''', [personId]);
-    
-    return result.isNotEmpty ? result.first : null;
+
+  /// Migration to version 9: Add category and currency to expenses table
+  static Future<void> _migrateToV9(Database db) async {
+    try {
+      // Add category and currency columns to expenses table
+      await _addColumnIfNotExists(db, 'expenses', 'category', 'TEXT DEFAULT "مصروفات"');
+      await _addColumnIfNotExists(db, 'expenses', 'currency', 'TEXT DEFAULT "محلي"');
+      
+      print('[MigrationHelper] Successfully added category and currency columns to expenses table');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV9: $e');
+      rethrow;
+    }
   }
 }
