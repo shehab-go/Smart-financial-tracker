@@ -62,7 +62,7 @@ class _MainNavigationState extends State<MainNavigation> {
               BottomNavigationBarItem(
                 icon: Icon(Icons.account_balance_wallet_rounded),
                 activeIcon: Icon(Icons.account_balance_wallet_rounded),
-                label: 'الحسابات',
+                label: 'ديون',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.receipt_long_rounded),
