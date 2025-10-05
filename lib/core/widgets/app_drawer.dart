@@ -73,42 +73,35 @@ class _AppDrawerState extends State<AppDrawer> {
           elevation: 0,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
-              topRight: Radius.circular(24),
-              bottomRight: Radius.circular(24),
+              topRight: Radius.circular(8),
+              bottomRight: Radius.circular(8),
             ),
           ),
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
-              expandedHeight: 220,
+              expandedHeight: 140,
+              collapsedHeight: 60,
               floating: false,
               pinned: true,
               automaticallyImplyLeading: false,
-              backgroundColor: AppTheme.primaryColor,
+              backgroundColor: Colors.grey.shade50,
+              title: null,
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppTheme.primaryColor,
-                        AppTheme.primaryColor.withOpacity(0.8),
-                        AppTheme.primaryColor.withOpacity(0.9),
-                      ],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
+                    color: Colors.grey.shade50,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Colors.grey.shade300,
+                        width: 1,
                       ),
-                    ],
+                    ),
                   ),
                   child: SafeArea(
                     bottom: false, // Allow bottom content to extend
                     child: Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(16),
                       child: _isLoading
                           ? const Center(
                               child: CircularProgressIndicator(
@@ -123,34 +116,35 @@ class _AppDrawerState extends State<AppDrawer> {
                                 Row(
                                    children: [
                                      Container(
-                                       width: 60,
-                                       height: 60,
+                                       width: 50,
+                                       height: 50,
                                        decoration: BoxDecoration(
-                                         color: Colors.white.withOpacity(0.2),
+                                         color: Colors.grey.shade100,
                                          border: Border.all(
-                                           color: Colors.white.withOpacity(0.3),
-                                           width: 2,
+                                           color: Colors.grey.shade300,
+                                           width: 1,
                                          ),
+                                         borderRadius: BorderRadius.circular(8),
                                        ),
                                        child: _userProfile?.logoPath != null
                                             ? Image.file(
                                                   File(_userProfile!.logoPath!),
                                                   fit: BoxFit.cover,
                                                   errorBuilder: (context, error, stackTrace) {
-                                                    return const Icon(
+                                                    return Icon(
                                                       Icons.person_rounded,
-                                                      size: 30,
-                                                      color: Colors.white,
+                                                      size: 24,
+                                                      color: Colors.grey.shade600,
                                                     );
                                                   },
                                                 )
-                                            : const Icon(
+                                            : Icon(
                                                 Icons.person_rounded,
-                                                size: 30,
-                                                color: Colors.white,
+                                                size: 24,
+                                                color: Colors.grey.shade600,
                                               ),
                                      ),
-                                     const SizedBox(width: 16),
+                                     const SizedBox(width: 12),
                                      Expanded(
                                        child: Column(
                                          crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,13 +155,12 @@ class _AppDrawerState extends State<AppDrawer> {
                                                   : _userProfile?.businessName?.isNotEmpty == true
                                                       ? _userProfile!.businessName!
                                                       : 'إدارة الحسابات المالية',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                letterSpacing: 0.5,
+                                              style: TextStyle(
+                                                color: Colors.grey.shade800,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
                                               ),
-                                              maxLines: 2,
+                                              maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                            const SizedBox(height: 4),
@@ -175,20 +168,20 @@ class _AppDrawerState extends State<AppDrawer> {
                                              Text(
                                                _userProfile!.tradingActivity!,
                                                style: TextStyle(
-                                                 color: Colors.white.withOpacity(0.9),
-                                                 fontSize: 14,
-                                                 fontWeight: FontWeight.w500,
+                                                 color: Colors.grey.shade600,
+                                                 fontSize: 13,
+                                                 fontWeight: FontWeight.w400,
                                                ),
-                                               maxLines: 2,
+                                               maxLines: 1,
                                                overflow: TextOverflow.ellipsis,
                                              )
                                            else
                                              Text(
                                                'تطبيق شامل لإدارة أموالك بذكاء',
                                                style: TextStyle(
-                                                 color: Colors.white.withOpacity(0.9),
-                                                 fontSize: 14,
-                                                 fontWeight: FontWeight.w500,
+                                                 color: Colors.grey.shade600,
+                                                 fontSize: 13,
+                                                 fontWeight: FontWeight.w400,
                                                ),
                                              ),
                                          ],
@@ -198,11 +191,12 @@ class _AppDrawerState extends State<AppDrawer> {
                                      Container(
                                        margin: const EdgeInsets.only(left: 8),
                                        child: Material(
-                                         color: Colors.white.withOpacity(0.2),
-                                         shape: const RoundedRectangleBorder(
-                                           borderRadius: BorderRadius.zero,
+                                         color: Colors.grey.shade200,
+                                         shape: RoundedRectangleBorder(
+                                           borderRadius: BorderRadius.circular(6),
                                          ),
                                          child: InkWell(
+                                           borderRadius: BorderRadius.circular(6),
                                            onTap: () async {
                                              final result = await Navigator.push(
                                                context,
@@ -214,11 +208,11 @@ class _AppDrawerState extends State<AppDrawer> {
                                              }
                                            },
                                            child: Container(
-                                             padding: const EdgeInsets.all(8),
-                                             child: const Icon(
+                                             padding: const EdgeInsets.all(6),
+                                             child: Icon(
                                                Icons.edit_rounded,
-                                               color: Colors.white,
-                                               size: 20,
+                                               color: Colors.grey.shade600,
+                                               size: 18,
                                              ),
                                            ),
                                          ),
@@ -227,24 +221,24 @@ class _AppDrawerState extends State<AppDrawer> {
                                    ],
                                  ),
                                 if (_userProfile?.phone?.isNotEmpty == true) ...[
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 8),
                                   if (_userProfile?.phone?.isNotEmpty == true)
                                     Padding(
-                                      padding: const EdgeInsets.only(bottom: 6),
+                                      padding: const EdgeInsets.only(bottom: 4),
                                       child: Row(
                                         children: [
                                           Icon(
                                             Icons.phone_rounded,
-                                            size: 16,
-                                            color: Colors.white.withOpacity(0.9),
+                                            size: 14,
+                                            color: Colors.grey.shade600,
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 6),
                                           Text(
                                             _userProfile!.phone!,
                                             style: TextStyle(
-                                              color: Colors.white.withOpacity(0.9),
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey.shade600,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w400,
                                             ),
                                           ),
                                         ],
@@ -374,60 +368,52 @@ class _AppDrawerState extends State<AppDrawer> {
     required VoidCallback onTap,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 6,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          splashColor: AppTheme.primaryColor.withOpacity(0.1),
-          highlightColor: AppTheme.primaryColor.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+          splashColor: Colors.grey.withOpacity(0.1),
+          highlightColor: Colors.grey.withOpacity(0.05),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 Container(
-                  width: 52,
-                  height: 52,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppTheme.primaryColor.withOpacity(0.15),
-                        AppTheme.primaryColor.withOpacity(0.08),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: AppTheme.primaryColor.withOpacity(0.12),
+                      color: Colors.grey.shade300,
                       width: 1.5,
                     ),
                   ),
                   child: Icon(
                     icon,
-                    color: AppTheme.primaryColor,
-                    size: 26,
+                    color: Colors.grey.shade600,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

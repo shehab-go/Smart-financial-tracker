@@ -163,21 +163,26 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           ),
           backgroundColor: Colors.white,
           elevation: 0,
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu, color: AppTheme.primaryColor),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
-          ),
+          automaticallyImplyLeading: false,
           actions: [
             IconButton(
               icon: const Icon(Icons.add, color: AppTheme.primaryColor),
               onPressed: _showAddExpenseDialog,
               tooltip: 'إضافة مصروف جديد',
             ),
+            Builder(
+            builder: (context) => IconButton(
+              icon: Icon(
+                Icons.menu_rounded,
+                color: AppTheme.primaryColor,
+              ),
+              tooltip: 'القائمة',
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
+          ),
           ],
         ),
-        drawer: const AppDrawer(),
+        endDrawer: const AppDrawer(),
         body: _state.isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
