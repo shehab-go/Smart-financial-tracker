@@ -8,6 +8,7 @@ class HomeSelectionAppBar extends StatelessWidget implements PreferredSizeWidget
   final VoidCallback onDelete;
   final VoidCallback onPrint;
   final VoidCallback onShare;
+  final bool isDrawerOpen;
 
   const HomeSelectionAppBar({
     super.key,
@@ -17,6 +18,7 @@ class HomeSelectionAppBar extends StatelessWidget implements PreferredSizeWidget
     required this.onDelete,
     required this.onPrint,
     required this.onShare,
+    this.isDrawerOpen = false,
   });
 
   @override
@@ -37,12 +39,13 @@ class HomeSelectionAppBar extends StatelessWidget implements PreferredSizeWidget
         IconButton(icon: const Icon(Icons.delete), onPressed: onDelete),
         IconButton(icon: const Icon(Icons.print), onPressed: onPrint),
         IconButton(icon: const Icon(Icons.share), onPressed: onShare),
-        Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(context).openEndDrawer(),
+        if (!isDrawerOpen)
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
           ),
-        ),
       ],
     );
   }

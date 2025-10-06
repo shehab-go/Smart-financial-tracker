@@ -12,10 +12,17 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
+  bool _isDrawerOpen = false;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const ExpenseScreen(),
+  void _onDrawerChanged(bool isOpen) {
+    setState(() {
+      _isDrawerOpen = isOpen;
+    });
+  }
+
+  List<Widget> get _screens => [
+    HomeScreen(onDrawerChanged: _onDrawerChanged),
+    ExpenseScreen(onDrawerChanged: _onDrawerChanged),
   ];
 
   @override
@@ -27,7 +34,7 @@ class _MainNavigationState extends State<MainNavigation> {
           index: _currentIndex,
           children: _screens,
         ),
-        bottomNavigationBar: Container(
+        bottomNavigationBar: _isDrawerOpen ? null : Container(
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [

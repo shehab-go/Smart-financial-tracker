@@ -8,6 +8,7 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
   final TabController tabController;
   final List<CategoryModel> categories;
   final PreferredSizeWidget bottom;
+  final bool isDrawerOpen;
 
   const HomeDefaultAppBar({
     super.key,
@@ -15,6 +16,7 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.tabController,
     required this.categories,
     required this.bottom,
+    this.isDrawerOpen = false,
   });
 
   @override
@@ -83,23 +85,24 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
         actions: [
-          Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Builder(
-              builder: (context) => IconButton(
-                icon: Icon(
-                  Icons.menu_rounded,
-                  color: AppTheme.primaryColor,
+          if (!isDrawerOpen)
+            Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Builder(
+                builder: (context) => IconButton(
+                  icon: Icon(
+                    Icons.menu_rounded,
+                    color: AppTheme.primaryColor,
+                  ),
+                  tooltip: 'القائمة',
+                  onPressed: () => Scaffold.of(context).openEndDrawer(),
                 ),
-                tooltip: 'القائمة',
-                onPressed: () => Scaffold.of(context).openEndDrawer(),
               ),
             ),
-          ),
         ],
         bottom: bottom,
         ),

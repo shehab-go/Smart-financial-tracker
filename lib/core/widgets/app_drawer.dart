@@ -70,25 +70,21 @@ class _AppDrawerState extends State<AppDrawer> {
         ),
         child: Drawer(
           backgroundColor: const Color(0xFFF8FAFC),
-          elevation: 0,
+          elevation: 16,
+          width: MediaQuery.of(context).size.width * 0.85,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
               topRight: Radius.circular(8),
               bottomRight: Radius.circular(8),
             ),
           ),
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 140,
-              collapsedHeight: 60,
-              floating: false,
-              pinned: true,
-              automaticallyImplyLeading: false,
-              backgroundColor: Colors.grey.shade50,
-              title: null,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
+        child: Container(
+          color: const Color(0xFFF8FAFC),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Container(
+                  height: 140,
                   decoration: BoxDecoration(
                     color: Colors.grey.shade50,
                     border: Border(
@@ -251,7 +247,6 @@ class _AppDrawerState extends State<AppDrawer> {
                   ),
                 ),
               ),
-            ),
             SliverList(
               delegate: SliverChildListDelegate([
                 const SizedBox(height: 16),
@@ -354,10 +349,10 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
           ],
         ),
-      ),
+          ),
         ),
-      );
-    
+      ),
+    ); 
   }
 
   Widget _buildDrawerItem(

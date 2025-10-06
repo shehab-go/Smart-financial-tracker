@@ -45,7 +45,9 @@ class StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Function(bool)? onDrawerChanged;
+  
+  const HomeScreen({super.key, this.onDrawerChanged});
 
   @override
   State<HomeScreen> createState() => HomeScreenState();
@@ -59,6 +61,7 @@ class HomeScreenState extends State<HomeScreen> {
   // State for category navigation
   int _selectedCategoryIndex = 0;
   late PageController _pageController;
+  bool _isDrawerOpen = false;
 
   void _showReportOptions() {
     showModalBottomSheet(
@@ -137,6 +140,12 @@ class HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       endDrawer: const AppDrawer(),
+      onEndDrawerChanged: (isOpened) {
+        setState(() {
+          _isDrawerOpen = isOpened;
+        });
+        widget.onDrawerChanged?.call(isOpened);
+      },
       appBar: AppBar(
         title: const Text(
           'الديون',
@@ -146,17 +155,20 @@ class HomeScreenState extends State<HomeScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: null, // Explicitly remove any leading widget
         actions: [
           IconButton(
             icon: const Icon(Icons.assessment_rounded, color: AppTheme.primaryColor),
             onPressed: _showReportOptions,
           ),
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu, color: AppTheme.primaryColor),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
+          if (!_isDrawerOpen)
+            Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu, color: AppTheme.primaryColor),
+                onPressed: () => Scaffold.of(context).openEndDrawer(),
+              ),
             ),
-          ),
         ],
       ),
       body: _state.categories.isEmpty

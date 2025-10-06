@@ -11,7 +11,9 @@ import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/widgets/app_drawer.dart';
 
 class ExpenseScreen extends StatefulWidget {
-  const ExpenseScreen({super.key});
+  final Function(bool)? onDrawerChanged;
+  
+  const ExpenseScreen({super.key, this.onDrawerChanged});
 
   @override
   State<ExpenseScreen> createState() => _ExpenseScreenState();
@@ -28,6 +30,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   String? _selectedCategoryFilter;
   String? _selectedCurrencyFilter;
   List<ExpenseModel> _filteredExpenses = [];
+  bool _isDrawerOpen = false;
 
   @override
   void initState() {
@@ -164,25 +167,33 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           backgroundColor: Colors.white,
           elevation: 0,
           automaticallyImplyLeading: false,
+          leading: null, // Explicitly remove any leading widget
           actions: [
             IconButton(
               icon: const Icon(Icons.add, color: AppTheme.primaryColor),
               onPressed: _showAddExpenseDialog,
               tooltip: 'إضافة مصروف جديد',
             ),
-            Builder(
-            builder: (context) => IconButton(
-              icon: Icon(
-                Icons.menu_rounded,
-                color: AppTheme.primaryColor,
+            if (!_isDrawerOpen)
+              Builder(
+                builder: (context) => IconButton(
+                  icon: Icon(
+                    Icons.menu_rounded,
+                    color: AppTheme.primaryColor,
+                  ),
+                  tooltip: 'القائمة',
+                  onPressed: () => Scaffold.of(context).openEndDrawer(),
+                ),
               ),
-              tooltip: 'القائمة',
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-            ),
-          ),
           ],
         ),
         endDrawer: const AppDrawer(),
+        onEndDrawerChanged: (isOpened) {
+          setState(() {
+            _isDrawerOpen = isOpened;
+          });
+          widget.onDrawerChanged?.call(isOpened);
+        },
         body: _state.isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
