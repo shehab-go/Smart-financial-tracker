@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:debit_credit_app/core/models/category.dart';
+import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/features/categories/application/categories_controller.dart';
 import 'package:debit_credit_app/features/categories/presentation/widgets/category_header.dart';
 import 'package:debit_credit_app/features/categories/presentation/widgets/category_empty_state.dart';
@@ -89,9 +90,28 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 ),
               ],
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addCategory,
-        child: const Icon(Icons.add),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: AppTheme.primaryGradient,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: _addCategory,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 28,
+          ),
+        ),
       ),
     ),
     );

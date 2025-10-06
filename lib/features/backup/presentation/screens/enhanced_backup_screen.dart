@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:open_file/open_file.dart';
 
 import 'package:debit_credit_app/core/services/enhanced_backup_service.dart';
+import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 class EnhancedBackupScreen extends StatefulWidget {
   const EnhancedBackupScreen({super.key});
@@ -565,17 +566,45 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
             );
           },
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          heroTag: 'create_backup',
-          onPressed: _isProcessing ? null : _createBackup,
-          label: const Text('إنشاء نسخة'),
-          icon: _isProcessing 
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.add),
+        floatingActionButton: Container(
+          decoration: BoxDecoration(
+            gradient: _isProcessing ? null : AppTheme.primaryGradient,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: _isProcessing ? null : [
+              BoxShadow(
+                color: AppTheme.primaryColor.withOpacity(0.4),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: FloatingActionButton.extended(
+            heroTag: 'create_backup',
+            onPressed: _isProcessing ? null : _createBackup,
+            backgroundColor: _isProcessing ? Colors.grey.shade300 : Colors.transparent,
+            elevation: 0,
+            label: Text(
+              'إنشاء نسخة',
+              style: TextStyle(
+                color: _isProcessing ? Colors.grey.shade600 : Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            icon: _isProcessing 
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade600),
+                    ),
+                  )
+                : const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+          ),
         ),
       ),
     );

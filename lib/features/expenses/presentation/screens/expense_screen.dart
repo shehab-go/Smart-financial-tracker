@@ -10,6 +10,7 @@ import 'package:debit_credit_app/features/expenses/presentation/dialogs/add_expe
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/widgets/app_drawer.dart';
 
+
 class ExpenseScreen extends StatefulWidget {
   final Function(bool)? onDrawerChanged;
   
@@ -78,30 +79,46 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     return _filteredExpenses.fold(0.0, (sum, expense) => sum + expense.amount);
   }
 
-  Future<void> _showAddExpenseDialog() async {
+  Future<void> _showAddExpenseDialog({ExpenseModel? expense}) async {
     final result = await showDialog<ExpenseModel>(
       context: context,
-      builder: (context) => const AddExpenseDialog(),
+      builder: (context) => AddExpenseDialog(expense: expense),
     );
 
     if (result != null) {
-      final success = await _controller.addExpense(result);
+      bool success;
+      if (expense != null) {
+        // Update existing expense
+        success = await _controller.updateExpense(result);
+      } else {
+        // Add new expense
+        success = await _controller.addExpense(result);
+      }
+      
       if (success && mounted) {
         setState(() {
           _state = _controller.state;
           _applyFilters();
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم إضافة المصروف بنجاح'),
+          SnackBar(
+            content: Text(expense != null ? 'تم تحديث المصروف بنجاح' : 'تم إضافة المصروف بنجاح'),
             backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_state.error ?? 'فشل في إضافة المصروف'),
+            content: Text(_state.error ?? (expense != null ? 'فشل في تحديث المصروف' : 'فشل في إضافة المصروف')),
             backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -169,11 +186,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           automaticallyImplyLeading: false,
           leading: null, // Explicitly remove any leading widget
           actions: [
-            IconButton(
-              icon: const Icon(Icons.add, color: AppTheme.primaryColor),
-              onPressed: _showAddExpenseDialog,
-              tooltip: 'إضافة مصروف جديد',
-            ),
             if (!_isDrawerOpen)
               Builder(
                 builder: (context) => IconButton(
@@ -194,6 +206,30 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           });
           widget.onDrawerChanged?.call(isOpened);
         },
+        floatingActionButton: Container(
+          decoration: BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryColor.withOpacity(0.4),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: FloatingActionButton(
+            onPressed: _showAddExpenseDialog,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            tooltip: 'إضافة مصروف جديد',
+            child: const Icon(
+              Icons.add,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+        ),
         body: _state.isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
@@ -442,81 +478,420 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   }
 
   Widget _buildExpenseCard(ExpenseModel expense) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE0E0E0),
-            width: 0.5,
+    return InkWell(
+      onTap: () {
+        _showExpenseDetailDialog(expense);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Color(0xFFE0E0E0),
+              width: 0.5,
+            ),
           ),
         ),
-      ),
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Row(
-          children: [
-            // Expense Name (flex: 3)
-            Expanded(
-              flex: 3,
-              child: Text(
-                expense.name,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            // Amount (flex: 2)
-            Expanded(
-              flex: 2,
-              child: Center(
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Row(
+            children: [
+              // Expense Name (flex: 3)
+              Expanded(
+                flex: 3,
                 child: Text(
-                  '${NumberFormat('#,##0').format(expense.amount)}',
+                  expense.name,
                   style: const TextStyle(
-                    color: AppTheme.errorColor,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-            // Details (flex: 2)
-            Expanded(
-              flex: 2,
-              child: Center(
-                child: Text(
-                  expense.detail.isNotEmpty ? expense.detail : '-',
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textPrimary,
                     fontSize: 14,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-            // Currency (flex: 1)
-            Expanded(
-              flex: 1,
-              child: Center(
-                child: Text(
-                  expense.currency,
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
+              // Amount (flex: 2)
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text(
+                    '${NumberFormat('#,##0').format(expense.amount)}',
+                    style: const TextStyle(
+                      color: AppTheme.errorColor,
+                      fontSize: 14,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-          ],
+              // Details (flex: 2)
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text(
+                    expense.detail.isNotEmpty ? expense.detail : '-',
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              // Currency (flex: 1)
+              Expanded(
+                flex: 1,
+                child: Center(
+                  child: Text(
+                    expense.currency,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  void _showExpenseDetailDialog(ExpenseModel expense) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Dialog(
+            backgroundColor: AppTheme.cardColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: AppTheme.cardGradient,
+                boxShadow: AppTheme.cardShadow,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'تفاصيل المصروف',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Expense Details
+                  _buildDetailRow('اسم المصروف', expense.name),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('المبلغ', '${NumberFormat('#,##0').format(expense.amount)} ${expense.currency}'),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('التفاصيل', expense.detail.isNotEmpty ? expense.detail : 'لا توجد تفاصيل'),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('الفئة', expense.category),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('تاريخ الإنشاء', DateFormat('yyyy/MM/dd - HH:mm').format(expense.createdDate)),
+                  if (expense.updatedDate != null) ...[
+                    const SizedBox(height: 12),
+                    _buildDetailRow('تاريخ التحديث', DateFormat('yyyy/MM/dd - HH:mm').format(expense.updatedDate!)),
+                  ],
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Action Buttons
+                  Container(
+                    width: double.infinity,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            decoration: BoxDecoration(
+                              gradient: AppTheme.primaryGradient,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                 Navigator.of(context).pop();
+                                 _showAddExpenseDialog(expense: expense);
+                               },
+                              icon: const Icon(Icons.edit, color: Colors.white),
+                              label: const Text(
+                                'تعديل',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [AppTheme.errorColor, AppTheme.errorColor.withOpacity(0.8)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.errorColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                _showDeleteConfirmationDialog(expense);
+                              },
+                              icon: const Icon(Icons.delete, color: Colors.white),
+                              label: const Text(
+                                'حذف',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+        ),
+        const Text(
+          ': ',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppTheme.textSecondary,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showDeleteConfirmationDialog(ExpenseModel expense) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              backgroundColor: AppTheme.cardColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Text(
+                'تأكيد الحذف',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              content: Text(
+                'هل أنت متأكد من حذف المصروف "${expense.name}"؟\nلا يمكن التراجع عن هذا الإجراء.',
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              actions: [
+                Container(
+                  width: double.infinity,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppTheme.textSecondary.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'إلغاء',
+                              style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.primaryGradient,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.errorColor.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: TextButton(
+                            onPressed: () async {
+                              Navigator.of(context).pop();
+                              await _deleteExpenseFromDialog(expense);
+                            },
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'حذف',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+ 
+   Future<void> _deleteExpenseFromDialog(ExpenseModel expense) async {
+     if (expense.id != null) {
+       final success = await _controller.deleteExpense(expense.id!);
+       if (success && mounted) {
+         setState(() {
+           _state = _controller.state;
+           _applyFilters();
+         });
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(
+             content: const Text('تم حذف المصروف بنجاح'),
+             backgroundColor: AppTheme.successColor,
+             behavior: SnackBarBehavior.floating,
+             shape: RoundedRectangleBorder(
+               borderRadius: BorderRadius.circular(8),
+             ),
+           ),
+         );
+       } else if (mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(
+             content: Text(_state.error ?? 'فشل في حذف المصروف'),
+             backgroundColor: AppTheme.errorColor,
+             behavior: SnackBarBehavior.floating,
+             shape: RoundedRectangleBorder(
+               borderRadius: BorderRadius.circular(8),
+             ),
+           ),
+         );
+       }
+     }
+   }
 }
