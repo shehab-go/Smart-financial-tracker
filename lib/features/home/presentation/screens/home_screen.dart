@@ -62,6 +62,10 @@ class HomeScreenState extends State<HomeScreen> {
   int _selectedCategoryIndex = 0;
   late PageController _pageController;
   bool _isDrawerOpen = false;
+  
+  // State for selection mode
+  bool _isSelectionMode = false;
+  Set<String> _selectedAccountIds = <String>{};
 
   void _showReportOptions() {
     showModalBottomSheet(
@@ -86,6 +90,86 @@ class HomeScreenState extends State<HomeScreen> {
         .cast<AccountModel>()
         .toList();
     await HomeReportCoordinator.generateAllAccountsReport(allAccounts: allAccounts);
+  }
+
+  // Selection mode methods
+  void _enterSelectionMode(String accountId) {
+    setState(() {
+      _isSelectionMode = true;
+      _selectedAccountIds.add(accountId);
+    });
+    print('Entered selection mode. Selected accounts: ${_selectedAccountIds.length}');
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedAccountIds.clear();
+    });
+  }
+
+  void _toggleAccountSelection(String accountId) {
+    setState(() {
+      if (_selectedAccountIds.contains(accountId)) {
+        _selectedAccountIds.remove(accountId);
+        if (_selectedAccountIds.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedAccountIds.add(accountId);
+      }
+    });
+  }
+
+  void _selectAllAccounts() {
+    setState(() {
+      final currentCategory = _state.categories[_selectedCategoryIndex];
+      final accounts = _state.accountsByCategory[currentCategory.name] ?? [];
+      _selectedAccountIds.addAll(accounts.map((a) => a.id.toString()));
+    });
+  }
+
+  Future<void> _deleteSelectedAccounts() async {
+    if (_selectedAccountIds.isEmpty) return;
+    
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('تأكيد الحذف'),
+        content: Text('هل تريد حذف ${_selectedAccountIds.length} حساب؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed == true) {
+      try {
+        // Convert string IDs to integers
+        final accountIds = _selectedAccountIds.map((id) => int.parse(id)).toList();
+        await _controller.deleteAccounts(accountIds);
+        _exitSelectionMode();
+        await loadData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('تم حذف الحسابات بنجاح')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('خطأ في حذف الحسابات: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -146,31 +230,61 @@ class HomeScreenState extends State<HomeScreen> {
         });
         widget.onDrawerChanged?.call(isOpened);
       },
-      appBar: AppBar(
-        title: const Text(
-          'الديون',
-          style: TextStyle(
-            fontSize: 14,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: null, // Explicitly remove any leading widget
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.assessment_rounded, color: AppTheme.primaryColor),
-            onPressed: _showReportOptions,
-          ),
-          if (!_isDrawerOpen)
-            Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.menu, color: AppTheme.primaryColor),
-                onPressed: () => Scaffold.of(context).openEndDrawer(),
+      appBar: _isSelectionMode
+          ? AppBar(
+              title: Text(
+                '${_selectedAccountIds.length} محدد',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
+              backgroundColor: AppTheme.primaryColor,
+              iconTheme: const IconThemeData(color: Colors.white),
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: _exitSelectionMode,
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.select_all, color: Colors.white),
+                  onPressed: _selectAllAccounts,
+                  tooltip: 'تحديد الكل',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.white),
+                  onPressed: _selectedAccountIds.isNotEmpty ? _deleteSelectedAccounts : null,
+                  tooltip: 'حذف',
+                ),
+              ],
+            )
+          : AppBar(
+              title: const Text(
+                'الديون',
+                style: TextStyle(
+                  fontSize: 14,
+                ),
+              ),
+              backgroundColor: Colors.white,
+              elevation: 0,
+              automaticallyImplyLeading: false,
+              leading: null, // Explicitly remove any leading widget
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.assessment_rounded, color: AppTheme.primaryColor),
+                  onPressed: _showReportOptions,
+                ),
+                if (!_isDrawerOpen)
+                  Builder(
+                    builder: (context) => IconButton(
+                      icon: const Icon(Icons.menu, color: AppTheme.primaryColor),
+                      onPressed: () => Scaffold.of(context).openEndDrawer(),
+                    ),
+                  ),
+              ],
             ),
-        ],
-      ),
       body: _state.categories.isEmpty
           ? _buildEmptyState()
           : Column(
@@ -586,16 +700,30 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildAccountTile(AccountModel account) {
+    final isSelected = _selectedAccountIds.contains(account.id.toString());
+    
     return InkWell(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => AccountTransactionsScreen(account: account),
-        ),
-      ).then((_) => loadData()),
+      onTap: () {
+        if (_isSelectionMode) {
+          _toggleAccountSelection(account.id.toString());
+        } else {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => AccountTransactionsScreen(account: account),
+            ),
+          ).then((_) => loadData());
+        }
+      },
+      onLongPress: () {
+        if (!_isSelectionMode) {
+          _enterSelectionMode(account.id.toString());
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: const BoxDecoration(
-          border: Border(
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : null,
+          border: const Border(
             bottom: BorderSide(
               color: Color(0xFFE0E0E0),
               width: 0.5,
@@ -606,14 +734,25 @@ class HomeScreenState extends State<HomeScreen> {
           textDirection: TextDirection.rtl,
           child: Row(
             children: [
+              // Selection checkbox (only visible in selection mode)
+              if (_isSelectionMode)
+                Container(
+                  margin: const EdgeInsets.only(left: 12),
+                  child: Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => _toggleAccountSelection(account.id.toString()),
+                    activeColor: AppTheme.primaryColor,
+                  ),
+                ),
               // Account Name Column
                Expanded(
                  flex: 3,
                  child: Text(
                    account.name,
-                   style: const TextStyle(
-                     color: AppTheme.textPrimary,
+                   style: TextStyle(
+                     color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
                      fontSize: 14,
+                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                    ),
                    maxLines: 1,
                    overflow: TextOverflow.ellipsis,
