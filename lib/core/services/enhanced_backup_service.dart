@@ -137,7 +137,7 @@ class EnhancedBackupService {
     final db = await DatabaseHelper().database;
     final stats = <String, int>{};
     
-    final tables = ['accounts', 'transactions', 'categories', 'currencies', 'user_profile', 'persons'];
+    final tables = ['accounts', 'transactions', 'categories', 'currencies', 'user_profile', 'persons', 'expenses'];
     
     for (final table in tables) {
       try {
@@ -274,6 +274,15 @@ class EnhancedBackupService {
       if (!requiredTables.every((table) => tableNames.contains(table))) {
         await db.close();
         return false;
+      }
+      
+      // Check if expenses table exists (optional for backward compatibility)
+      // This table was added in version 8, so it's not required for older backups
+      final hasExpensesTable = tableNames.contains('expenses');
+      if (hasExpensesTable) {
+        print('Expenses table found in backup');
+      } else {
+        print('Expenses table not found in backup (older version)');
       }
       
       // Check database version compatibility
