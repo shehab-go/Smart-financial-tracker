@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Modern color palette
-  static const Color primaryColor = Color(0xFF1565C0); // Professional blue
+  static const Color primaryColor = Color(0xFF00879E); // Teal primary color
   static const Color secondaryColor = Color(0xFF00ACC1); // Teal accent
   static const Color surfaceColor = Color(0xFFF8FAFC); // Light surface
   static const Color errorColor = Color(0xFFE53E3E); // Modern red
@@ -228,7 +228,7 @@ class AppTheme {
   
   // Gradient definitions
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [primaryColor, Color(0xFF1976D2)],
+    colors: [primaryColor, Color(0xFF006B7D)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
