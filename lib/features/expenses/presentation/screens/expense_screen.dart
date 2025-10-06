@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import 'dart:async';
 import 'package:debit_credit_app/core/models/expense.dart';
 import 'package:debit_credit_app/core/models/category.dart';
 import 'package:debit_credit_app/core/models/currency.dart';
@@ -9,12 +10,14 @@ import 'package:debit_credit_app/features/expenses/application/expense_state.dar
 import 'package:debit_credit_app/features/expenses/presentation/dialogs/add_expense_dialog.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/widgets/app_drawer.dart';
+import 'package:debit_credit_app/features/home/presentation/screens/search_screen.dart';
 
 
 class ExpenseScreen extends StatefulWidget {
   final Function(bool)? onDrawerChanged;
+  final int? highlightExpenseId;
   
-  const ExpenseScreen({super.key, this.onDrawerChanged});
+  const ExpenseScreen({super.key, this.onDrawerChanged, this.highlightExpenseId});
 
   @override
   State<ExpenseScreen> createState() => _ExpenseScreenState();
@@ -32,12 +35,32 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   String? _selectedCurrencyFilter;
   List<ExpenseModel> _filteredExpenses = [];
   bool _isDrawerOpen = false;
+  Timer? _highlightTimer;
+  int? _currentHighlightId;
 
   @override
   void initState() {
     super.initState();
+    _currentHighlightId = widget.highlightExpenseId;
     _loadExpenses();
     _loadFiltersData();
+    
+    // Set up timer to clear highlighting after 5 seconds
+    if (_currentHighlightId != null) {
+      _highlightTimer = Timer(const Duration(seconds: 5), () {
+        if (mounted) {
+          setState(() {
+            _currentHighlightId = null;
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _highlightTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadExpenses() async {
@@ -186,6 +209,18 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           automaticallyImplyLeading: false,
           leading: null, // Explicitly remove any leading widget
           actions: [
+            IconButton(
+              icon: const Icon(Icons.search, color: AppTheme.primaryColor),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SearchScreen(),
+                  ),
+                );
+              },
+              tooltip: 'بحث',
+            ),
             if (!_isDrawerOpen)
               Builder(
                 builder: (context) => IconButton(
@@ -478,19 +513,31 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   }
 
   Widget _buildExpenseCard(ExpenseModel expense) {
+    final bool isHighlighted = _currentHighlightId != null && expense.id == _currentHighlightId;
+    
     return InkWell(
       onTap: () {
         _showExpenseDetailDialog(expense);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-        decoration: const BoxDecoration(
-          border: Border(
+        decoration: BoxDecoration(
+          color: isHighlighted ? AppTheme.primaryColor.withOpacity(0.05) : Colors.white,
+          border: const Border(
             bottom: BorderSide(
               color: Color(0xFFE0E0E0),
               width: 0.5,
             ),
           ),
+          boxShadow: isHighlighted 
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Directionality(
           textDirection: TextDirection.rtl,

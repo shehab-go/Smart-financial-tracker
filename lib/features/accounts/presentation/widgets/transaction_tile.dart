@@ -8,6 +8,7 @@ class TransactionTile extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final bool selected;
+  final bool highlighted;
 
   const TransactionTile({
     super.key,
@@ -15,6 +16,7 @@ class TransactionTile extends StatelessWidget {
     required this.selected,
     this.onTap,
     this.onLongPress,
+    this.highlighted = false,
   });
 
   @override
@@ -31,13 +33,26 @@ class TransactionTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
+          color: selected 
+              ? AppTheme.primaryColor.withOpacity(0.1) 
+              : highlighted 
+                  ? AppTheme.primaryColor.withOpacity(0.05)
+                  : Colors.white,
           border: const Border(
             bottom: BorderSide(
               color: Color(0xFFE0E0E0),
               width: 0.5,
             ),
           ),
+          boxShadow: highlighted 
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Directionality(
           textDirection: TextDirection.rtl,

@@ -13,6 +13,7 @@ import 'package:debit_credit_app/features/home/application/home_controller.dart'
 import 'package:debit_credit_app/features/home/application/home_state.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/events/category_events.dart';
+import 'search_screen.dart';
 
 class StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double minHeight;
@@ -272,6 +273,18 @@ class HomeScreenState extends State<HomeScreen> {
               automaticallyImplyLeading: false,
               leading: null, // Explicitly remove any leading widget
               actions: [
+                IconButton(
+                  icon: const Icon(Icons.search, color: AppTheme.primaryColor),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SearchScreen(),
+                      ),
+                    );
+                  },
+                  tooltip: 'بحث',
+                ),
                 IconButton(
                   icon: const Icon(Icons.assessment_rounded, color: AppTheme.primaryColor),
                   onPressed: _showReportOptions,

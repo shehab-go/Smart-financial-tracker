@@ -342,6 +342,20 @@ class DatabaseHelper {
     );
   }
 
+  Future<AccountModel?> getAccountById(int id) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'accounts',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (maps.isNotEmpty) {
+      return AccountModel.fromMap(maps.first);
+    }
+    return null;
+  }
+
   Future<int> deleteAccount(int id) async {
     final db = await database;
     return await db.delete(

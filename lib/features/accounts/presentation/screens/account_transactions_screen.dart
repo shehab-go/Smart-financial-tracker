@@ -14,6 +14,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'dart:async';
 import 'package:pdf/pdf.dart';
 
 class _AccountEditDialog extends StatefulWidget {
@@ -463,10 +464,12 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
 
 class AccountTransactionsScreen extends StatefulWidget {
   final AccountModel account;
+  final int? highlightTransactionId;
 
   const AccountTransactionsScreen({
     super.key,
     required this.account,
+    this.highlightTransactionId,
   });
 
   @override
@@ -476,12 +479,34 @@ class AccountTransactionsScreen extends StatefulWidget {
 class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   late AccountModel _currentAccount;
   bool _accountUpdated = false;
+  final ScrollController _scrollController = ScrollController();
+  Timer? _highlightTimer;
+  int? _currentHighlightId;
 
   @override
   void initState() {
     super.initState();
     _currentAccount = widget.account;
+    _currentHighlightId = widget.highlightTransactionId;
     _loadTransactions();
+    
+    // Set up timer to clear highlighting after 5 seconds
+    if (_currentHighlightId != null) {
+      _highlightTimer = Timer(const Duration(seconds: 5), () {
+        if (mounted) {
+          setState(() {
+            _currentHighlightId = null;
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _highlightTimer?.cancel();
+    super.dispose();
   }
 
   void _toggleSelection(TransactionModel t) {
@@ -499,6 +524,32 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     setState(() {
       _accountUpdated = true;
     });
+  }
+
+  void _scrollToHighlightedTransaction() {
+    if (widget.highlightTransactionId == null || _transactions.isEmpty) return;
+    
+    // Find the index of the highlighted transaction
+    final highlightedIndex = _transactions.indexWhere(
+      (transaction) => transaction.id == widget.highlightTransactionId
+    );
+    
+    if (highlightedIndex != -1) {
+      // Add a small delay to ensure the UI is built
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (_scrollController.hasClients) {
+          // Calculate the position to scroll to (approximate height per item)
+          const itemHeight = 80.0; // Approximate height of TransactionTile
+          final scrollPosition = highlightedIndex * itemHeight;
+          
+          _scrollController.animateTo(
+            scrollPosition,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
   }
 
   void _clearSelection() {
@@ -623,6 +674,11 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
         };
         _isLoading = false;
       });
+      
+      // Auto-scroll to highlighted transaction if exists
+      if (widget.highlightTransactionId != null) {
+        _scrollToHighlightedTransaction();
+      }
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -1054,6 +1110,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
       TransactionTile(
         transaction: transaction,
         selected: _selectedIds.contains(transaction.id),
+        highlighted: _currentHighlightId != null && transaction.id == _currentHighlightId,
         onTap: _selectionMode
               ? () => _toggleSelection(transaction)
               : () => _showTransactionDetailDialog(transaction),
@@ -1356,6 +1413,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                                 const Divider(height: 1, color: Colors.grey),
                                 Expanded(
                                   child: ListView(
+                                    controller: _scrollController,
                                     children: _buildTransactionList(),
                                   ),
                                 ),
