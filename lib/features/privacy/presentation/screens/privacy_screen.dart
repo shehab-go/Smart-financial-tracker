@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/main_navigation.dart';
 
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
@@ -11,6 +12,23 @@ class PrivacyScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('سياسة الخصوصية'),
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios),
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const MainNavigation()),
+                (route) => false,
+              );
+              // Open drawer after navigation
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final scaffoldState = Scaffold.of(context);
+                if (scaffoldState.hasEndDrawer) {
+                  scaffoldState.openEndDrawer();
+                }
+              });
+            },
+          ),
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),

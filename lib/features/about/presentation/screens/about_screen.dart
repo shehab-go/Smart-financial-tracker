@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/main_navigation.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -16,6 +17,23 @@ class AboutScreen extends StatelessWidget {
             decoration: const BoxDecoration(
               gradient: AppTheme.primaryGradient,
             ),
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const MainNavigation()),
+                (route) => false,
+              );
+              // Open drawer after navigation
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final scaffoldState = Scaffold.of(context);
+                if (scaffoldState.hasEndDrawer) {
+                  scaffoldState.openEndDrawer();
+                }
+              });
+            },
           ),
         ),
         body: SingleChildScrollView(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:debit_credit_app/core/models/currency.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/main_navigation.dart';
 
 class CurrenciesScreen extends StatefulWidget {
   const CurrenciesScreen({super.key});
@@ -53,6 +54,23 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
           decoration: BoxDecoration(
             gradient: AppTheme.primaryGradient,
           ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const MainNavigation()),
+              (route) => false,
+            );
+            // Open drawer after navigation
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final scaffoldState = Scaffold.of(context);
+              if (scaffoldState.hasEndDrawer) {
+                scaffoldState.openEndDrawer();
+              }
+            });
+          },
         ),
         actions: [
           IconButton(

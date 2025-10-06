@@ -7,6 +7,7 @@ import 'package:path/path.dart' as path;
 import '../../../../core/models/user_profile.dart';
 import '../../../../core/db/database_helper.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/main_navigation.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -180,7 +181,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.black87, size: 20),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const MainNavigation()),
+                (route) => false,
+              );
+              // Open drawer after navigation
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final scaffoldState = Scaffold.of(context);
+                if (scaffoldState.hasEndDrawer) {
+                  scaffoldState.openEndDrawer();
+                }
+              });
+            },
           ),
           actions: [
             if (!_isLoading)

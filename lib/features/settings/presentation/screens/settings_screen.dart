@@ -4,6 +4,7 @@ import 'package:debit_credit_app/features/about/presentation/screens/about_scree
 import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
+import 'package:debit_credit_app/core/widgets/main_navigation.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -38,7 +39,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryColor),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const MainNavigation()),
+              (route) => false,
+            );
+            // Open drawer after navigation
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final scaffoldState = Scaffold.of(context);
+              if (scaffoldState.hasEndDrawer) {
+                scaffoldState.openEndDrawer();
+              }
+            });
+          },
         ),
       ),
       body: Directionality(
