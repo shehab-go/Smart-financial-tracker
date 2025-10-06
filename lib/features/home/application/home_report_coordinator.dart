@@ -13,7 +13,7 @@ class HomeReportCoordinator {
 
     final totalCredit = accounts.fold<double>(0, (s, a) => s + a.totalCredit);
     final totalDebit = accounts.fold<double>(0, (s, a) => s + a.totalDebit);
-    final netHeaderLabel = totalCredit >= totalDebit ? 'المتبقي عليك' : 'المتبقي لك';
+    final netHeaderLabel = totalCredit >= totalDebit ? 'المتبقي لك' : 'المتبقي عليك';
 
     final rows = accounts
         .map((a) => [

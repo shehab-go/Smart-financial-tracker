@@ -302,12 +302,10 @@ class _AppDrawerState extends State<AppDrawer> {
                   icon: Icons.settings_rounded,
                   title: 'الإعدادات',
                   subtitle: 'إعدادات التطبيق والتفضيلات',
+                  isDisabled: true,
+                  comingSoonTag: 'قريباً',
                   onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                    );
+                    // Disabled - Coming Soon
                   },
                 ),
                 _buildDrawerItem(
@@ -361,19 +359,21 @@ class _AppDrawerState extends State<AppDrawer> {
     required String title,
     String? subtitle,
     required VoidCallback onTap,
+    bool isDisabled = false,
+    String? comingSoonTag,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDisabled ? Colors.grey.shade100 : Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: Colors.grey.shade300,
+          color: isDisabled ? Colors.grey.shade300 : Colors.grey.shade300,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isDisabled ? 0.02 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -383,10 +383,10 @@ class _AppDrawerState extends State<AppDrawer> {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
-          onTap: onTap,
+          onTap: isDisabled ? null : onTap,
           borderRadius: BorderRadius.circular(8),
-          splashColor: Colors.grey.withOpacity(0.1),
-          highlightColor: Colors.grey.withOpacity(0.05),
+          splashColor: isDisabled ? Colors.transparent : Colors.grey.withOpacity(0.1),
+          highlightColor: isDisabled ? Colors.transparent : Colors.grey.withOpacity(0.05),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -395,7 +395,7 @@ class _AppDrawerState extends State<AppDrawer> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: isDisabled ? Colors.grey.shade200 : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: Colors.grey.shade300,
@@ -404,7 +404,7 @@ class _AppDrawerState extends State<AppDrawer> {
                   ),
                   child: Icon(
                     icon,
-                    color: Colors.grey.shade600,
+                    color: isDisabled ? Colors.grey.shade400 : Colors.grey.shade600,
                     size: 20,
                   ),
                 ),
@@ -413,21 +413,47 @@ class _AppDrawerState extends State<AppDrawer> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: AppTheme.textPrimary,
-                          letterSpacing: 0.3,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: isDisabled ? Colors.grey.shade500 : AppTheme.textPrimary,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                          if (comingSoonTag != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade100,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.orange.shade300,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                comingSoonTag,
+                                style: TextStyle(
+                                  color: Colors.orange.shade700,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       if (subtitle != null) ...[
                         const SizedBox(height: 4),
                         Text(
                           subtitle,
                           style: TextStyle(
-                            color: AppTheme.textSecondary,
+                            color: isDisabled ? Colors.grey.shade400 : AppTheme.textSecondary,
                             fontSize: 13,
                             fontWeight: FontWeight.w400,
                             height: 1.3,
@@ -437,15 +463,16 @@ class _AppDrawerState extends State<AppDrawer> {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 14,
+                if (!isDisabled)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 14,
                     color: AppTheme.primaryColor,
                   ),
                 ),
