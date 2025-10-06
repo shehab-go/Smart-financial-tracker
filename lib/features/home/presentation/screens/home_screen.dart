@@ -201,6 +201,46 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> loadDataPreservingCategory() async {
+    // Save current category name to preserve selection
+    String? currentCategoryName;
+    if (_state.categories.isNotEmpty && _selectedCategoryIndex < _state.categories.length) {
+      currentCategoryName = _state.categories[_selectedCategoryIndex].name;
+    }
+    
+    setState(() => _state = _state.copyWith(isLoading: true));
+    try {
+      final newState = await _controller.load();
+      
+      // Find the new index for the preserved category before updating state
+      int newSelectedIndex = 0;
+      if (currentCategoryName != null && newState.categories.isNotEmpty) {
+        final foundIndex = newState.categories.indexWhere((cat) => cat.name == currentCategoryName);
+        if (foundIndex != -1) {
+          newSelectedIndex = foundIndex;
+        }
+      }
+      
+      setState(() {
+        _state = newState;
+        _selectedCategoryIndex = newSelectedIndex;
+      });
+      
+      // Ensure PageController is synchronized with the selected index
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _pageController.hasClients && _pageController.page?.round() != _selectedCategoryIndex) {
+          _pageController.jumpToPage(_selectedCategoryIndex);
+        }
+      });
+    } catch (e) {
+      setState(() => _state = _state.copyWith(isLoading: false));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('خطأ في تحميل البيانات: $e'), backgroundColor: Colors.red));
+      }
+    }
+  }
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -214,7 +254,7 @@ class HomeScreenState extends State<HomeScreen> {
           builder: (context) => AddTransactionDialog(accountId: null, category: category),
         ) ??
         false;
-    if (result == true) await loadData();
+    if (result == true) await loadDataPreservingCategory();
   }
 
   @override
@@ -499,7 +539,8 @@ class HomeScreenState extends State<HomeScreen> {
                        // Debit Header
                        const Expanded(
                          flex: 2,
-                         child: Center(
+                         child: Align(
+                           alignment: Alignment.centerRight,
                            child: Text(
                              'عليك',
                              style: TextStyle(
@@ -724,7 +765,7 @@ class HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(
               builder: (context) => AccountTransactionsScreen(account: account),
             ),
-          ).then((_) => loadData());
+          ).then((_) => loadDataPreservingCategory());
         }
       },
       onLongPress: () {
