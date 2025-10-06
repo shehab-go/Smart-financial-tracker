@@ -25,70 +25,66 @@ class TransactionTile extends StatelessWidget {
     final Color amountColor = isCredit ? AppTheme.creditColor : AppTheme.debitColor;
     final IconData typeIcon = isCredit ? Icons.arrow_downward : Icons.arrow_upward;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: selected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade300,
-            width: 1,
+    return InkWell(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
+          border: const Border(
+            bottom: BorderSide(
+              color: Color(0xFFE0E0E0),
+              width: 0.5,
+            ),
           ),
         ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Row(
-                children: [
-                  // Date column
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      formattedDate,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Row(
+            children: [
+              // Amount column
+              Expanded(
+                flex: 3,
+                child: Text(
+                  formattedAmount,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: amountColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(width: 16),
-                  // Details column
-                  Expanded(
-                    flex: 4,
-                    child: Text(
-                      transaction.description ?? 'بدون وصف',
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Amount column
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      formattedAmount,
-                      textAlign: TextAlign.left,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: amountColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              // Details column
+              Expanded(
+                flex: 4,
+                child: Center(
+                  child: Text(
+                    transaction.description ?? 'بدون وصف',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              // Date column
+              Expanded(
+                flex: 3,
+                child: Text(
+                  formattedDate,
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

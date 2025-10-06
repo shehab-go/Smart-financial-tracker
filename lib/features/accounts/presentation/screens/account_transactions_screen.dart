@@ -101,22 +101,113 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('تعديل بيانات الحساب'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 380, maxHeight: 600),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        color: AppTheme.primaryColor,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'تعديل بيانات الحساب',
+                        style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppTheme.textSecondary,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: AppTheme.dividerColor),
+              // Content
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
             TextFormField(
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: 'اسم الحساب',
-                prefixIcon: const Icon(Icons.account_balance),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                labelStyle: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
                 ),
+                prefixIcon: const Icon(
+                  Icons.person_outline,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.dividerColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.dividerColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.grey[50],
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
               validator: (value) => (value == null || value.trim().isEmpty) ? 'يرجى إدخال اسم الحساب' : null,
             ),
@@ -126,98 +217,247 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
                 Expanded(
                   child: TextFormField(
                     controller: _phoneController,
+                    keyboardType: TextInputType.phone,
                     decoration: InputDecoration(
                       labelText: 'رقم الهاتف (اختياري)',
-                      prefixIcon: const Icon(Icons.phone),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      labelStyle: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
                       ),
+                      prefixIcon: const Icon(
+                        Icons.phone_outlined,
+                        color: AppTheme.primaryColor,
+                        size: 20,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppTheme.dividerColor),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppTheme.dividerColor),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
-                    keyboardType: TextInputType.phone,
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(
-                  onPressed: _pickContact,
-                  icon: const Icon(Icons.contact_phone),
-                  tooltip: 'اختيار من جهات الاتصال',
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    onPressed: _pickContact,
+                    icon: const Icon(
+                      Icons.contacts_outlined,
+                      color: AppTheme.primaryColor,
+                      size: 20,
+                    ),
+                    tooltip: 'اختيار من جهات الاتصال',
+                  ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                ],
+              ),
+              const SizedBox(height: 16),
             TextFormField(
               controller: _addressController,
+              maxLines: 2,
               decoration: InputDecoration(
                 labelText: 'العنوان (اختياري)',
-                prefixIcon: const Icon(Icons.location_on),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                labelStyle: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
                 ),
+                prefixIcon: const Icon(
+                  Icons.location_on_outlined,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.dividerColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.dividerColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.grey[50],
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
-              maxLines: 2,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _workDetailsController,
+              maxLines: 2,
               decoration: InputDecoration(
                 labelText: 'تفاصيل العمل (اختياري)',
-                prefixIcon: const Icon(Icons.work),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                labelStyle: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
                 ),
+                prefixIcon: const Icon(
+                  Icons.work_outline,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.dividerColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.dividerColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.grey[50],
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
-              maxLines: 2,
             ),
             const SizedBox(height: 16),
-            Directionality(
-              textDirection: TextDirection.rtl,
-              child: DropdownButtonFormField<String>(
-                value: _selectedCurrency,
-                decoration: InputDecoration(
-                  labelText: 'العملة',
-                  prefixIcon: const Icon(Icons.currency_exchange),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+            DropdownButtonFormField<String>(
+              value: _selectedCurrency,
+              decoration: InputDecoration(
+                labelText: 'العملة',
+                labelStyle: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
+                ),
+                prefixIcon: const Icon(
+                  Icons.attach_money_outlined,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.dividerColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.dividerColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.grey[50],
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              items: _currencies.map((currency) => DropdownMenuItem<String>(
+                value: currency.name,
+                child: Text(currency.name),
+              )).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedCurrency = value;
+                });
+              },
+              validator: (value) => (value == null || value.isEmpty) ? 'يرجى اختيار العملة' : null,
+              isExpanded: true,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppTheme.textPrimary,
+              ),
+              menuMaxHeight: 200,
+              dropdownColor: Colors.white,
+              alignment: AlignmentDirectional.centerStart,
+            ),
+                    ],
                   ),
                 ),
-                items: _currencies.map((currency) => DropdownMenuItem<String>(
-                  value: currency.name,
-                        child: Text(currency.name),
-                )).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCurrency = value;
-                  });
-                },
-                validator: (value) => (value == null || value.isEmpty) ? 'يرجى اختيار العملة' : null,
               ),
-            ),
+              ),
+              
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppTheme.textSecondary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: const BorderSide(color: AppTheme.dividerColor),
+                          ),
+                        ),
+                        child: const Text(
+                          'إلغاء',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            await widget.onSave(
+                              _nameController.text.trim(),
+                              _phoneController.text.trim(),
+                              _selectedCurrency!,
+                              _addressController.text.trim(),
+                              _workDetailsController.text.trim()
+                            );
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'حفظ',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('إلغاء'),
-        ),
-        ElevatedButton(
-            onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                await widget.onSave(
-                  _nameController.text.trim(), 
-                  _phoneController.text.trim(), 
-                  _selectedCurrency!, 
-                  _addressController.text.trim(),
-                  _workDetailsController.text.trim()
-                );
-                Navigator.of(context).pop();
-              }
-            },
-          child: const Text('حفظ'),
-        ),
-      ],
     );
+
+
   }
 }
 
@@ -415,6 +655,257 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     }
   }
 
+  void _showTransactionDetailDialog(TransactionModel transaction) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Dialog(
+            backgroundColor: AppTheme.cardColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: AppTheme.cardGradient,
+                boxShadow: AppTheme.cardShadow,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'تفاصيل المعاملة',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Transaction Details
+                  _buildDetailRow('المبلغ', '${NumberFormat('#,##0').format(transaction.amount)} ${_currentAccount.currencyName}'),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('النوع', transaction.type == 'credit' ? 'لك' : 'عليك'),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('التفاصيل', transaction.description?.isNotEmpty == true ? transaction.description! : 'لا توجد تفاصيل'),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('التاريخ', DateFormat('yyyy/MM/dd - HH:mm').format(transaction.date)),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Action Buttons
+                  Container(
+                    width: double.infinity,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            decoration: BoxDecoration(
+                              gradient: AppTheme.primaryGradient,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                _navigateToEditTransaction(transaction);
+                              },
+                              icon: const Icon(Icons.edit, color: Colors.white),
+                              label: const Text(
+                                'تعديل',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [AppTheme.errorColor, AppTheme.errorColor.withOpacity(0.8)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.errorColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                _showDeleteConfirmationDialog(transaction);
+                              },
+                              icon: const Icon(Icons.delete, color: Colors.white),
+                              label: const Text(
+                                'حذف',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showDeleteConfirmationDialog(TransactionModel transaction) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: AppTheme.cardColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text(
+              'تأكيد الحذف',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            content: Text(
+              'هل أنت متأكد من حذف هذه المعاملة؟\nلا يمكن التراجع عن هذا الإجراء.',
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text(
+                  'إلغاء',
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppTheme.errorColor, AppTheme.errorColor.withOpacity(0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _deleteTransaction(transaction);
+                  },
+                  child: const Text(
+                    'حذف',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _navigateToEditTransaction(TransactionModel transaction) async {
     final result = await showDialog<bool>(
           context: context,
@@ -480,36 +971,33 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   }
 
   Widget _buildStatCard(String title, String amount, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 3,
+              offset: const Offset(0, 1),
             ),
-            textAlign: TextAlign.center,
+          ],
+        ),
+        child: Text(
+          '$title: $amount',
+          style: TextStyle(
+            color: color,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(height: 6),
-          Text(
-            amount,
-            style: TextStyle(
-              color: color,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+          textAlign: TextAlign.right,
+        ),
       ),
     );
   }
@@ -559,60 +1047,19 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     );
   }
 
-  List<Widget> _buildTransactionListWithYearSeparators() {
+  List<Widget> _buildTransactionList() {
     if (_transactions.isEmpty) return [];
     
-    List<Widget> widgets = [];
-    int? currentYear;
-    
-    for (int i = 0; i < _transactions.length; i++) {
-      final transaction = _transactions[i];
-      final transactionYear = transaction.date.year;
-      
-      // Add year separator if this is a new year
-      if (currentYear != transactionYear) {
-        if (widgets.isNotEmpty) {
-          widgets.add(const SizedBox(height: 16));
-        }
-        widgets.add(
-           Padding(
-             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-             child: Row(
-               children: [
-                 const Expanded(child: Divider()),
-                 Padding(
-                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                   child: Text(
-                     transactionYear.toString(),
-                     style: const TextStyle(
-                       fontSize: 12,
-                       color: Colors.grey,
-                       fontWeight: FontWeight.w500,
-                     ),
-                   ),
-                 ),
-               ],
-             ),
-           ),
-         );
-        widgets.add(const SizedBox(height: 8));
-        currentYear = transactionYear;
-      }
-      
-      // Add transaction tile
-      widgets.add(
-        TransactionTile(
-          transaction: transaction,
-          selected: _selectedIds.contains(transaction.id),
-          onTap: _selectionMode
+    return _transactions.map((transaction) => 
+      TransactionTile(
+        transaction: transaction,
+        selected: _selectedIds.contains(transaction.id),
+        onTap: _selectionMode
               ? () => _toggleSelection(transaction)
-              : () => _navigateToEditTransaction(transaction),
-          onLongPress: () => _toggleSelection(transaction),
-      ),
-    );
-    }
-    
-    return widgets;
+              : () => _showTransactionDetailDialog(transaction),
+        onLongPress: () => _toggleSelection(transaction),
+      )
+    ).toList();
   }
 
   @override
@@ -698,52 +1145,11 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
               automaticallyImplyLeading: false,
               title: Row(
                 children: [
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
-                    tooltip: 'المزيد',
-                    position: PopupMenuPosition.under,
-                    onSelected: (value) {
-                      switch (value) {
-                        case 'print':
-                          _generateReportForAccount();
-                          break;
-                        case 'export':
-                          // TODO: Implement export functionality
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('سيتم إضافة وظيفة التصدير قريباً')),
-                          );
-                          break;
-                        case 'settings':
-                          _editAccountDetails();
-                          break;
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'print',
-                        child: ListTile(
-                          leading: Icon(Icons.print),
-                          title: Text('طباعة التقرير'),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                      // const PopupMenuItem(
-                      //   value: 'export',
-                      //   child: ListTile(
-                      //     leading: Icon(Icons.file_download),
-                      //     title: Text('تصدير البيانات'),
-                      //     contentPadding: EdgeInsets.zero,
-                      //   ),
-                      // ),
-                      const PopupMenuItem(
-                        value: 'settings',
-                        child: ListTile(
-                          leading: Icon(Icons.settings),
-                          title: Text('تعديل الحساب'),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ],
+
+                  IconButton(
+                    icon: const Icon(Icons.assessment),
+                    onPressed: _generateReportForAccount,
+                    tooltip: 'عرض التقرير',
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit),
@@ -816,110 +1222,60 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
             ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.blue.shade50, Colors.white],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+          : Directionality(
+              textDirection: TextDirection.rtl,
+              child: Column(
+                children: [
+                Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 0, top: 8,right: 8,left:8),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 3,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-
-                      Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: _buildStatCard(
-                               'لك',
-                               NumberFormat('#,##0').format(_totals['credit']),
-                               Colors.green,
-                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildStatCard(
-                               'عليك',
-                               NumberFormat('#,##0').format(_totals['debit']),
-                               Colors.red,
-                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildStatCard(
-                               _totals['credit']! >= _totals['debit']! ? 'المتبقي لك' : 'المتبقي عليك',
-                               NumberFormat('#,##0').format((_totals['net']!).abs()),
-                               _totals['credit']! >= _totals['debit']! ? Colors.green : Colors.red,
-                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // Quick Action Buttons
-                      Row(
-                        children: [                          
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _generateReportForAccount,
-                              icon: const Icon(Icons.assessment, size: 18),
-                              label: const Text('عرض التقرير'),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                side: BorderSide(color: Colors.green.shade300),
-                                foregroundColor: Colors.green.shade700,
-                              ),
+                          Text(
+                            'لك: ${NumberFormat('#,##0').format(_totals['credit'])}',
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _navigateToAddTransaction,
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text('إضافة معاملة'),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                side: BorderSide(color: Colors.blue.shade300),
-                                foregroundColor: Colors.blue.shade700,
-                              ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'عليك: ${NumberFormat('#,##0').format(_totals['debit'])}',
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          
+                          const SizedBox(height: 8),
+                          Text(
+                            '${_totals['credit']! >= _totals['debit']! ? 'المتبقي لك' : 'المتبقي عليك'}: ${NumberFormat('#,##0').format((_totals['net']!).abs())}',
+                            style: TextStyle(
+                              color: _totals['credit']! >= _totals['debit']! ? Colors.green : Colors.red,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.grey,
-                        width: 1,
-                      ),
                     ),
-                  ),
-                  child: const Row(
-                    children: [
-                      Expanded(flex: 3, child: Text('المبلغ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87), textAlign: TextAlign.left)),
-                      SizedBox(width: 16),
-                      Expanded(flex: 4, child: Text('تفاصيل', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87), textAlign: TextAlign.center)),
-                      SizedBox(width: 16),
-                      Expanded(flex: 3, child: Text('التاريخ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87), textAlign: TextAlign.right)),
-                    ],
                   ),
                 ),
                 Expanded(
@@ -959,35 +1315,82 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'اضغط على + لإضافة معاملة جديدة',
+                                  'استخدم الزر العائم لإضافة معاملة جديدة',
                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: AppTheme.textSecondary,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 24),
-                                ElevatedButton.icon(
-                                  onPressed: _navigateToAddTransaction,
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('إضافة معاملة'),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 12,
-                                    ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : Container(
+                          margin: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  decoration: const BoxDecoration(),
+                                  child: const Row(
+                                    children: [
+                                      Expanded(flex: 3, child: Text('المبلغ', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary))),
+                                      Expanded(flex: 4, child: Center(child: Text('تفاصيل', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)))),
+                                      Expanded(flex: 3, child: Text('التاريخ', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary), textAlign: TextAlign.end)),
+                                    ],
+                                  ),
+                                ),
+                                const Divider(height: 1, color: Colors.grey),
+                                Expanded(
+                                  child: ListView(
+                                    children: _buildTransactionList(),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        )
-                      : ListView(
-                          children: _buildTransactionListWithYearSeparators(),
                         ),
                 ),
-              ],
+                ],
+              ),
             ),
-
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: AppTheme.primaryGradient,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: _navigateToAddTransaction,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 28,
+          ),
+        ),
+      ),
     );  
   }
 }

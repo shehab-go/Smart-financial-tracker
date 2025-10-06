@@ -209,29 +209,34 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     return Dialog(
       insetPadding: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Container(
         constraints: const BoxConstraints(maxWidth: 380, maxHeight: 520),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppTheme.backgroundColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-                border: Border(
-                  bottom: BorderSide(
-                    color: AppTheme.dividerColor.withOpacity(0.2),
-                    width: 1,
-                  ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
                 ),
               ),
               child: Row(
@@ -245,14 +250,14 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                     child: Icon(
                       _isEditing ? Icons.edit_outlined : Icons.add,
                       color: AppTheme.primaryColor,
-                      size: 20,
+                      size: 18,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       _isEditing ? 'تعديل معاملة' : 'إضافة معاملة',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      style: const TextStyle(
                         color: AppTheme.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 18,
@@ -261,18 +266,20 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(false),
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.close,
-                      color: Colors.white,
+                      color: AppTheme.textSecondary,
+                      size: 18,
                     ),
                   ),
                 ],
               ),
             ),
+            const Divider(height: 1, color: AppTheme.dividerColor),
             // Content
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(2),
+                padding: const EdgeInsets.all(20),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -282,79 +289,89 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         TextFormField(
                           controller: _accountNameController,
                           decoration: InputDecoration(
-                            hintText: 'أدخل اسم الحساب',
-                            hintStyle: TextStyle(
-                              color: AppTheme.textSecondary.withOpacity(0.7),
-                              fontSize: 16,
+                            labelText: 'اسم الحساب',
+                            labelStyle: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 14,
                             ),
                             suffixIcon: IconButton(
-                              icon: Icon(
-                                Icons.person,
-                                color: AppTheme.primaryColor.withOpacity(0.7),
-                                size: 20,
+                              icon: const Icon(
+                                Icons.person_outline,
+                                color: AppTheme.textSecondary,
+                                size: 18,
                               ),
                               onPressed: _pickContactForName,
                             ),
-                            border: UnderlineInputBorder(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: AppTheme.dividerColor.withOpacity(0.5),
+                                color: Colors.grey.shade300,
                               ),
                             ),
-                            enabledBorder: UnderlineInputBorder(
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: AppTheme.dividerColor.withOpacity(0.3),
+                                color: Colors.grey.shade300,
                               ),
                             ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
                                 color: AppTheme.primaryColor,
-                                width: 2,
+                                width: 1.5,
                               ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           ),
                           validator: (v) => v == null || v.trim().isEmpty ? 'مطلوب' : null,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 16),
                       ],
                       TextFormField(
                         controller: _amountController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          hintText: 'المبلغ',
-                          hintStyle: TextStyle(
-                            color: AppTheme.textSecondary.withOpacity(0.7),
-                            fontSize: 16,
+                          labelText: 'المبلغ',
+                          labelStyle: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 14,
                           ),
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             Icons.attach_money,
-                            color: AppTheme.primaryColor.withOpacity(0.7),
-                            size: 20,
+                            color: AppTheme.textSecondary,
+                            size: 18,
                           ),
-                          border: UnderlineInputBorder(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: AppTheme.dividerColor.withOpacity(0.5),
+                              color: Colors.grey.shade300,
                             ),
                           ),
-                          enabledBorder: UnderlineInputBorder(
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: AppTheme.dividerColor.withOpacity(0.3),
+                              color: Colors.grey.shade300,
                             ),
                           ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
                               color: AppTheme.primaryColor,
-                              width: 2,
+                              width: 1.5,
                             ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
                         validator: (v) => v == null || v.trim().isEmpty ? 'مطلوب' : null,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 16),
                       // Transaction type selection
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Row(
                           children: [
                             Expanded(
@@ -365,14 +382,13 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                   decoration: BoxDecoration(
                                     color: _selectedType == 'debit'
                                         ? AppTheme.debitColor.withOpacity(0.1)
-                                        : Colors.transparent,
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: _selectedType == 'debit'
-                                            ? AppTheme.debitColor
-                                            : AppTheme.dividerColor.withOpacity(0.3),
-                                        width: _selectedType == 'debit' ? 2 : 1,
-                                      ),
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: _selectedType == 'debit'
+                                          ? AppTheme.debitColor
+                                          : Colors.grey.shade300,
+                                      width: _selectedType == 'debit' ? 1.5 : 1,
                                     ),
                                   ),
                                   child: Row(
@@ -382,7 +398,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                         Icons.arrow_upward,
                                         color: _selectedType == 'debit'
                                             ? AppTheme.debitColor
-                                            : AppTheme.textSecondary.withOpacity(0.6),
+                                            : AppTheme.textSecondary,
                                         size: 16,
                                       ),
                                       const SizedBox(width: 6),
@@ -395,7 +411,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                           fontWeight: _selectedType == 'debit'
                                               ? FontWeight.w600
                                               : FontWeight.w500,
-                                          fontSize: 15,
+                                          fontSize: 14,
                                         ),
                                       ),
                                     ],
@@ -412,14 +428,13 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                   decoration: BoxDecoration(
                                     color: _selectedType == 'credit'
                                         ? AppTheme.creditColor.withOpacity(0.1)
-                                        : Colors.transparent,
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: _selectedType == 'credit'
-                                            ? AppTheme.creditColor
-                                            : AppTheme.dividerColor.withOpacity(0.3),
-                                        width: _selectedType == 'credit' ? 2 : 1,
-                                      ),
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: _selectedType == 'credit'
+                                          ? AppTheme.creditColor
+                                          : Colors.grey.shade300,
+                                      width: _selectedType == 'credit' ? 1.5 : 1,
                                     ),
                                   ),
                                   child: Row(
@@ -429,7 +444,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                         Icons.arrow_downward,
                                         color: _selectedType == 'credit'
                                             ? AppTheme.creditColor
-                                            : AppTheme.textSecondary.withOpacity(0.6),
+                                            : AppTheme.textSecondary,
                                         size: 16,
                                       ),
                                       const SizedBox(width: 6),
@@ -442,7 +457,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                           fontWeight: _selectedType == 'credit'
                                               ? FontWeight.w600
                                               : FontWeight.w500,
-                                          fontSize: 15,
+                                          fontSize: 14,
                                         ),
                                       ),
                                     ],
@@ -475,33 +490,38 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         controller: _detailsController,
                         maxLines: 3,
                         decoration: InputDecoration(
-                          hintText: 'التفاصيل (اختياري)',
-                          hintStyle: TextStyle(
-                            color: AppTheme.textSecondary.withOpacity(0.7),
-                            fontSize: 16,
+                          labelText: 'التفاصيل (اختياري)',
+                          labelStyle: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 14,
                           ),
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             Icons.description,
-                            color: AppTheme.primaryColor.withOpacity(0.7),
-                            size: 20,
+                            color: AppTheme.textSecondary,
+                            size: 18,
                           ),
-                          border: UnderlineInputBorder(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: AppTheme.dividerColor.withOpacity(0.5),
+                              color: Colors.grey.shade300,
                             ),
                           ),
-                          enabledBorder: UnderlineInputBorder(
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: AppTheme.dividerColor.withOpacity(0.3),
+                              color: Colors.grey.shade300,
                             ),
                           ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
                               color: AppTheme.primaryColor,
-                              width: 2,
+                              width: 1.5,
                             ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -605,37 +625,46 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         decoration: InputDecoration(
-                          hintText: 'رقم الهاتف (اختياري)',
-                          hintStyle: TextStyle(
-                            color: AppTheme.textSecondary.withOpacity(0.7),
-                            fontSize: 16,
+                          labelText: 'رقم الهاتف (اختياري)',
+                          labelStyle: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 14,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.phone,
+                            color: AppTheme.textSecondary,
+                            size: 18,
                           ),
                           suffixIcon: IconButton(
-                            icon: Icon(
-                              Icons.contact_phone,
-                              color: AppTheme.primaryColor.withOpacity(0.7),
-                              size: 20,
+                            icon: const Icon(
+                              Icons.contacts,
+                              color: AppTheme.textSecondary,
+                              size: 18,
                             ),
                             onPressed: _pickContact,
-                            tooltip: 'اختيار من جهات الاتصال',
                           ),
-                          border: UnderlineInputBorder(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: AppTheme.dividerColor.withOpacity(0.5),
+                              color: Colors.grey.shade300,
                             ),
                           ),
-                          enabledBorder: UnderlineInputBorder(
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: AppTheme.dividerColor.withOpacity(0.3),
+                              color: Colors.grey.shade300,
                             ),
                           ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
                               color: AppTheme.primaryColor,
-                              width: 2,
+                              width: 1.5,
                             ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
                       ),
                     ],
@@ -645,18 +674,12 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
             ),
             // Actions
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppTheme.backgroundColor,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                ),
-                border: Border(
-                  top: BorderSide(
-                    color: AppTheme.dividerColor.withOpacity(0.2),
-                    width: 1,
-                  ),
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
                 ),
               ),
               child: Row(
@@ -665,35 +688,30 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                     child: TextButton(
                       onPressed: () => Navigator.of(context).pop(false),
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                        minimumSize: const Size(0, 32),
-                        backgroundColor: Colors.transparent,
+                        backgroundColor: Colors.grey.shade100,
                         foregroundColor: AppTheme.textSecondary,
-                        overlayColor: AppTheme.textSecondary.withOpacity(0.1),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'إلغاء',
                         style: TextStyle(
-                          color: AppTheme.textSecondary,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          fontSize: 15,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
-                    flex: 2,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _save,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        minimumSize: const Size(0, 32),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -701,19 +719,18 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       ),
                       child: _isLoading
                           ? const SizedBox(
-                              height: 20,
-                              width: 20,
+                              height: 18,
+                              width: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : Text(
+                          : const Text(
                               'حفظ',
                               style: TextStyle(
-                                color: Colors.white,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                fontSize: 16,
                               ),
                             ),
                     ),
@@ -756,29 +773,38 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       child: DropdownButtonFormField<String>(
         value: _selectedCurrency,
         decoration: InputDecoration(
-          hintText: 'العملة',
-          hintStyle: TextStyle(
-            fontSize: 16,
-            color: AppTheme.textSecondary.withOpacity(0.7),
+          labelText: 'العملة',
+          labelStyle: const TextStyle(
+            color: AppTheme.textSecondary,
+            fontSize: 14,
           ),
-          border: UnderlineInputBorder(
+          prefixIcon: const Icon(
+            Icons.monetization_on,
+            color: AppTheme.textSecondary,
+            size: 18,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(
-              color: AppTheme.dividerColor.withOpacity(0.5),
+              color: Colors.grey.shade300,
             ),
           ),
-          enabledBorder: UnderlineInputBorder(
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(
-              color: AppTheme.dividerColor.withOpacity(0.3),
+              color: Colors.grey.shade300,
             ),
           ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(
               color: AppTheme.primaryColor,
-              width: 2,
+              width: 1.5,
             ),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
-          isDense: false,
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
         items: items,
         onChanged: (val) => setState(() => _selectedCurrency = val),
