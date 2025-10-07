@@ -62,6 +62,7 @@ class HomeScreenState extends State<HomeScreen> {
   // State for category navigation
   int _selectedCategoryIndex = 0;
   late PageController _pageController;
+  ScrollController? _categoryScrollController;
   bool _isDrawerOpen = false;
   
   // State for selection mode
@@ -177,6 +178,7 @@ class HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    _categoryScrollController = ScrollController();
     loadData();
     // Listen for category events
     _categoryEventSubscription = CategoryEventBus().events.listen((event) {
@@ -226,11 +228,25 @@ class HomeScreenState extends State<HomeScreen> {
         _selectedCategoryIndex = newSelectedIndex;
       });
       
-      // Ensure PageController is synchronized with the selected index
+      // Ensure PageController and CategoryScrollController are synchronized with the selected index
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _pageController.hasClients) {
           // Always jump to the selected index to ensure proper synchronization
           _pageController.jumpToPage(_selectedCategoryIndex);
+        }
+        
+        // Scroll category navigation to show selected category
+        if (mounted && _categoryScrollController?.hasClients == true && _state.categories.isNotEmpty) {
+          final itemWidth = 120.0; // Approximate width of each category item
+          final targetOffset = _selectedCategoryIndex * itemWidth;
+          final maxScrollExtent = _categoryScrollController!.position.maxScrollExtent;
+          final scrollOffset = targetOffset > maxScrollExtent ? maxScrollExtent : targetOffset;
+          
+          _categoryScrollController!.animateTo(
+            scrollOffset,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
         }
       });
     } catch (e) {
@@ -245,6 +261,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _categoryScrollController?.dispose();
     _categoryEventSubscription?.cancel();
     super.dispose();
   }
@@ -429,6 +446,7 @@ class HomeScreenState extends State<HomeScreen> {
       height: 40,
       margin: const EdgeInsets.only(top: 8, bottom: 8),
       child: ListView.builder(
+        controller: _categoryScrollController,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         itemCount: _state.categories.length,
