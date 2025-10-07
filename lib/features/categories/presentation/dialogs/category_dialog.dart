@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:debit_credit_app/core/models/category.dart';
+import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 class CategoryDialog extends StatefulWidget {
   final CategoryModel? category;
@@ -31,6 +32,9 @@ class _CategoryDialogState extends State<CategoryDialog> {
     final isEditing = widget.category != null;
     
     return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       title: Text(isEditing ? 'تعديل الفئة' : 'إضافة فئة جديدة'),
       content: Form(
         key: _formKey,
@@ -39,9 +43,20 @@ class _CategoryDialogState extends State<CategoryDialog> {
           children: [
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'اسم الفئة', 
-                border: OutlineInputBorder()
+              decoration: InputDecoration(
+                labelText: 'اسم الفئة',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppTheme.primaryColor),
+                ),
               ),
               validator: (value) => (value == null || value.trim().isEmpty) 
                   ? 'يرجى إدخال اسم الفئة' 
@@ -52,11 +67,23 @@ class _CategoryDialogState extends State<CategoryDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context), 
-          child: const Text('إلغاء')
+          onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text('إلغاء'),
         ),
         ElevatedButton(
           onPressed: _submitForm,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryColor,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
           child: Text(isEditing ? 'تعديل' : 'إضافة'),
         ),
       ],

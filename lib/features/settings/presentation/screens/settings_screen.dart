@@ -26,21 +26,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           'الإعدادات',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
+            color: Colors.black87,
           ),
         ),
-        backgroundColor: AppTheme.backgroundColor,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          color: AppTheme.primaryColor,
+          icon: Icon(Icons.arrow_back_ios, color: Colors.grey.shade700, size: 20),
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context,
@@ -326,19 +326,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,17 +336,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
+                Icon(
+                  icon,
+                  color: Colors.grey.shade600,
+                  size: 20,
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -385,17 +367,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Color? textColor,
   }) {
     return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: (textColor ?? AppTheme.primaryColor).withOpacity(0.08),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          icon,
-          color: textColor ?? AppTheme.primaryColor,
-          size: 20,
-        ),
+      leading: Icon(
+        icon,
+        color: textColor ?? Colors.grey.shade600,
+        size: 20,
       ),
       title: Text(
         title,
@@ -413,8 +388,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       trailing: Icon(
         Icons.arrow_forward_ios,
-        size: 16,
-        color: AppTheme.textTertiary,
+        size: 14,
+        color: Colors.grey.shade400,
       ),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
@@ -429,17 +404,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required ValueChanged<bool> onChanged,
   }) {
     return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          icon,
-          color: AppTheme.primaryColor,
-          size: 20,
-        ),
+      leading: Icon(
+        icon,
+        color: Colors.grey.shade600,
+        size: 20,
       ),
       title: Text(
         title,
@@ -473,17 +441,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required ValueChanged<String?> onChanged,
   }) {
     return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          icon,
-          color: AppTheme.primaryColor,
-          size: 20,
-        ),
+      leading: Icon(
+        icon,
+        color: Colors.grey.shade600,
+        size: 20,
       ),
       title: Text(
         title,
@@ -525,11 +486,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: const Text('قريباً'),
         content: const Text('هذه الميزة ستكون متاحة في التحديث القادم.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             child: const Text('حسناً'),
           ),
         ],
@@ -541,11 +510,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: const Text('تنظيف البيانات'),
         content: const Text('هل تريد حذف البيانات المؤقتة؟ هذا لن يؤثر على بياناتك الأساسية.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
@@ -561,6 +538,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('تنظيف', style: TextStyle(color: Colors.white)),
           ),
@@ -573,6 +553,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: const Text(
           'تحذير!',
           style: TextStyle(color: AppTheme.errorColor),
@@ -583,6 +566,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
@@ -598,6 +586,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.errorColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('حذف نهائي', style: TextStyle(color: Colors.white)),
           ),

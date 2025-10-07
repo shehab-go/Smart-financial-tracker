@@ -19,16 +19,8 @@ class CategoryListItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
         leading: Icon(
@@ -46,11 +38,11 @@ class CategoryListItem extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.edit_rounded, color: AppTheme.primaryColor),
+              icon: Icon(Icons.edit_outlined, color: Colors.grey.shade600, size: 20),
               onPressed: onEdit,
             ),
             IconButton(
-              icon: const Icon(Icons.delete_rounded, color: Colors.red),
+              icon: Icon(Icons.delete_outline, color: Colors.grey.shade600, size: 20),
               onPressed: onDelete,
             ),
           ],

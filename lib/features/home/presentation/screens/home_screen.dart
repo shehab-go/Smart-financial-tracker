@@ -364,27 +364,14 @@ class HomeScreenState extends State<HomeScreen> {
               ],
             ),
       floatingActionButton: _state.categories.isNotEmpty
-          ? Container(
-              decoration: BoxDecoration(
-                gradient: AppTheme.primaryGradient,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: FloatingActionButton(
-                onPressed: () => _navigateToCreateAccount(_state.categories[_selectedCategoryIndex].name),
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                child: const Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 28,
-                ),
+          ? FloatingActionButton(
+              onPressed: () => _navigateToCreateAccount(_state.categories[_selectedCategoryIndex].name),
+              backgroundColor: AppTheme.primaryColor,
+              elevation: 2,
+              child: const Icon(
+                Icons.add,
+                color: Colors.white,
+                size: 24,
               ),
             )
           : null,

@@ -68,50 +68,40 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             ),
           ],
         ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                const CategoryHeader(),
-                Expanded(
-                  child: state.categories.isEmpty
-                      ? const CategoryEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: state.categories.length,
-                          itemBuilder: (context, index) {
-                            final category = state.categories[index];
-                            return CategoryListItem(
-                              category: category,
-                              onEdit: () => _editCategory(category),
-                              onDelete: () => _deleteCategory(category),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: _addCategory,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 28,
-          ),
+      body: Container(
+        color: Colors.white,
+        child: state.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: [
+                  const CategoryHeader(),
+                  Expanded(
+                    child: state.categories.isEmpty
+                        ? const CategoryEmptyState()
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: state.categories.length,
+                            itemBuilder: (context, index) {
+                              final category = state.categories[index];
+                              return CategoryListItem(
+                                category: category,
+                                onEdit: () => _editCategory(category),
+                                onDelete: () => _deleteCategory(category),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addCategory,
+        backgroundColor: AppTheme.primaryColor,
+        elevation: 0,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 24,
         ),
       ),
     ),
@@ -151,6 +141,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: const Text('حذف الفئة'),
         content: Text(
           'هل أنت متأكد من حذف فئة "${category.name}"؟\n\n'
@@ -158,13 +151,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), 
-            child: const Text('إلغاء')
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('إلغاء'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red, 
-              foregroundColor: Colors.white
+              backgroundColor: AppTheme.errorColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () async {
               Navigator.pop(context);

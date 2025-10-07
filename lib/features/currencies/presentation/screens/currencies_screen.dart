@@ -48,9 +48,15 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إدارة العملات'),
-        backgroundColor: AppTheme.backgroundColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'إدارة العملات',
+          style: TextStyle(
+            color: AppTheme.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: AppTheme.textPrimary,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
@@ -78,28 +84,19 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
+      body: Container(
+        color: Colors.white,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
               children: [
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.grey.shade300,
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
                   ),
                   child: Column(
                     children: [
@@ -141,19 +138,8 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                             margin: const EdgeInsets.all(32),
                             padding: const EdgeInsets.all(32),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Colors.grey.shade50,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.grey.shade300,
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -208,29 +194,18 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                           itemBuilder: (context, index) {
                             final currency = _currencies[index];
                             return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
+                              margin: const EdgeInsets.only(bottom: 8),
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.grey.shade300,
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: ListTile(
                                 contentPadding: const EdgeInsets.all(16),
                                 leading: Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor.withOpacity(0.08),
+                                  width: 40,
+                                  height: 40,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Center(
@@ -238,8 +213,8 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                                       currency.name.substring(0, 2).toUpperCase(),
                                       style: TextStyle(
                                         color: AppTheme.primaryColor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
                                       ),
                                     ),
                                   ),
@@ -255,27 +230,13 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Container(
-                                      margin: const EdgeInsets.only(left: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: IconButton(
-                                        icon: const Icon(Icons.edit, color: Colors.blue),
-                                        onPressed: () => _editCurrency(currency),
-                                      ),
+                                    IconButton(
+                                      icon: Icon(Icons.edit_outlined, color: Colors.grey.shade600, size: 20),
+                                      onPressed: () => _editCurrency(currency),
                                     ),
-                                    Container(
-                                      margin: const EdgeInsets.only(left: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: IconButton(
-                                        icon: const Icon(Icons.delete, color: Colors.red),
-                                        onPressed: () => _deleteCurrency(currency),
-                                      ),
+                                    IconButton(
+                                      icon: Icon(Icons.delete_outline, color: Colors.grey.shade600, size: 20),
+                                      onPressed: () => _deleteCurrency(currency),
                                     ),
                                   ],
                                 ),
@@ -286,15 +247,16 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                 ),
               ],
             ),
+        ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton(
         onPressed: _addCurrency,
         backgroundColor: AppTheme.primaryColor,
-        elevation: 2,
+        elevation: 0,
         child: const Icon(
           Icons.add,
           color: Colors.white,
-          size: 28,
+          size: 24,
         ),
       ),
     );
@@ -312,13 +274,12 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Container(
           decoration: BoxDecoration(
-            gradient: AppTheme.cardGradient,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: AppTheme.cardShadow,
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -326,28 +287,28 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
               // Header
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
+                  color: Colors.grey.shade50,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
                   ),
                 ),
                 child: Column(
                   children: [
                     Icon(
                       isEditing ? Icons.edit : Icons.add,
-                      color: Colors.white,
-                      size: 32,
+                      color: AppTheme.primaryColor,
+                      size: 28,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       isEditing ? 'تعديل العملة' : 'إضافة عملة جديدة',
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -367,7 +328,16 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                           hintText: 'ريال سعودي',
                           prefixIcon: const Icon(Icons.translate),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: AppTheme.primaryColor),
                           ),
                         ),
                         validator: (value) => (value == null || value.trim().isEmpty) ? 'يرجى إدخال اسم العملة' : null,
@@ -383,7 +353,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                               style: TextButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                               child: const Text('إلغاء'),
@@ -422,8 +392,10 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                               },
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
+                                backgroundColor: AppTheme.primaryColor,
+                                foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                               child: Text(isEditing ? 'تعديل' : 'إضافة'),
@@ -448,12 +420,29 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: const Text('حذف العملة'),
         content: Text('هل أنت متأكد من حذف عملة "${currency.name}"؟'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('إلغاء'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             onPressed: () async {
               try {
                 await DatabaseHelper().deleteCurrency(currency.id!);

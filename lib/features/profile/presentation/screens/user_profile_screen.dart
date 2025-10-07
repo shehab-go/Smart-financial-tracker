@@ -172,15 +172,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           title: const Text(
             'تعديل الملف الشخصي',
             style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 20,
-              color: Colors.black87,
+              fontSize: 14,
             ),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: AppTheme.backgroundColor,
+          foregroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.black87, size: 20),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryColor),
             onPressed: () {
               Navigator.pushAndRemoveUntil(
                 context,
@@ -265,10 +264,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withOpacity(0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 2),
                             ),

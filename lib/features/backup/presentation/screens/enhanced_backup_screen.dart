@@ -45,8 +45,11 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const AlertDialog(
-          content: Row(
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: const Row(
             children: [
               CircularProgressIndicator(),
               SizedBox(width: 16),
@@ -94,6 +97,9 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: const Text('تأكيد الاستعادة'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -265,16 +271,30 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: const Text('تأكيد الحذف'),
         content: Text('هل تريد حذف النسخة الاحتياطية "$fileName"؟\n\nلا يمكن التراجع عن هذا الإجراء.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             child: const Text('حذف'),
           ),
         ],
@@ -329,10 +349,11 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: AppTheme.backgroundColor,
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87,
+          elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
+            icon: Icon(Icons.arrow_back_ios, color: Colors.grey.shade700, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
           title: const Text('إدارة النسخ الاحتياطية المتقدمة'),
@@ -344,15 +365,30 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     title: const Text('تنظيف النسخ القديمة'),
                     content: const Text('سيتم الاحتفاظ بآخر 10 نسخ احتياطية وحذف الباقي.\n\nهل تريد المتابعة؟'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
+                        style: TextButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
                         child: const Text('إلغاء'),
                       ),
                       ElevatedButton(
                         onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
                         child: const Text('تنظيف'),
                       ),
                     ],
@@ -424,16 +460,8 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
                   Container(
                     margin: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: ListTile(
                       leading: Icon(Icons.folder, color: AppTheme.primaryColor),
@@ -458,16 +486,8 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
 
                       return Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: ExpansionTile(
                           leading: Icon(
@@ -596,23 +616,11 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
             );
           },
         ),
-        floatingActionButton: Container(
-          decoration: BoxDecoration(
-            gradient: _isProcessing ? null : AppTheme.primaryGradient,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: _isProcessing ? null : [
-              BoxShadow(
-                color: AppTheme.primaryColor.withOpacity(0.4),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: FloatingActionButton.extended(
-            heroTag: 'create_backup',
-            onPressed: _isProcessing ? null : _createBackup,
-            backgroundColor: _isProcessing ? Colors.grey.shade300 : Colors.transparent,
-            elevation: 0,
+        floatingActionButton: FloatingActionButton.extended(
+          heroTag: 'create_backup',
+          onPressed: _isProcessing ? null : _createBackup,
+          backgroundColor: _isProcessing ? Colors.grey.shade300 : AppTheme.primaryColor,
+          elevation: 0,
             label: Text(
               'إنشاء نسخة',
               style: TextStyle(
@@ -636,8 +644,9 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
                   ),
           ),
         ),
-      ),
-    );
+      );
+
+    
   }
 
   Widget _buildInfoRow(String label, String value) {
