@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/main_navigation.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
@@ -11,9 +12,10 @@ class PrivacyScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('سياسة الخصوصية'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          backgroundColor: AppTheme.backgroundColor,
+          foregroundColor: Colors.white,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryColor),
             onPressed: () {
               Navigator.pushAndRemoveUntil(
                 context,
@@ -31,22 +33,66 @@ class PrivacyScreen extends StatelessWidget {
           ),
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
+              // Header Card
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.grey.shade300,
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
                 child: Column(
                   children: [
-                    Icon(Icons.privacy_tip, size: 64, color: Theme.of(context).primaryColor),
-                    const SizedBox(height: 16),
-                    Text('سياسة الخصوصية', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
-                    const SizedBox(height: 8),
-                    Text('نحن نحترم خصوصيتك ونحمي بياناتك', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600])),
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.privacy_tip,
+                        color: AppTheme.primaryColor,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'سياسة الخصوصية',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'نحن نحترم خصوصيتك ونحمي بياناتك',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 8),
               _buildSection(
                 context,
                 'جمع البيانات',
@@ -89,26 +135,51 @@ class PrivacyScreen extends StatelessWidget {
                 'قد نقوم بتحديث سياسة الخصوصية من وقت لآخر. أي تغييرات ستكون واضحة ومعلنة في التطبيق. استمرار استخدامك للتطبيق يعني موافقتك على السياسة المحدثة.',
                 Icons.update,
               ),
-              const SizedBox(height: 32),
-              Center(
-                child: Column(
+              const SizedBox(height: 8),
+              // Security Guarantee Card
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.green.shade200,
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.green.withOpacity(0.3))),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.verified_user, color: Colors.green, size: 24),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text('بياناتك آمنة ومحمية 100%', style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold)),
-                          ),
-                        ],
+                    const Icon(Icons.verified_user, color: Colors.green, size: 20),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'بياناتك آمنة ومحمية 100%',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text('آخر تحديث: يناير 2024', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
                   ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: Text(
+                  'آخر تحديث: يناير 2024',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ],
@@ -119,26 +190,65 @@ class PrivacyScreen extends StatelessWidget {
   }
 
   Widget _buildSection(BuildContext context, String title, String content, IconData icon) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: Theme.of(context).primaryColor, size: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(content, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6)),
-          ],
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            content,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppTheme.textSecondary,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

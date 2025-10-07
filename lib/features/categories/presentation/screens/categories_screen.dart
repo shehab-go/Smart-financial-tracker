@@ -54,10 +54,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: AppTheme.backgroundColor,
+          foregroundColor: Colors.white,
           title: const Text('إدارة الفئات'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
             onPressed: () => Navigator.of(context).pop(_hasChanges),
           ),
           actions: [

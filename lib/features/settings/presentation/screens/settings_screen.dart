@@ -4,7 +4,6 @@ import 'package:debit_credit_app/features/about/presentation/screens/about_scree
 import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
-import 'package:debit_credit_app/features/settings/presentation/screens/flexible_update_screen.dart';
 import 'package:debit_credit_app/core/widgets/main_navigation.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -36,10 +35,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             fontSize: 24,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.backgroundColor,
+        foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryColor),
+          icon: const Icon(Icons.arrow_back_ios),
+          color: AppTheme.primaryColor,
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context,
@@ -264,19 +265,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
                 _buildSettingsTile(
-                  icon: Icons.system_update_rounded,
-                  title: 'تحديث التطبيق',
-                  subtitle: 'البحث عن تحديثات جديدة للتطبيق',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const FlexibleUpdateScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildSettingsTile(
                   icon: Icons.privacy_tip_rounded,
                   title: 'سياسة الخصوصية',
                   subtitle: 'اطلع على سياسة الخصوصية',
@@ -339,7 +327,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -358,7 +350,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    color: AppTheme.primaryColor.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -396,7 +388,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: (textColor ?? AppTheme.primaryColor).withOpacity(0.1),
+          color: (textColor ?? AppTheme.primaryColor).withOpacity(0.08),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
@@ -440,7 +432,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.1),
+          color: AppTheme.primaryColor.withOpacity(0.08),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
@@ -484,7 +476,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.1),
+          color: AppTheme.primaryColor.withOpacity(0.08),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(

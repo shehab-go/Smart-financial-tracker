@@ -117,8 +117,8 @@ class _AppDrawerState extends State<AppDrawer> {
                                        decoration: BoxDecoration(
                                          color: Colors.grey.shade100,
                                          border: Border.all(
-                                           color: Colors.grey.shade300,
-                                           width: 1,
+                                           color: AppTheme.primaryColor.withOpacity(0.3),
+                                           width: 1.5,
                                          ),
                                          borderRadius: BorderRadius.circular(8),
                                        ),
@@ -186,13 +186,19 @@ class _AppDrawerState extends State<AppDrawer> {
                                      // Edit Profile Button
                                      Container(
                                        margin: const EdgeInsets.only(left: 8),
-                                       child: Material(
-                                         color: Colors.grey.shade200,
-                                         shape: RoundedRectangleBorder(
-                                           borderRadius: BorderRadius.circular(6),
+                                       decoration: BoxDecoration(
+                                         color: AppTheme.primaryColor.withOpacity(0.1),
+                                         borderRadius: BorderRadius.circular(8),
+                                         border: Border.all(
+                                           color: AppTheme.primaryColor.withOpacity(0.3),
+                                           width: 1,
                                          ),
+                                       ),
+                                       child: Material(
+                                         color: Colors.transparent,
+                                         borderRadius: BorderRadius.circular(8),
                                          child: InkWell(
-                                           borderRadius: BorderRadius.circular(6),
+                                           borderRadius: BorderRadius.circular(8),
                                            onTap: () async {
                                              final result = await Navigator.push(
                                                context,
@@ -204,10 +210,10 @@ class _AppDrawerState extends State<AppDrawer> {
                                              }
                                            },
                                            child: Container(
-                                             padding: const EdgeInsets.all(6),
+                                             padding: const EdgeInsets.all(8),
                                              child: Icon(
                                                Icons.edit_rounded,
-                                               color: Colors.grey.shade600,
+                                               color: AppTheme.primaryColor,
                                                size: 18,
                                              ),
                                            ),
@@ -461,19 +467,6 @@ class _AppDrawerState extends State<AppDrawer> {
                         ),
                       ],
                     ],
-                  ),
-                ),
-                if (!isDisabled)
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 14,
-                    color: AppTheme.primaryColor,
                   ),
                 ),
               ],

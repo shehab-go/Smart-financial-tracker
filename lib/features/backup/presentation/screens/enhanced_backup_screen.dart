@@ -329,6 +329,12 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: AppTheme.backgroundColor,
+          foregroundColor: Colors.white,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
+            onPressed: () => Navigator.pop(context),
+          ),
           title: const Text('إدارة النسخ الاحتياطية المتقدمة'),
           actions: [
             IconButton(
@@ -415,13 +421,25 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
             return Column(
               children: [
                 if (_dirPath != null)
-                  Card(
+                  Container(
                     margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
                     child: ListTile(
-                      leading: const Icon(Icons.folder, color: Colors.blue),
+                      leading: Icon(Icons.folder, color: AppTheme.primaryColor),
                       title: const Text('مجلد النسخ الاحتياطية'),
                       subtitle: const Text('Download/FinanceApp/Backups'),
-                      trailing: const Icon(Icons.open_in_new),
+                      trailing: Icon(Icons.open_in_new, color: AppTheme.primaryColor),
                       onTap: () => OpenFile.open(_dirPath!),
                     ),
                   ),
@@ -438,7 +456,19 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
                       final lastModified = backupInfo['lastModified'] as DateTime;
                       final sizeKB = backupInfo['sizeKB'] as String;
 
-                      return Card(
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: ExpansionTile(
                           leading: Icon(
                             Icons.archive,

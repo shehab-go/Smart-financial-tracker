@@ -61,11 +61,6 @@ android {
         targetSdk = 35
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
-        
-        // Enable NDK debug symbols
-        ndk {
-            debugSymbolLevel 'SYMBOL_TABLE'
-        }
     }
 
     signingConfigs {
@@ -80,23 +75,9 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.release
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            
-            // Enable debug symbols for crash reporting
-            debuggable false
-            jniDebuggable false
-            renderscriptDebuggable false
-            
-            // Generate mapping file for deobfuscation
-            consumerProguardFiles 'consumer-rules.pro'
-        }
-        
-        debug {
-            debuggable true
             minifyEnabled false
             shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

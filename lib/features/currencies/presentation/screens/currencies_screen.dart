@@ -49,14 +49,12 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('إدارة العملات'),
+        backgroundColor: AppTheme.backgroundColor,
+        foregroundColor: Colors.white,
         elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: AppTheme.primaryGradient,
-          ),
-        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios),
+          color: AppTheme.primaryColor,
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context,
@@ -75,11 +73,8 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            color: AppTheme.primaryColor,
             onPressed: _loadCurrencies,
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.2),
-              foregroundColor: Colors.white,
-            ),
           ),
         ],
       ),
@@ -92,16 +87,26 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    gradient: AppTheme.cardGradient,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: AppTheme.cardShadow,
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.grey.shade300,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          color: AppTheme.primaryColor.withOpacity(0.08),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -136,9 +141,19 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                             margin: const EdgeInsets.all(32),
                             padding: const EdgeInsets.all(32),
                             decoration: BoxDecoration(
-                              gradient: AppTheme.cardGradient,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: AppTheme.cardShadow,
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.grey.shade300,
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -146,7 +161,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(20),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor.withOpacity(0.1),
+                                    color: AppTheme.primaryColor.withOpacity(0.08),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
@@ -195,31 +210,34 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                             return Container(
                               margin: const EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
-                                gradient: AppTheme.cardGradient,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: AppTheme.cardShadow,
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
                               child: ListTile(
                                 contentPadding: const EdgeInsets.all(16),
                                 leading: Container(
-                                  width: 56,
-                                  height: 56,
+                                  width: 50,
+                                  height: 50,
                                   decoration: BoxDecoration(
-                                    gradient: AppTheme.primaryGradient,
+                                    color: AppTheme.primaryColor.withOpacity(0.08),
                                     shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppTheme.primaryColor.withOpacity(0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
                                   ),
                                   child: Center(
                                     child: Text(
-                                      currency.name,
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      currency.name.substring(0, 2).toUpperCase(),
+                                      style: TextStyle(
+                                        color: AppTheme.primaryColor,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
                                       ),
@@ -269,27 +287,14 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
               ],
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: _addCurrency,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 28,
-          ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addCurrency,
+        backgroundColor: AppTheme.primaryColor,
+        elevation: 2,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 28,
         ),
       ),
     );
