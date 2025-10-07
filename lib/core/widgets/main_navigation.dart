@@ -57,11 +57,11 @@ class _MainNavigationState extends State<MainNavigation> {
             selectedItemColor: AppTheme.primaryColor,
             unselectedItemColor: AppTheme.textSecondary,
             selectedLabelStyle: const TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
             unselectedLabelStyle: const TextStyle(
-              fontSize: 12,
+              fontSize: 16,
               fontWeight: FontWeight.normal,
             ),
             elevation: 0,
@@ -69,7 +69,7 @@ class _MainNavigationState extends State<MainNavigation> {
               BottomNavigationBarItem(
                 icon: Icon(Icons.account_balance_wallet_rounded),
                 activeIcon: Icon(Icons.account_balance_wallet_rounded),
-                label: 'ديون',
+                label: 'الديون',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.receipt_long_rounded),
