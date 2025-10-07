@@ -13,7 +13,7 @@ import 'database_helper.dart';
 /// - Detailed logging is provided for debugging and monitoring
 class MigrationHelper {
   /// Current database schema version
-  static const int currentVersion = 9;
+  static const int currentVersion = 10;
   
   // Constants for default values and common strings
   static const String defaultCurrencyName = 'محلي';
@@ -77,6 +77,10 @@ class MigrationHelper {
       if (oldVersion < 9) {
         print('[MigrationHelper] Applying migration to version 9');
         await _migrateToV9(db);
+      }
+      if (oldVersion < 10) {
+        print('[MigrationHelper] Applying migration to version 10');
+        await _migrateToV10(db);
       }
       
       print('[MigrationHelper] Database migration completed successfully');
@@ -239,23 +243,30 @@ class MigrationHelper {
         // Extract default value if present
         defaultValue = _extractDefaultValue(columnDefinition);
         
-        // If column is NOT NULL, add it as nullable first
+        // If column is NOT NULL, we need to handle it carefully
         if (columnDefinition.toUpperCase().contains('NOT NULL')) {
-          // Remove NOT NULL from definition for initial addition
-          actualDefinition = columnDefinition.replaceAll(RegExp(r'NOT\s+NULL', caseSensitive: false), '').trim();
-          // Clean up any double spaces
-          actualDefinition = actualDefinition.replaceAll(RegExp(r'\s+'), ' ').trim();
+          if (defaultValue != null) {
+            // If we have a default value, we can keep the NOT NULL constraint
+            actualDefinition = columnDefinition;
+          } else {
+            // If no default value, remove NOT NULL for now
+            actualDefinition = columnDefinition.replaceAll(RegExp(r'NOT\s+NULL', caseSensitive: false), '').trim();
+            // Clean up any double spaces
+            actualDefinition = actualDefinition.replaceAll(RegExp(r'\s+'), ' ').trim();
+          }
         }
         
         // Add the column
         await db.execute('ALTER TABLE $tableName ADD COLUMN $columnName $actualDefinition');
-        print('[MigrationHelper] Added column $columnName to $tableName');
+        print('[MigrationHelper] Added column $columnName to $tableName with definition: $actualDefinition');
         
         // If there was a default value and the original was NOT NULL, update existing records
-        if (defaultValue != null && columnDefinition.toUpperCase().contains('NOT NULL')) {
+        if (defaultValue != null && columnDefinition.toUpperCase().contains('NOT NULL') && !actualDefinition.toUpperCase().contains('NOT NULL')) {
           await db.execute('UPDATE $tableName SET $columnName = ? WHERE $columnName IS NULL', [defaultValue]);
           print('[MigrationHelper] Updated existing records in $tableName with default value for $columnName');
         }
+      } else {
+        print('[MigrationHelper] Column $columnName already exists in $tableName, skipping');
       }
     } catch (e) {
       print('[MigrationHelper] ERROR: Failed to add column $columnName to $tableName: $e');
@@ -498,6 +509,30 @@ class MigrationHelper {
       print('[MigrationHelper] Successfully added category and currency columns to expenses table');
     } catch (e) {
       print('[MigrationHelper] ERROR in _migrateToV9: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 10: Fix currencyName column issues for existing users
+  static Future<void> _migrateToV10(Database db) async {
+    try {
+      // Ensure currencyName column exists and has proper default values
+      await _addColumnIfNotExists(db, 'accounts', 'currencyName', 'TEXT NOT NULL DEFAULT "محلي"');
+      
+      // Update any accounts that might have null currencyName values
+      await db.execute('''
+        UPDATE accounts 
+        SET currencyName = 'محلي' 
+        WHERE currencyName IS NULL OR currencyName = ''
+      ''');
+      
+      // Verify the accounts table structure
+      final tableInfo = await db.rawQuery('PRAGMA table_info(accounts)');
+      print('[MigrationHelper] Accounts table structure after v10 migration: $tableInfo');
+      
+      print('[MigrationHelper] Successfully completed migration to v10 - currencyName column fixed');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV10: $e');
       rethrow;
     }
   }

@@ -25,7 +25,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _createDatabase,
       onUpgrade: MigrationHelper.migrate,
     );
