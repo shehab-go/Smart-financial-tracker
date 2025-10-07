@@ -447,8 +447,10 @@ class _AppDrawerState extends State<AppDrawer> {
                         const SizedBox(height: 4),
                         Text(
                           subtitle,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          style: TextStyle(
                             color: isDisabled ? Colors.grey.shade400 : AppTheme.textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
                             height: 1.3,
                           ),
                         ),
@@ -494,7 +496,8 @@ class _AppDrawerState extends State<AppDrawer> {
           const SizedBox(width: 14),
           Text(
             title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            style: TextStyle(
+              fontSize: 15,
               fontWeight: FontWeight.w700,
               color: AppTheme.textPrimary,
               letterSpacing: 0.5,
