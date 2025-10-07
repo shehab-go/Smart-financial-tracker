@@ -151,10 +151,8 @@ class _AppDrawerState extends State<AppDrawer> {
                                                   : _userProfile?.businessName?.isNotEmpty == true
                                                       ? _userProfile!.businessName!
                                                       : 'إدارة الحسابات المالية',
-                                              style: TextStyle(
+                                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                                 color: Colors.grey.shade800,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -163,10 +161,8 @@ class _AppDrawerState extends State<AppDrawer> {
                                            if (_userProfile?.tradingActivity?.isNotEmpty == true)
                                              Text(
                                                _userProfile!.tradingActivity!,
-                                               style: TextStyle(
+                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                  color: Colors.grey.shade600,
-                                                 fontSize: 13,
-                                                 fontWeight: FontWeight.w400,
                                                ),
                                                maxLines: 1,
                                                overflow: TextOverflow.ellipsis,
@@ -174,10 +170,8 @@ class _AppDrawerState extends State<AppDrawer> {
                                            else
                                              Text(
                                                'تطبيق شامل لإدارة أموالك بذكاء',
-                                               style: TextStyle(
+                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                  color: Colors.grey.shade600,
-                                                 fontSize: 13,
-                                                 fontWeight: FontWeight.w400,
                                                ),
                                              ),
                                          ],
@@ -237,10 +231,8 @@ class _AppDrawerState extends State<AppDrawer> {
                                           const SizedBox(width: 6),
                                           Text(
                                             _userProfile!.phone!,
-                                            style: TextStyle(
+                                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                               color: Colors.grey.shade600,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w400,
                                             ),
                                           ),
                                         ],
@@ -424,9 +416,7 @@ class _AppDrawerState extends State<AppDrawer> {
                           Expanded(
                             child: Text(
                               title,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 color: isDisabled ? Colors.grey.shade500 : AppTheme.textPrimary,
                                 letterSpacing: 0.3,
                               ),
@@ -445,9 +435,8 @@ class _AppDrawerState extends State<AppDrawer> {
                               ),
                               child: Text(
                                 comingSoonTag,
-                                style: TextStyle(
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                   color: Colors.orange.shade700,
-                                  fontSize: 10,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -458,10 +447,8 @@ class _AppDrawerState extends State<AppDrawer> {
                         const SizedBox(height: 4),
                         Text(
                           subtitle,
-                          style: TextStyle(
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: isDisabled ? Colors.grey.shade400 : AppTheme.textSecondary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
                             height: 1.3,
                           ),
                         ),
@@ -507,8 +494,7 @@ class _AppDrawerState extends State<AppDrawer> {
           const SizedBox(width: 14),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 15,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppTheme.textPrimary,
               letterSpacing: 0.5,

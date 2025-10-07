@@ -46,13 +46,14 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
       appBar: AppBar(
         title: Text(
           'إدارة العملات',
-          style: TextStyle(
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: AppTheme.textPrimary,
-            fontWeight: FontWeight.w600,
           ),
         ),
         backgroundColor: Colors.white,
@@ -211,10 +212,8 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                                   child: Center(
                                     child: Text(
                                       currency.name.substring(0, 2).toUpperCase(),
-                                      style: TextStyle(
+                                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                         color: AppTheme.primaryColor,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
                                       ),
                                     ),
                                   ),
@@ -259,6 +258,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
           size: 24,
         ),
       ),
+    ),
     );
   }
 
@@ -305,10 +305,8 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                     const SizedBox(height: 8),
                     Text(
                       isEditing ? 'تعديل العملة' : 'إضافة عملة جديدة',
-                      style: const TextStyle(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: AppTheme.primaryColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],

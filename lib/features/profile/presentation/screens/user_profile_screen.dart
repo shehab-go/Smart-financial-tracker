@@ -169,11 +169,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
         appBar: AppBar(
-          title: const Text(
+          title: Text(
             'تعديل الملف الشخصي',
-            style: TextStyle(
-              fontSize: 14,
-            ),
+            style: Theme.of(context).textTheme.titleSmall,
           ),
           backgroundColor: AppTheme.backgroundColor,
           foregroundColor: Colors.white,
@@ -225,10 +223,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
                   label: Text(
                     _isSaving ? 'جاري الحفظ...' : 'حفظ',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+                    style: Theme.of(context).textTheme.labelLarge,
                   ),
                 ),
               ),
@@ -243,9 +238,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'جاري تحميل البيانات...',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.grey.shade600,
-                        fontSize: 16,
                       ),
                     ),
                   ],
@@ -339,17 +333,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               const SizedBox(height: 12),
                               Text(
                                 'الصورة الشخصية أو الشعار',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                   color: Colors.white,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'سيظهر في التقارير والمستندات الرسمية',
-                                style: TextStyle(
-                                  fontSize: 13,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: Colors.grey.shade600,
                                 ),
                                 textAlign: TextAlign.center,
@@ -544,9 +535,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               const SizedBox(width: 12),
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.black87,
                 ),
               ),
@@ -573,14 +562,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        labelStyle: TextStyle(
+        labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
           color: AppTheme.textSecondary,
-          fontWeight: FontWeight.w500,
-          fontSize: 14,
         ),
-        hintStyle: TextStyle(
+        hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: AppTheme.textSecondary.withOpacity(0.6),
-          fontSize: 13,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -629,8 +615,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
-      style: TextStyle(
-        fontSize: 15,
+      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
         color: AppTheme.textPrimary,
       ),
     );

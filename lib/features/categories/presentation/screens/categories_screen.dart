@@ -45,7 +45,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget build(BuildContext context) {
     final state = _controller.state;
 
-    return PopScope(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: PopScope(
       canPop: false,
       onPopInvoked: (didPop) async {
         if (!didPop) {
@@ -105,6 +107,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         ),
       ),
     ),
+      ),
     );
   }
 
