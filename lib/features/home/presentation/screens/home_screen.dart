@@ -523,13 +523,13 @@ class HomeScreenState extends State<HomeScreen> {
                            ),
                          ),
                        ),
-                       // Debit Header
+                       // Credit Header
                        const Expanded(
                          flex: 2,
                          child: Align(
                            alignment: Alignment.centerRight,
                            child: Text(
-                             'عليك',
+                             'لك',
                              style: TextStyle(
                                fontSize: 14,
                                color: AppTheme.textSecondary,
@@ -537,12 +537,12 @@ class HomeScreenState extends State<HomeScreen> {
                            ),
                          ),
                        ),
-                       // Credit Header
+                       // Debit Header
                        const Expanded(
                          flex: 2,
                          child: Center(
                            child: Text(
-                             'لك',
+                             'عليك',
                              style: TextStyle(
                                fontSize: 14,
                                color: AppTheme.textSecondary,
@@ -553,11 +553,14 @@ class HomeScreenState extends State<HomeScreen> {
                        // Currency Header
                        const Expanded(
                          flex: 2,
-                         child: Text(
-                           'العملة',
-                           style: TextStyle(
-                             fontSize: 14,
-                             color: AppTheme.textSecondary,
+                         child: Align(
+                           alignment: Alignment.centerLeft,
+                           child: Text(
+                             'العملة',
+                             style: TextStyle(
+                               fontSize: 14,
+                               color: AppTheme.textSecondary,
+                             ),
                            ),
                          ),
                        ),
@@ -668,7 +671,8 @@ class HomeScreenState extends State<HomeScreen> {
                         // For You Header
                         const Expanded(
                           flex: 2,
-                          child: Center(
+                          child: Align(
+                            alignment: Alignment.centerRight,
                             child: Text(
                               'لك',
                               style: TextStyle(
@@ -694,7 +698,8 @@ class HomeScreenState extends State<HomeScreen> {
                         // Currency Header
                         const Expanded(
                           flex: 1,
-                          child: Center(
+                          child: Align(
+                            alignment: Alignment.centerLeft,
                             child: Text(
                               'العملة',
                               style: TextStyle(
