@@ -158,18 +158,16 @@ class ReportService {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    if (profile?.businessName?.isNotEmpty == true)
-                      pw.Text(
-                        profile!.businessName!,
-                        style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: primaryColor),
-                        textDirection: pw.TextDirection.rtl,
-                      ),
-                    if (profile?.fullName?.isNotEmpty == true)
-                      pw.Text(
-                        profile!.fullName!,
-                        style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
-                        textDirection: pw.TextDirection.rtl,
-                      ),
+                    pw.Text(
+                      (profile?.businessName?.isNotEmpty == true) ? profile!.businessName! : 'غير محدد',
+                      style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: primaryColor),
+                      textDirection: pw.TextDirection.rtl,
+                    ),
+                    pw.Text(
+                      (profile?.fullName?.isNotEmpty == true) ? profile!.fullName! : 'غير محدد',
+                      style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+                      textDirection: pw.TextDirection.rtl,
+                    ),
                   ],
                 ),
               ),
@@ -266,24 +264,21 @@ class ReportService {
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            if (profile.businessName?.isNotEmpty == true)
-              pw.Text(
-                profile.businessName!,
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: primaryColor),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            if (profile.fullName?.isNotEmpty == true)
-              pw.Text(
-                profile.fullName!,
-                style: const pw.TextStyle(fontSize: 14),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            if (profile.tradingActivity?.isNotEmpty == true)
-              pw.Text(
-                'النشاط التجاري: ${profile.tradingActivity}',
-                style: const pw.TextStyle(fontSize: 12),
-                textDirection: pw.TextDirection.rtl,
-              ),
+            pw.Text(
+              (profile.businessName?.isNotEmpty == true) ? profile.businessName! : 'غير محدد',
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: primaryColor),
+              textDirection: pw.TextDirection.rtl,
+            ),
+            pw.Text(
+              (profile.fullName?.isNotEmpty == true) ? profile.fullName! : 'غير محدد',
+              style: const pw.TextStyle(fontSize: 14),
+              textDirection: pw.TextDirection.rtl,
+            ),
+            pw.Text(
+              'النشاط التجاري: ${(profile.tradingActivity?.isNotEmpty == true) ? profile.tradingActivity! : "غير محدد"}',
+              style: const pw.TextStyle(fontSize: 12),
+              textDirection: pw.TextDirection.rtl,
+            ),
             pw.SizedBox(height: 8),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -291,23 +286,21 @@ class ReportService {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    if (profile.phone?.isNotEmpty == true)
-                      pw.Text(
-                        'الهاتف: ${profile.phone}',
-                        style: const pw.TextStyle(fontSize: 10),
-                        textDirection: pw.TextDirection.rtl,
-                      ),
-                  ],
-                ),
-                if (profile.address?.isNotEmpty == true)
-                  pw.Expanded(
-                    child: pw.Text(
-                      'العنوان: ${profile.address}',
+                    pw.Text(
+                      'الهاتف: ${(profile.phone?.isNotEmpty == true) ? profile.phone! : "غير محدد"}',
                       style: const pw.TextStyle(fontSize: 10),
                       textDirection: pw.TextDirection.rtl,
-                      textAlign: pw.TextAlign.right,
                     ),
+                  ],
+                ),
+                pw.Expanded(
+                  child: pw.Text(
+                    'العنوان: ${(profile.address?.isNotEmpty == true) ? profile.address! : "غير محدد"}',
+                    style: const pw.TextStyle(fontSize: 10),
+                    textDirection: pw.TextDirection.rtl,
+                    textAlign: pw.TextAlign.right,
                   ),
+                ),
               ],
             ),
           ],
