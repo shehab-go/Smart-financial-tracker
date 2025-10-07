@@ -12,13 +12,16 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Preserve line number information for debugging stack traces
+-keepattributes SourceFile,LineNumberTable
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Hide the original source file name
+-renamesourcefileattribute SourceFile
+
+# Keep crash reporting attributes
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes Exceptions
 
 # Flutter specific rules
 -keep class io.flutter.app.** { *; }

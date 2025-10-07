@@ -4,6 +4,7 @@ import 'package:debit_credit_app/features/about/presentation/screens/about_scree
 import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
+import 'package:debit_credit_app/features/settings/presentation/screens/flexible_update_screen.dart';
 import 'package:debit_credit_app/core/widgets/main_navigation.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -258,6 +259,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const AboutScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildSettingsTile(
+                  icon: Icons.system_update_rounded,
+                  title: 'تحديث التطبيق',
+                  subtitle: 'البحث عن تحديثات جديدة للتطبيق',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FlexibleUpdateScreen(),
                       ),
                     );
                   },
