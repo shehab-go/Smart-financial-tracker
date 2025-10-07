@@ -218,7 +218,7 @@ class ReportService {
       ),
       child: pw.Center(
         child: pw.Text(
-          'LOGO',
+          'الشعار',
           style: pw.TextStyle(
             fontSize: 10,
             fontWeight: pw.FontWeight.bold,

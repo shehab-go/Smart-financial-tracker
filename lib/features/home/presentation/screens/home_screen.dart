@@ -228,7 +228,8 @@ class HomeScreenState extends State<HomeScreen> {
       
       // Ensure PageController is synchronized with the selected index
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _pageController.hasClients && _pageController.page?.round() != _selectedCategoryIndex) {
+        if (mounted && _pageController.hasClients) {
+          // Always jump to the selected index to ensure proper synchronization
           _pageController.jumpToPage(_selectedCategoryIndex);
         }
       });
