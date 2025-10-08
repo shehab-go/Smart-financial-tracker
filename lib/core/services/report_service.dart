@@ -669,8 +669,36 @@ class ReportService {
       await dir.create(recursive: true);
     }
 
-    final slug = title
-        .replaceAll(RegExp(r'[^A-Za-z0-9_\-]'), '_')
+    // Create more descriptive file names based on report type
+    String baseFileName;
+    if (title.contains('تقرير حساب ')) {
+      // Single account report: "Account_[AccountName]"
+      final accountName = title.replaceFirst('تقرير حساب ', '').trim();
+      baseFileName = 'حساب_${accountName.replaceAll(RegExp(r'[^A-Za-z0-9_\-\u0600-\u06FF]'), '_')}';
+    } else if (title.contains('تقرير فئة ')) {
+      // Single category report: "Category_[CategoryName]"
+      final categoryName = title.replaceFirst('تقرير فئة ', '').trim();
+      baseFileName = 'فئة_${categoryName.replaceAll(RegExp(r'[^A-Za-z0-9_\-\u0600-\u06FF]'), '_')}';
+    } else if (title.contains('تقرير جميع الحسابات')) {
+      // All accounts report: "AllAccounts_Report"
+      baseFileName = 'جميع الفئات';
+    } else if (title.contains('معاملات مختارة')) {
+      // Selected transactions: "SelectedTransactions_[AccountName]"
+      final accountName = title.replaceFirst('معاملات مختارة - ', '').trim();
+      baseFileName = 'SelectedTransactions_${accountName.replaceAll(RegExp(r'[^A-Za-z0-9_\-\u0600-\u06FF]'), '_')}';
+    } else if (title.contains('حسابات مختارة')) {
+      // Selected accounts: "SelectedAccounts"
+      baseFileName = 'SelectedAccounts';
+    } else {
+      // Fallback to original logic
+      baseFileName = title
+          .replaceAll(RegExp(r'[^A-Za-z0-9_\-\u0600-\u06FF]'), '_')
+          .replaceAll(RegExp(r'_+'), '_')
+          .replaceAll(RegExp(r'^_+|_+$'), '');
+    }
+
+    // Clean up the base filename
+    baseFileName = baseFileName
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_+|_+$'), '');
 
@@ -679,12 +707,14 @@ class ReportService {
         .whereType<File>()
         .where((f) => p.extension(f.path) == '.pdf')
         .map((f) => p.basenameWithoutExtension(f.path))
-        .where((name) => name.startsWith('$slug-'))
+        .where((name) => name.contains(baseFileName))
         .map((name) {
-          final rest = name.substring(slug.length + 1);
-          final parts = rest.split('-');
-          if (parts.isEmpty) return -1;
-          return int.tryParse(parts[0]) ?? -1;
+          // Extract index from filename pattern: [index]_[baseFileName]_[date].pdf
+          final parts = name.split('_');
+          if (parts.isNotEmpty) {
+            return int.tryParse(parts[0]) ?? -1;
+          }
+          return -1;
         })
         .where((n) => n >= 0)
         .toList();
@@ -692,7 +722,7 @@ class ReportService {
 
     final now = DateTime.now();
     final dateStr = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final fileName = '$nextIndex-$slug-$dateStr.pdf';
+    final fileName = '${nextIndex}_${baseFileName}_$dateStr.pdf';
     final file = File(p.join(dir.path, fileName));
     await file.writeAsBytes(bytes);
     debugPrint('PDF saved to: ${file.path}');
