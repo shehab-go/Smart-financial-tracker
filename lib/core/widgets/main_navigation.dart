@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import 'dart:io';
-import 'dart:async';
-import 'package:in_app_update/in_app_update.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
 import 'package:debit_credit_app/features/expenses/presentation/screens/expense_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
@@ -18,73 +14,10 @@ class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
   bool _isDrawerOpen = false;
 
-  @override
-  void initState() {
-    super.initState();
-    // Check for updates only on Android
-    if (!kIsWeb && Platform.isAndroid) {
-      checkForUpdate();
-    }
-  }
-
   void _onDrawerChanged(bool isOpen) {
     setState(() {
       _isDrawerOpen = isOpen;
     });
-  }
-
-  Future<void> checkForUpdate() async {
-    try {
-      final updateInfo = await InAppUpdate.checkForUpdate();
-      
-      if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable &&
-          updateInfo.flexibleUpdateAllowed) {
-        await InAppUpdate.startFlexibleUpdate();
-        
-        // Listen for update download completion
-        _listenForUpdateStatus();
-      }
-    } catch (e) {
-      // Handle update check errors silently
-      debugPrint('Update check failed: $e');
-    }
-  }
-
-  void _listenForUpdateStatus() {
-    // Check update status periodically
-    Timer.periodic(const Duration(seconds: 2), (timer) async {
-      try {
-        final updateInfo = await InAppUpdate.checkForUpdate();
-        if (updateInfo.installStatus == InstallStatus.downloaded) {
-          timer.cancel();
-          _showUpdateReadySnackBar();
-        }
-      } catch (e) {
-        timer.cancel();
-        debugPrint('Update status check failed: $e');
-      }
-    });
-  }
-
-  void _showUpdateReadySnackBar() {
-    if (!mounted) return;
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('تحديث جديد جاهز للتثبيت!'),
-        duration: const Duration(days: 1), // Make it persistent
-        action: SnackBarAction(
-          label: 'إعادة التشغيل',
-          onPressed: () async {
-            try {
-              await InAppUpdate.completeFlexibleUpdate();
-            } catch (e) {
-              debugPrint('Failed to complete update: $e');
-            }
-          },
-        ),
-      ),
-    );
   }
 
   List<Widget> get _screens => [

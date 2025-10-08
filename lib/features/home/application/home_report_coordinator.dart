@@ -148,13 +148,14 @@ class HomeReportCoordinator {
       ),
     );
 
-    await ReportService.generateAndOpenPdf(
+    await ReportService.generateAndOpenPdfWithTableData(
       title: 'تقرير فئة ${category.name}',
-      content: [
+      headerContent: [
         categoryInfo,
         financialSummary,
-        table,
       ],
+      tableHeaders: [netHeaderLabel, 'عليك', 'لك', 'الحساب'],
+      tableData: rows,
     );
   }
 
@@ -276,33 +277,14 @@ class HomeReportCoordinator {
             ])
         .toList();
 
-    final table = pw.Table.fromTextArray(
-      headers: [netHeaderLabelAll, 'عليك', 'لك', 'الفئة', 'الحساب'],
-      data: rows,
-      headerStyle: pw.TextStyle(
-        fontWeight: pw.FontWeight.bold,
-        fontSize: 12,
-        color: PdfColors.white,
-      ),
-      headerDecoration: pw.BoxDecoration(
-        color: primaryColor,
-      ),
-      cellStyle: const pw.TextStyle(fontSize: 11),
-      cellAlignment: pw.Alignment.center,
-      cellPadding: const pw.EdgeInsets.all(8),
-      border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-      oddRowDecoration: const pw.BoxDecoration(
-        color: PdfColors.grey50,
-      ),
-    );
-
-    await ReportService.generateAndOpenPdf(
+    await ReportService.generateAndOpenPdfWithTableData(
       title: 'تقرير جميع الحسابات',
-      content: [
+      headerContent: [
         allAccountsInfo,
         financialSummaryAll,
-        table,
       ],
+      tableHeaders: [netHeaderLabelAll, 'عليك', 'لك', 'الفئة', 'الحساب'],
+      tableData: rows,
     );
   }
 
@@ -319,11 +301,11 @@ class HomeReportCoordinator {
             ])
         .toList();
 
-    final table = pw.Table.fromTextArray(headers: ['الحساب', 'لك', 'عليك'], data: rows);
-
-    await ReportService.generateAndOpenPdf(
+    await ReportService.generateAndOpenPdfWithTableData(
       title: 'حسابات مختارة',
-      content: [table],
+      headerContent: [],
+      tableHeaders: ['الحساب', 'لك', 'عليك'],
+      tableData: rows,
     );
   }
 }

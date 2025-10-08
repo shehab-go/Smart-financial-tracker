@@ -592,10 +592,11 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
           t.type == 'credit' ? t.amount.toStringAsFixed(0) : '-',
           t.type == 'debit' ? t.amount.toStringAsFixed(0) : '-',
         ]).toList();
-    final table = pw.Table.fromTextArray(headers: ['التاريخ', 'تفاصيل', 'لك', 'عليك'], data: rows);
-    await ReportService.generateAndOpenPdf(
+    await ReportService.generateAndOpenPdfWithTableData(
       title: 'معاملات مختارة - ${widget.account.name}',
-      content: [table],
+      headerContent: [],
+      tableHeaders: ['التاريخ', 'تفاصيل', 'لك', 'عليك'],
+      tableData: rows,
     );
   }
 
@@ -794,9 +795,9 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
 
 
 
-    await ReportService.generateAndOpenPdf(
+    await ReportService.generateAndOpenPdfWithTableData(
       title: 'تقرير حساب ${widget.account.name}',
-      content: [
+      headerContent: [
         accountInfo,
         financialSummary,
         pw.SizedBox(height: 10),
@@ -806,8 +807,9 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
           textDirection: pw.TextDirection.rtl,
         ),
         pw.SizedBox(height: 10),
-        table,
       ],
+      tableHeaders: ['التاريخ', 'تفاصيل', 'لك', 'عليك'],
+      tableData: rows,
     );
   }
 
@@ -1646,27 +1648,14 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
               ),
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: _navigateToAddTransaction,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 28,
-          ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _navigateToAddTransaction,
+        backgroundColor: AppTheme.primaryColor,
+        elevation: 2,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 24,
         ),
       ),
     );  
