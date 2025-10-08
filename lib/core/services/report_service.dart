@@ -674,14 +674,14 @@ class ReportService {
     if (title.contains('تقرير حساب ')) {
       // Single account report: "Account_[AccountName]"
       final accountName = title.replaceFirst('تقرير حساب ', '').trim();
-      baseFileName = 'حساب_${accountName.replaceAll(RegExp(r'[^A-Za-z0-9_\-\u0600-\u06FF]'), '_')}';
+      baseFileName = 'Account_${accountName.replaceAll(RegExp(r'[^A-Za-z0-9_\-\u0600-\u06FF]'), '_')}';
     } else if (title.contains('تقرير فئة ')) {
       // Single category report: "Category_[CategoryName]"
       final categoryName = title.replaceFirst('تقرير فئة ', '').trim();
-      baseFileName = 'فئة_${categoryName.replaceAll(RegExp(r'[^A-Za-z0-9_\-\u0600-\u06FF]'), '_')}';
+      baseFileName = 'Category_${categoryName.replaceAll(RegExp(r'[^A-Za-z0-9_\-\u0600-\u06FF]'), '_')}';
     } else if (title.contains('تقرير جميع الحسابات')) {
       // All accounts report: "AllAccounts_Report"
-      baseFileName = 'جميع الفئات';
+      baseFileName = 'AllAccounts_Report';
     } else if (title.contains('معاملات مختارة')) {
       // Selected transactions: "SelectedTransactions_[AccountName]"
       final accountName = title.replaceFirst('معاملات مختارة - ', '').trim();

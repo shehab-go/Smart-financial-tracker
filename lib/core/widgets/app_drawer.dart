@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:debit_credit_app/features/about/presentation/screens/about_screen.dart';
 import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_screen.dart';
 import 'package:debit_credit_app/features/categories/presentation/screens/categories_screen.dart';
@@ -297,13 +298,12 @@ class _AppDrawerState extends State<AppDrawer> {
                 _buildSectionDivider('أخرى'),
                 _buildDrawerItem(
                   context,
-                  icon: Icons.settings_rounded,
-                  title: 'الإعدادات',
-                  subtitle: 'إعدادات التطبيق والتفضيلات',
-                  isDisabled: true,
-                  comingSoonTag: 'قريباً',
+                  icon: Icons.system_update_rounded,
+                  title: 'تحديث التطبيق',
+                  subtitle: 'تحقق من التحديثات الجديدة',
                   onTap: () {
-                    // Disabled - Coming Soon
+                    Navigator.pop(context);
+                    _openAppInPlayStore();
                   },
                 ),
                 _buildDrawerItem(
@@ -532,5 +532,36 @@ class _AppDrawerState extends State<AppDrawer> {
       'حمل التطبيق الآن:\nhttps://play.google.com/store/apps/details?id=com.ramzi.debit_credit_app',
       subject: 'تطبيق إدارة الحسابات المالية',
     );
+  }
+
+  Future<void> _openAppInPlayStore() async {
+    const String playStoreUrl = 'https://play.google.com/store/apps/details?id=com.ramzi.debit_credit_app';
+    final Uri uri = Uri.parse(playStoreUrl);
+    
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        // Fallback: show a snackbar with the URL
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('لا يمكن فتح متجر التطبيقات'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Handle any errors
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('حدث خطأ أثناء فتح متجر التطبيقات'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
