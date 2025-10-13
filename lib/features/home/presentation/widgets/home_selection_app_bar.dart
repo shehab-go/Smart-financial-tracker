@@ -29,11 +29,7 @@ class HomeSelectionAppBar extends StatelessWidget implements PreferredSizeWidget
     return AppBar(
       leading: IconButton(icon: const Icon(Icons.close), onPressed: onClearSelection),
       title: Text('تم تحديد $selectedCount'),
-      systemOverlayStyle: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-      ),
+      // Edge-to-edge handled globally; avoid direct system bar styling.
       actions: [
         IconButton(icon: const Icon(Icons.select_all), tooltip: 'تحديد الكل', onPressed: onSelectAll),
         IconButton(icon: const Icon(Icons.delete), onPressed: onDelete),

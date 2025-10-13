@@ -41,11 +41,7 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
         elevation: 0,
         backgroundColor: Colors.transparent,
         centerTitle: false,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-          statusBarBrightness: Brightness.light,
-        ),
+        // Edge-to-edge handled globally; avoid direct system bar styling.
         leading: Container(
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(

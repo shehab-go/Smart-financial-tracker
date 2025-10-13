@@ -10,17 +10,9 @@ void main() async {
   // Initialize date formatting for Arabic locale
   await initializeDateFormatting('ar', null);
   
-  // Configure system UI overlay style
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark, // Dark icons on light background
-      statusBarBrightness: Brightness.light, // Light status bar background
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarIconBrightness: Brightness.dark,
-      systemNavigationBarDividerColor: Colors.transparent,
-    ),
-  );
+  // Let AndroidX EdgeToEdge handle system bars; only control overlay visibility.
+  // Do not set status/navigation bar colors directly to avoid deprecated APIs on Android 15.
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   
   // Set preferred orientations
   SystemChrome.setPreferredOrientations([
@@ -40,12 +32,8 @@ class PersonalFinanceApp extends StatelessWidget {
       title: 'حسابات يوميه',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      builder: (context, child) {
-        return SafeArea(
-          top: false, // Allow status bar to show
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
+      // Avoid wrapping a global SafeArea; handle paddings per-screen using MediaQuery insets.
+      builder: (context, child) => child ?? const SizedBox.shrink(),
       home: const MainNavigation(),
     );
   }

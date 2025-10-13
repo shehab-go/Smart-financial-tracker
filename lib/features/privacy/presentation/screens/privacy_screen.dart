@@ -39,6 +39,7 @@ class PrivacyScreen extends StatelessWidget {
             children: [
               // Header Card
               Container(
+                width: double.infinity,
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -138,6 +139,7 @@ class PrivacyScreen extends StatelessWidget {
               const SizedBox(height: 8),
               // Security Guarantee Card
               Container(
+                width: double.infinity,
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(

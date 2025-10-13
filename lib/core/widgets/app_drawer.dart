@@ -85,7 +85,7 @@ class _AppDrawerState extends State<AppDrawer> {
             slivers: [
               SliverToBoxAdapter(
                 child: Container(
-                  height: 140,
+                  constraints: const BoxConstraints(minHeight: 140),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade50,
                     border: Border(
@@ -108,7 +108,7 @@ class _AppDrawerState extends State<AppDrawer> {
                             )
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Row(
                                    children: [
@@ -175,6 +175,33 @@ class _AppDrawerState extends State<AppDrawer> {
                                                  color: Colors.grey.shade600,
                                                ),
                                              ),
+                                          if (_userProfile?.phone?.isNotEmpty == true) ...[
+                                            const SizedBox(height: 6),
+                                            Padding(
+                                              padding: const EdgeInsets.only(left: 16),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.phone_rounded,
+                                                    size: 14,
+                                                    color: Colors.grey.shade600,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Flexible(
+                                                    child: Text(
+                                                      _userProfile!.phone!,
+                                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                                        color: Colors.grey.shade600,
+                                                      ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                      maxLines: 1,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                          ],
                                        ),
                                      ),
@@ -217,29 +244,7 @@ class _AppDrawerState extends State<AppDrawer> {
                                      ),
                                    ],
                                  ),
-                                if (_userProfile?.phone?.isNotEmpty == true) ...[
-                                  const SizedBox(height: 8),
-                                  if (_userProfile?.phone?.isNotEmpty == true)
-                                    Padding(
-                                      padding: const EdgeInsets.only(bottom: 4),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.phone_rounded,
-                                            size: 14,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            _userProfile!.phone!,
-                                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                              color: Colors.grey.shade600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                ],
+                                
                               ],
                             ),
                     ),
