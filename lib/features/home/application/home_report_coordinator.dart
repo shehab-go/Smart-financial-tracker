@@ -19,7 +19,7 @@ class HomeReportCoordinator {
     final totalCredit = accounts.fold<double>(0, (s, a) => s + a.totalCredit);
     final totalDebit = accounts.fold<double>(0, (s, a) => s + a.totalDebit);
     final netBalance = totalCredit - totalDebit;
-    final netHeaderLabel = totalCredit >= totalDebit ? 'المتبقي لك' : 'المتبقي عليك';
+    final netHeaderLabel = totalCredit >= totalDebit ? 'المتبقي لهم' : 'المتبقي عليهم';
 
     // Category Information Header
     final categoryInfo = pw.Container(
@@ -86,7 +86,7 @@ class HomeReportCoordinator {
             mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
             children: [
               pw.Text(
-                'لك: ${NumberFormat('#,##0').format(totalCredit)}',
+                'له: ${NumberFormat('#,##0').format(totalCredit)}',
                 style: pw.TextStyle(
                   fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
@@ -95,7 +95,7 @@ class HomeReportCoordinator {
                 textDirection: pw.TextDirection.rtl,
               ),
               pw.Text(
-                'عليك: ${NumberFormat('#,##0').format(totalDebit)}',
+                'عليه: ${NumberFormat('#,##0').format(totalDebit)}',
                 style: pw.TextStyle(
                   fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
@@ -104,7 +104,7 @@ class HomeReportCoordinator {
                 textDirection: pw.TextDirection.rtl,
               ),
               pw.Text(
-                '${netBalance >= 0 ? 'المتبقي لك' : 'المتبقي عليك'}: ${NumberFormat('#,##0').format(netBalance.abs())}',
+                '${netBalance >= 0 ? 'المتبقي لهم' : 'المتبقي عليهم'}: ${NumberFormat('#,##0').format(netBalance.abs())}',
                 style: pw.TextStyle(
                   fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
@@ -129,7 +129,7 @@ class HomeReportCoordinator {
         .toList();
 
     final table = pw.Table.fromTextArray(
-      headers: [netHeaderLabel, 'عليك', 'لك', 'الحساب'],
+      headers: [netHeaderLabel, 'عليه', 'له', 'الحساب'],
       data: rows,
       headerStyle: pw.TextStyle(
         fontWeight: pw.FontWeight.bold,
@@ -154,7 +154,7 @@ class HomeReportCoordinator {
         categoryInfo,
         financialSummary,
       ],
-      tableHeaders: [netHeaderLabel, 'عليك', 'لك', 'الحساب'],
+      tableHeaders: [netHeaderLabel, 'عليه', 'له', 'الحساب'],
       tableData: rows,
     );
   }
@@ -167,7 +167,7 @@ class HomeReportCoordinator {
     final totalCreditAll = allAccounts.fold<double>(0, (s, a) => s + a.totalCredit);
     final totalDebitAll = allAccounts.fold<double>(0, (s, a) => s + a.totalDebit);
     final netBalanceAll = totalCreditAll - totalDebitAll;
-    final netHeaderLabelAll = totalCreditAll >= totalDebitAll ? 'المتبقي لك' : 'المتبقي عليك';
+    final netHeaderLabelAll = totalCreditAll >= totalDebitAll ? 'المتبقي لهم' : 'المتبقي عليهم';
 
     // All Accounts Information Header
     final allAccountsInfo = pw.Container(
@@ -234,7 +234,7 @@ class HomeReportCoordinator {
             mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
             children: [
               pw.Text(
-                'لك: ${NumberFormat('#,##0').format(totalCreditAll)}',
+                'له: ${NumberFormat('#,##0').format(totalCreditAll)}',
                 style: pw.TextStyle(
                   fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
@@ -243,7 +243,7 @@ class HomeReportCoordinator {
                 textDirection: pw.TextDirection.rtl,
               ),
               pw.Text(
-                'عليك: ${NumberFormat('#,##0').format(totalDebitAll)}',
+                'عليه: ${NumberFormat('#,##0').format(totalDebitAll)}',
                 style: pw.TextStyle(
                   fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
@@ -252,7 +252,7 @@ class HomeReportCoordinator {
                 textDirection: pw.TextDirection.rtl,
               ),
               pw.Text(
-                '${netBalanceAll >= 0 ? 'المتبقي لك' : 'المتبقي عليك'}: ${NumberFormat('#,##0').format(netBalanceAll.abs())}',
+                '${netBalanceAll >= 0 ? 'المتبقي لهم' : 'المتبقي عليهم'}: ${NumberFormat('#,##0').format(netBalanceAll.abs())}',
                 style: pw.TextStyle(
                   fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
@@ -283,7 +283,7 @@ class HomeReportCoordinator {
         allAccountsInfo,
         financialSummaryAll,
       ],
-      tableHeaders: [netHeaderLabelAll, 'عليك', 'لك', 'الفئة', 'الحساب'],
+      tableHeaders: [netHeaderLabelAll, 'عليه', 'له', 'الفئة', 'الحساب'],
       tableData: rows,
     );
   }
@@ -304,7 +304,7 @@ class HomeReportCoordinator {
     await ReportService.generateAndOpenPdfWithTableData(
       title: 'حسابات مختارة',
       headerContent: [],
-      tableHeaders: ['الحساب', 'لك', 'عليك'],
+      tableHeaders: ['الحساب', 'له', 'عليه'],
       tableData: rows,
     );
   }

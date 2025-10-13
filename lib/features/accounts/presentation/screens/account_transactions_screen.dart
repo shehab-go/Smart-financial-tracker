@@ -595,7 +595,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     await ReportService.generateAndOpenPdfWithTableData(
       title: 'معاملات مختارة - ${widget.account.name}',
       headerContent: [],
-      tableHeaders: ['التاريخ', 'تفاصيل', 'لك', 'عليك'],
+      tableHeaders: ['التاريخ', 'تفاصيل', 'له', 'عليه'],
       tableData: rows,
     );
   }
@@ -606,7 +606,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     final header = 'حساب: ${widget.account.name}';
     final lines = selectedTx
         .map((t) {
-          final label = t.type == 'debit' ? 'عليك' : 'لك';
+          final label = t.type == 'debit' ? 'عليه' : 'له';
           return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label ${t.amount.toStringAsFixed(0)} ${_currentAccount.currencyName}';
         })
         .join('\n');
@@ -741,17 +741,17 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
             mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
             children: [
               pw.Text(
-                 'لك: ${NumberFormat('#,##0').format(_totals['credit']!)}',
+                 'له: ${NumberFormat('#,##0').format(_totals['credit']!)}',
                  style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
                  textDirection: pw.TextDirection.rtl,
                ),
                pw.Text(
-                 'عليك: ${NumberFormat('#,##0').format(_totals['debit']!)}',
+                 'عليه: ${NumberFormat('#,##0').format(_totals['debit']!)}',
                  style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
                  textDirection: pw.TextDirection.rtl,
                ),
                pw.Text(
-                 '${_totals['credit']! >= _totals['debit']! ? 'المتبقي لك' : 'المتبقي عليك'}: ${NumberFormat('#,##0').format(_totals['net']!.abs())}',
+                 '${_totals['credit']! >= _totals['debit']! ? 'المتبقي له' : 'المتبقي عليه'}: ${NumberFormat('#,##0').format(_totals['net']!.abs())}',
                  style: pw.TextStyle(
                    fontSize: 14,
                    fontWeight: pw.FontWeight.bold,
@@ -774,7 +774,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
         ]).toList();
 
     final table = pw.Table.fromTextArray(
-      headers: ['التاريخ', 'تفاصيل', 'لك', 'عليك'],
+      headers: ['التاريخ', 'تفاصيل', 'له', 'عليه'],
       data: rows,
       headerStyle: pw.TextStyle(
         fontWeight: pw.FontWeight.bold,
@@ -808,7 +808,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
         ),
         pw.SizedBox(height: 10),
       ],
-      tableHeaders: ['التاريخ', 'تفاصيل', 'لك', 'عليك'],
+      tableHeaders: ['التاريخ', 'تفاصيل', 'له', 'عليه'],
       tableData: rows,
     );
   }
@@ -978,7 +978,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                   // Transaction Details
                   _buildDetailRow('المبلغ', '${NumberFormat('#,##0').format(transaction.amount)} ${_currentAccount.currencyName}'),
                   const SizedBox(height: 12),
-                  _buildDetailRow('النوع', transaction.type == 'credit' ? 'لك' : 'عليك'),
+                  _buildDetailRow('النوع', transaction.type == 'credit' ? 'له' : 'عليه'),
                   const SizedBox(height: 12),
                   _buildDetailRow('التفاصيل', transaction.description?.isNotEmpty == true ? transaction.description! : 'لا توجد تفاصيل'),
                   const SizedBox(height: 12),
@@ -1528,7 +1528,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'لك: ${NumberFormat('#,##0').format(_totals['credit'])}',
+                            'له: ${NumberFormat('#,##0').format(_totals['credit'])}',
                             style: const TextStyle(
                               color: Colors.green,
                               fontSize: 14,
@@ -1537,7 +1537,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'عليك: ${NumberFormat('#,##0').format(_totals['debit'])}',
+                            'عليه: ${NumberFormat('#,##0').format(_totals['debit'])}',
                             style: const TextStyle(
                               color: Colors.red,
                               fontSize: 14,
@@ -1546,7 +1546,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${_totals['credit']! >= _totals['debit']! ? 'المتبقي لك' : 'المتبقي عليك'}: ${NumberFormat('#,##0').format((_totals['net']!).abs())}',
+                            '${_totals['credit']! >= _totals['debit']! ? 'المتبقي له' : 'المتبقي عليه'}: ${NumberFormat('#,##0').format((_totals['net']!).abs())}',
                             style: TextStyle(
                               color: _totals['credit']! >= _totals['debit']! ? Colors.green : Colors.red,
                               fontSize: 14,

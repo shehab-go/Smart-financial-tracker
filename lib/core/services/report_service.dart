@@ -613,7 +613,7 @@ class ReportService {
   static List<String> _extractTableHeaders(pw.Table table) {
     // This is a simplified extraction - in practice, you might need to access table properties
     // For now, return default headers that match the report structure
-    return ['الحساب', 'الفئة', 'لك', 'عليك', 'الصافي'];
+    return ['الحساب', 'الفئة', 'له', 'عليه', 'الصافي'];
   }
 
   static List<List<String>> _extractTableData(pw.Table table) {

@@ -548,7 +548,7 @@ class HomeScreenState extends State<HomeScreen> {
                          child: Align(
                            alignment: Alignment.centerRight,
                            child: Text(
-                             'لك',
+                             'له',
                              style: TextStyle(
                                fontSize: 14,
                                color: AppTheme.textSecondary,
@@ -561,7 +561,7 @@ class HomeScreenState extends State<HomeScreen> {
                          flex: 2,
                          child: Center(
                            child: Text(
-                             'عليك',
+                             'عليه',
                              style: TextStyle(
                                fontSize: 14,
                                color: AppTheme.textSecondary,
@@ -693,7 +693,7 @@ class HomeScreenState extends State<HomeScreen> {
                           child: Align(
                             alignment: Alignment.centerRight,
                             child: Text(
-                              'لك',
+                              'له',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: AppTheme.textSecondary,
@@ -706,7 +706,7 @@ class HomeScreenState extends State<HomeScreen> {
                           flex: 2,
                           child: Center(
                             child: Text(
-                              'عليك',
+                              'عليه',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: AppTheme.textSecondary,

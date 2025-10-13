@@ -403,7 +403,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'عليك',
+                                        'عليه',
                                         style: TextStyle(
                                           color: _selectedType == 'debit'
                                               ? AppTheme.debitColor
@@ -449,7 +449,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'لك',
+                                        'له',
                                         style: TextStyle(
                                           color: _selectedType == 'credit'
                                               ? AppTheme.creditColor
