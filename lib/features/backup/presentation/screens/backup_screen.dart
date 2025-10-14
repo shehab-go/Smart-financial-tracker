@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:open_file/open_file.dart';
 
 import 'package:debit_credit_app/core/services/backup_service.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 
 class BackupScreen extends StatefulWidget {
   const BackupScreen({super.key});
@@ -104,8 +105,9 @@ class _BackupScreenState extends State<BackupScreen> {
                                   await BackupService.instance.restoreBackup(file);
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('تمت الاستعادة بنجاح، أعد تشغيل التطبيق.')),
+                                      const SnackBar(content: Text('تمت الاستعادة بنجاح، سيتم إعادة تشغيل التطبيق الآن.')),
                                     );
+                                    Phoenix.rebirth(context);
                                   }
                                 }
                               },

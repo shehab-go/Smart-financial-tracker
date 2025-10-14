@@ -7,6 +7,7 @@ import 'package:open_file/open_file.dart';
 
 import 'package:debit_credit_app/core/services/enhanced_backup_service.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 
 class EnhancedBackupScreen extends StatefulWidget {
   const EnhancedBackupScreen({super.key});
@@ -176,46 +177,14 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
         Navigator.of(context).pop(); // Close progress dialog
         
         if (result.success) {
-          // Show success dialog with details
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.green),
-                  SizedBox(width: 8),
-                  Text('تمت الاستعادة بنجاح'),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('تم استعادة النسخة الاحتياطية بنجاح.'),
-                  const SizedBox(height: 8),
-                  if (result.preRestoreBackupPath != null)
-                    Text(
-                      'تم حفظ نسخة احتياطية من البيانات السابقة في:\n${p.basename(result.preRestoreBackupPath!)}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    '⚠️ يُنصح بإعادة تشغيل التطبيق لضمان عمل جميع الميزات بشكل صحيح.',
-                    style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _refresh();
-                  },
-                  child: const Text('موافق'),
-                ),
-              ],
+          // Automatically restart the app to apply the restored database
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تمت الاستعادة بنجاح، سيتم إعادة تشغيل التطبيق الآن.'),
+              backgroundColor: Colors.green,
             ),
           );
+          Phoenix.rebirth(context);
         } else {
           // Show error dialog
           showDialog(

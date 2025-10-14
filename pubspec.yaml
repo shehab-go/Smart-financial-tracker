@@ -63,6 +63,7 @@ dependencies:
   share_plus: ^7.2.2
   image_picker: ^1.1.2
   url_launcher: ^6.2.2
+  flutter_phoenix: ^1.1.1
 
 dev_dependencies:
   flutter_test:

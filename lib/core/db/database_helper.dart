@@ -16,8 +16,10 @@ class DatabaseHelper {
   static Database? _database;
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDatabase();
+    // Ensure we don't return a closed database instance
+    if (_database == null || !(_database!.isOpen)) {
+      _database = await _initDatabase();
+    }
     return _database!;
   }
 
@@ -562,5 +564,7 @@ class DatabaseHelper {
   Future<void> close() async {
     final db = await database;
     db.close();
+    // Reset instance so subsequent calls reopen a fresh connection
+    _database = null;
   }
 }

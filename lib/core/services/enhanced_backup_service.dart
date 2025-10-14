@@ -136,19 +136,37 @@ class EnhancedBackupService {
   Future<Map<String, int>> _getDatabaseStats() async {
     final db = await DatabaseHelper().database;
     final stats = <String, int>{};
-    
-    final tables = ['accounts', 'transactions', 'categories', 'currencies', 'user_profile', 'persons', 'expenses'];
-    
-    for (final table in tables) {
+    // Discover existing tables first to avoid noisy SQLite errors
+    final existingTableRows = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+    );
+    final existingTables = existingTableRows.map((r) => r['name'] as String).toSet();
+
+    final tablesToCheck = [
+      'accounts',
+      'transactions',
+      'categories',
+      'currencies',
+      'user_profile',
+      'persons',
+      'expenses',
+    ];
+
+    for (final table in tablesToCheck) {
+      if (!existingTables.contains(table)) {
+        // Table might not exist in older versions
+        stats[table] = 0;
+        continue;
+      }
       try {
         final result = await db.rawQuery('SELECT COUNT(*) as count FROM $table');
-        stats[table] = result.first['count'] as int;
+        stats[table] = (result.first['count'] as num?)?.toInt() ?? 0;
       } catch (e) {
-        // Table might not exist in older versions
+        // Any unexpected error yields 0 but doesn't crash
         stats[table] = 0;
       }
     }
-    
+
     return stats;
   }
 

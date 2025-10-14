@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:debit_credit_app/core/widgets/main_navigation.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 void main() async {
@@ -20,7 +21,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
   
-  runApp(const PersonalFinanceApp());
+  runApp(Phoenix(child: const PersonalFinanceApp()));
 }
 
 class PersonalFinanceApp extends StatelessWidget {
