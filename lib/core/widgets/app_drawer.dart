@@ -297,7 +297,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 _buildDrawerItem(
                   context,
                   icon: Icons.system_update_rounded,
-                  title: 'تحديث التطبيق',
+                  title: 'تحديث التطبيق',                  
                   // subtitle: 'تحقق من التحديثات الجديدة',
                   onTap: () {
                     Navigator.pop(context);
