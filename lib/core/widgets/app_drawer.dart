@@ -253,19 +253,12 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
             SliverList(
               delegate: SliverChildListDelegate([
-                const SizedBox(height: 16),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.home_rounded,
-                  title: 'الرئيسية',
-                  onTap: () => Navigator.pop(context),
-                ),
                 _buildSectionDivider('إدارة البيانات'),
                 _buildDrawerItem(
                   context,
                   icon: Icons.backup_rounded,
                   title: 'النسخ الاحتياطية',
-                  subtitle: 'إنشاء أو استعادة قاعدة البيانات مع الحماية المتقدمة',
+                  subtitle: 'إنشاء أو استعادة قاعدة البيانات',
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -305,7 +298,7 @@ class _AppDrawerState extends State<AppDrawer> {
                   context,
                   icon: Icons.system_update_rounded,
                   title: 'تحديث التطبيق',
-                  subtitle: 'تحقق من التحديثات الجديدة',
+                  // subtitle: 'تحقق من التحديثات الجديدة',
                   onTap: () {
                     Navigator.pop(context);
                     _openAppInPlayStore();
@@ -315,7 +308,7 @@ class _AppDrawerState extends State<AppDrawer> {
                   context,
                   icon: Icons.share_rounded,
                   title: 'مشاركة التطبيق',
-                  subtitle: 'شارك التطبيق مع الأصدقاء',
+                  // subtitle: 'شارك التطبيق مع الأصدقاء',
                   onTap: () {
                     Navigator.pop(context);
                     _shareApp();
