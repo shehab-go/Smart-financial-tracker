@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:fluttercontactpicker/fluttercontactpicker.dart';
+import 'package:flutter_native_contact_picker/flutter_native_contact_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
@@ -125,8 +125,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
   Future<void> _pickContact() async {
     try {
-      final phoneContact = await FlutterContactPicker.pickPhoneContact();
-      final number = phoneContact.phoneNumber?.number;
+      final FlutterNativeContactPicker _picker = FlutterNativeContactPicker();
+      final contact = await _picker.selectContact();
+      final number = contact?.phoneNumbers?.isNotEmpty == true ? contact?.phoneNumbers?.first : null;
       if (number != null) {
         setState(() => _phoneController.text = number);
       }
@@ -135,9 +136,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
   Future<void> _pickContactForName() async {
     try {
-      final phoneContact = await FlutterContactPicker.pickPhoneContact();
-      final name = phoneContact.fullName;
-      final number = phoneContact.phoneNumber?.number;
+      final FlutterNativeContactPicker _picker = FlutterNativeContactPicker();
+      final contact = await _picker.selectContact();
+      final name = contact?.fullName;
+      final number = contact?.phoneNumbers?.isNotEmpty == true ? contact?.phoneNumbers?.first : null;
       if (name != null && name.isNotEmpty) {
         setState(() {
           _accountNameController.text = name;

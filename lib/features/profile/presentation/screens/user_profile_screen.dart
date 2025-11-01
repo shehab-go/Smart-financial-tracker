@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:fluttercontactpicker/fluttercontactpicker.dart';
+import 'package:flutter_native_contact_picker/flutter_native_contact_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import '../../../../core/models/user_profile.dart';
@@ -74,9 +74,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> _pickContact() async {
     try {
-      final PhoneContact contact = await FlutterContactPicker.pickPhoneContact();
+      final FlutterNativeContactPicker _picker = FlutterNativeContactPicker();
+      final contact = await _picker.selectContact();
       setState(() {
-        _phoneController.text = contact.phoneNumber?.number ?? '';
+        _phoneController.text = contact?.phoneNumbers?.isNotEmpty == true ? contact!.phoneNumbers!.first : '';
       });
     } catch (e) {
       if (mounted) {

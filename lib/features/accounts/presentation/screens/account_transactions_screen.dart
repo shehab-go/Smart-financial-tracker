@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
-import 'package:fluttercontactpicker/fluttercontactpicker.dart';
+import 'package:flutter_native_contact_picker/flutter_native_contact_picker.dart';
 import 'package:debit_credit_app/core/models/transaction.dart';
 import 'package:debit_credit_app/core/models/account.dart';
 import 'package:debit_credit_app/core/models/currency.dart';
@@ -86,8 +86,9 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
 
   Future<void> _pickContact() async {
     try {
-      final phoneContact = await FlutterContactPicker.pickPhoneContact();
-      final number = phoneContact.phoneNumber?.number;
+      final FlutterNativeContactPicker _picker = FlutterNativeContactPicker();
+      final contact = await _picker.selectContact();
+      final number = contact?.phoneNumbers?.isNotEmpty == true ? contact?.phoneNumbers?.first : null;
       if (number != null) {
         setState(() => _phoneController.text = number);
       }
