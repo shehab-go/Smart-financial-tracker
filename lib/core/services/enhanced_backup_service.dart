@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -90,21 +91,21 @@ class EnhancedBackupService {
 
   Future<bool> _ensureStoragePermission() async {
     if (!Platform.isAndroid) return true;
-    var status = await Permission.manageExternalStorage.status;
-    if (!status.isGranted) {
-      status = await Permission.manageExternalStorage.request();
-    }
-    if (!status.isGranted) {
-      status = await Permission.storage.request();
-    }
-    return status.isGranted;
+
+    // Play policy forbids MANAGE_EXTERNAL_STORAGE for regular file access.
+    // Stick to scoped storage and only request the standard permission when needed.
+    final status = await Permission.storage.status;
+    if (status.isGranted) return true;
+
+    final requested = await Permission.storage.request();
+    return requested.isGranted;
   }
 
   Future<Directory> _getBackupDir() async {
     Directory baseDir;
     if (Platform.isAndroid) {
       await _ensureStoragePermission();
-      baseDir = Directory('/storage/emulated/0/Download');
+      baseDir = await getExternalStorageDirectory() ?? await getApplicationDocumentsDirectory();
     } else {
       baseDir = (await getDownloadsDirectory()) ?? await getApplicationDocumentsDirectory();
     }
@@ -178,7 +179,7 @@ class EnhancedBackupService {
 
   /// Create backup with metadata
   Future<File> createBackup({
-    String backupType = 'manual',
+    String backupType = _manualBackupPrefix,
     String? description,
   }) async {
     final dbPath = await _getDbPath();
@@ -188,7 +189,7 @@ class EnhancedBackupService {
     final now = DateTime.now();
     final dateStr = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final timeStr = '${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}';
-    final backupFileName = '${backupType}-db-$dateStr-$timeStr.db';
+    final backupFileName = '$backupType-db-$dateStr-$timeStr.db';
     final backupPath = p.join(backupDir.path, backupFileName);
 
     // Create backup file
@@ -229,7 +230,7 @@ class EnhancedBackupService {
         allMetadata = jsonList.map((json) => BackupMetadata.fromJson(json)).toList();
       } catch (e) {
         // If metadata file is corrupted, start fresh
-        print('Warning: Corrupted metadata file, starting fresh: $e');
+        debugPrint('Warning: Corrupted metadata file, starting fresh: $e');
       }
     }
     
@@ -258,7 +259,7 @@ class EnhancedBackupService {
       final jsonList = jsonDecode(content) as List;
       return jsonList.map((json) => BackupMetadata.fromJson(json)).toList();
     } catch (e) {
-      print('Error loading backup metadata: $e');
+      debugPrint('Error loading backup metadata: $e');
       return [];
     }
   }
@@ -298,9 +299,9 @@ class EnhancedBackupService {
       // This table was added in version 8, so it's not required for older backups
       final hasExpensesTable = tableNames.contains('expenses');
       if (hasExpensesTable) {
-        print('Expenses table found in backup');
+        debugPrint('Expenses table found in backup');
       } else {
-        print('Expenses table not found in backup (older version)');
+        debugPrint('Expenses table not found in backup (older version)');
       }
       
       // Check database version compatibility
@@ -313,7 +314,7 @@ class EnhancedBackupService {
       await db.close();
       return true;
     } catch (e) {
-      print('Database validation failed: $e');
+      debugPrint('Database validation failed: $e');
       return false;
     }
   }
@@ -381,7 +382,7 @@ class EnhancedBackupService {
           final dbPath = await _getDbPath();
           await File(preRestoreBackupPath).copy(dbPath);
         } catch (rollbackError) {
-          print('Rollback failed: $rollbackError');
+          debugPrint('Rollback failed: $rollbackError');
         }
       }
       
@@ -459,14 +460,18 @@ class EnhancedBackupService {
       
       return true;
     } catch (e) {
-      print('Error deleting backup: $e');
+      debugPrint('Error deleting backup: $e');
       return false;
     }
   }
 
   /// Share backup file
   Future<void> shareBackup(File backup) async {
-    await Share.shareXFiles([XFile(backup.path)]);
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(backup.path)],
+      ),
+    );
   }
 
   /// Clean old backups (keep only specified number of recent backups)

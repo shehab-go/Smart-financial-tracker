@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:typed_data';
@@ -63,37 +62,28 @@ class ReportService {
 
     final userProfile = await _getUserProfile();
 
-    try {
-      pdf.addPage(
-        pw.MultiPage(
-          theme: theme,
-          pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(0.5 * PdfPageFormat.cm),
-          header: (context) => _buildProfessionalHeader(title, userProfile),
-          footer: (context) => _buildProfessionalFooter(context),
-          maxPages: 100, // Set a reasonable limit
-          build: (context) => [
-            pw.Directionality(
-              textDirection: pw.TextDirection.rtl,
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.SizedBox(height: 10),
-                  ...content,
-                ],
-              ),
+    pdf.addPage(
+      pw.MultiPage(
+        theme: theme,
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(0.5 * PdfPageFormat.cm),
+        header: (context) => _buildProfessionalHeader(title, userProfile),
+        footer: (context) => _buildProfessionalFooter(context),
+        maxPages: 100,
+        build: (context) => [
+          pw.Directionality(
+            textDirection: pw.TextDirection.rtl,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.SizedBox(height: 10),
+                ...content,
+              ],
             ),
-          ],
-        ),
-      );
-    } catch (e) {
-      // If TooManyPagesException occurs, split content into smaller chunks
-      if (e.toString().contains('TooManyPagesException')) {
-        await _generatePaginatedPdf(pdf, theme, title, userProfile, content);
-      } else {
-        rethrow;
-      }
-    }
+          ),
+        ],
+      ),
+    );
 
     final bytes = await pdf.save();
     await _savePdfFile(bytes, title);
@@ -337,187 +327,111 @@ class ReportService {
     required PdfColor primaryColor,
   }) async {
     final pdf = pw.Document();
-    const int maxRowsPerPage = 25; // Safe limit for single PDF
-    
-    if (tableData.length <= maxRowsPerPage) {
-      // Single page approach
-      final table = tableData.isNotEmpty 
-          ? pw.Table.fromTextArray(
-              headers: tableHeaders,
-              data: tableData,
-              headerStyle: pw.TextStyle(
-                fontWeight: pw.FontWeight.bold,
-                fontSize: 12,
-                color: PdfColors.white,
-              ),
-              headerDecoration: pw.BoxDecoration(
-                color: primaryColor,
-              ),
-              cellStyle: const pw.TextStyle(fontSize: 11),
-              cellAlignment: pw.Alignment.center,
-              cellPadding: const pw.EdgeInsets.all(8),
-              border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-              oddRowDecoration: const pw.BoxDecoration(
-                color: PdfColors.grey50,
-              ),
-            )
-          : pw.Container(
-              padding: const pw.EdgeInsets.all(20),
-              child: pw.Text(
-                'لا توجد بيانات لعرضها',
-                style: const pw.TextStyle(fontSize: 14),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            );
+    final orderedTableData = tableData.reversed
+        .map((row) => List<String>.from(row))
+        .toList();
 
-      pdf.addPage(
-        pw.Page(
-          theme: theme,
-          pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(0.5 * PdfPageFormat.cm),
-          build: (context) => pw.Column(
-            children: [
-              _buildProfessionalHeader(title, userProfile),
-              pw.SizedBox(height: 10),
-              pw.Expanded(
-                child: pw.Directionality(
-                  textDirection: pw.TextDirection.rtl,
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      ...headerContent,
-                      if (headerContent.isNotEmpty) pw.SizedBox(height: 15),
-                      pw.Expanded(child: table),
-                    ],
-                  ),
-                ),
-              ),
-              _buildProfessionalFooter(context),
-            ],
+    final tableWidgets = <pw.Widget>[];
+    if (orderedTableData.isEmpty) {
+      tableWidgets.add(
+        pw.Container(
+          padding: const pw.EdgeInsets.all(20),
+          child: pw.Text(
+            '?? ???? ?????? ????? ?????',
+            style: const pw.TextStyle(fontSize: 14),
+            textDirection: pw.TextDirection.rtl,
           ),
         ),
       );
     } else {
-      // Multi-page approach with safe pagination
-      const int firstPageRows = 13;
-      const int subsequentPageRows = 20;
-      
-      // First page
-      final firstPageData = tableData.take(firstPageRows).toList();
-      final firstPageTable = firstPageData.isNotEmpty
-          ? pw.Table.fromTextArray(
-              headers: tableHeaders,
-              data: firstPageData,
-              headerStyle: pw.TextStyle(
-                fontWeight: pw.FontWeight.bold,
-                fontSize: 12,
-                color: PdfColors.white,
-              ),
-              headerDecoration: pw.BoxDecoration(
-                color: primaryColor,
-              ),
-              cellStyle: const pw.TextStyle(fontSize: 11),
-              cellAlignment: pw.Alignment.center,
-              cellPadding: const pw.EdgeInsets.all(8),
-              border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-              oddRowDecoration: const pw.BoxDecoration(
-                color: PdfColors.grey50,
-              ),
-            )
-          : pw.Container(
-              padding: const pw.EdgeInsets.all(20),
-              child: pw.Text(
-                'لا توجد بيانات لعرضها',
-                style: const pw.TextStyle(fontSize: 14),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            );
-
-      pdf.addPage(
-        pw.Page(
-          theme: theme,
-          pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(0.5 * PdfPageFormat.cm),
-          build: (context) => pw.Column(
-            children: [
-              _buildProfessionalHeader(title, userProfile),
-              pw.SizedBox(height: 10),
-              pw.Expanded(
-                child: pw.Directionality(
-                  textDirection: pw.TextDirection.rtl,
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      ...headerContent,
-                      if (headerContent.isNotEmpty) pw.SizedBox(height: 15),
-                      pw.Expanded(child: firstPageTable),
-                    ],
-                  ),
-                ),
-              ),
-              _buildProfessionalFooter(context),
-            ],
-          ),
-        ),
-      );
-
-      // Subsequent pages
-      final remainingData = tableData.skip(firstPageRows).toList();
-      final totalRemainingPages = (remainingData.length / subsequentPageRows).ceil();
-      
-      for (int pageIndex = 0; pageIndex < totalRemainingPages; pageIndex++) {
-        final startIndex = pageIndex * subsequentPageRows;
-        final endIndex = (startIndex + subsequentPageRows).clamp(0, remainingData.length);
-        final pageData = remainingData.sublist(startIndex, endIndex);
-        
-        final table = pw.Table.fromTextArray(
-          headers: tableHeaders,
-          data: pageData,
-          headerStyle: pw.TextStyle(
-            fontWeight: pw.FontWeight.bold,
-            fontSize: 12,
-            color: PdfColors.white,
-          ),
-          headerDecoration: pw.BoxDecoration(
-            color: primaryColor,
-          ),
-          cellStyle: const pw.TextStyle(fontSize: 11),
-          cellAlignment: pw.Alignment.center,
-          cellPadding: const pw.EdgeInsets.all(8),
-          border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-          oddRowDecoration: const pw.BoxDecoration(
-            color: PdfColors.grey50,
-          ),
-        );
-
-        final pageTitle = '$title (صفحة ${pageIndex + 2} من ${totalRemainingPages + 1})';
-        
-        pdf.addPage(
-          pw.Page(
-            theme: theme,
-            pageFormat: PdfPageFormat.a4,
-            margin: const pw.EdgeInsets.all(0.5 * PdfPageFormat.cm),
-            build: (context) => pw.Column(
-              children: [
-                _buildProfessionalHeader(pageTitle, userProfile),
-                pw.SizedBox(height: 10),
-                pw.Expanded(
-                  child: pw.Directionality(
-                    textDirection: pw.TextDirection.rtl,
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Expanded(child: table),
-                      ],
-                    ),
-                  ),
-                ),
-                _buildProfessionalFooter(context),
-              ],
+      const rowsPerChunk = 10;
+      for (int i = 0; i < orderedTableData.length; i += rowsPerChunk) {
+        final endIndex = (i + rowsPerChunk) > orderedTableData.length
+            ? orderedTableData.length
+            : i + rowsPerChunk;
+        final chunk = orderedTableData.sublist(i, endIndex);
+        tableWidgets.add(
+          pw.Table.fromTextArray(
+            headers: tableHeaders,
+            data: chunk,
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              fontSize: 12,
+              color: PdfColors.white,
+            ),
+            headerDecoration: pw.BoxDecoration(
+              color: primaryColor,
+            ),
+            cellStyle: const pw.TextStyle(fontSize: 11),
+            cellAlignment: pw.Alignment.center,
+            cellPadding: const pw.EdgeInsets.all(8),
+            border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+            oddRowDecoration: const pw.BoxDecoration(
+              color: PdfColors.grey50,
             ),
           ),
         );
+        if (endIndex < orderedTableData.length) {
+          tableWidgets.add(pw.SizedBox(height: 12));
+        }
       }
+    }
+
+    const tablesPerSection = 4;
+    final sectionedContent = <List<pw.Widget>>[];
+
+    var currentSection = <pw.Widget>[];
+    int tablesInSection = 0;
+    for (final widget in tableWidgets) {
+      currentSection.add(widget);
+      if (widget is pw.Table) {
+        tablesInSection++;
+      }
+      if (tablesInSection >= tablesPerSection) {
+        sectionedContent.add(currentSection);
+        currentSection = <pw.Widget>[];
+        tablesInSection = 0;
+      }
+    }
+    if (currentSection.isNotEmpty) {
+      sectionedContent.add(currentSection);
+    }
+
+    if (sectionedContent.isEmpty) {
+      sectionedContent.add([]);
+    }
+
+    for (int i = 0; i < sectionedContent.length; i++) {
+      final isFirstSection = i == 0;
+      final bodyContent = <pw.Widget>[
+        pw.Directionality(
+          textDirection: pw.TextDirection.rtl,
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              if (isFirstSection) ...headerContent,
+              if (isFirstSection && headerContent.isNotEmpty)
+                pw.SizedBox(height: 15),
+              ...sectionedContent[i],
+            ],
+          ),
+        ),
+      ];
+
+      pdf.addPage(
+        pw.MultiPage(
+          theme: theme,
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(0.5 * PdfPageFormat.cm),
+          header: (context) => _buildProfessionalHeader(
+            _formatPaginatedTitle(title, context.pageNumber, context.pagesCount),
+            userProfile,
+          ),
+          footer: (context) => _buildProfessionalFooter(context),
+          maxPages: 250,
+          build: (context) => bodyContent,
+        ),
+      );
     }
 
     final bytes = await pdf.save();
@@ -650,20 +564,22 @@ class ReportService {
     );
   }
 
+  static String _formatPaginatedTitle(String baseTitle, int currentPage, int totalPages) {
+    if (totalPages <= 1) return baseTitle;
+    return '$baseTitle (الصفحة $currentPage من $totalPages)';
+  }
+
   static Future<void> _savePdfFile(List<int> bytes, String title) async {
     Directory dir;
     if (Platform.isAndroid) {
-      var status = await Permission.manageExternalStorage.status;
-      if (!status.isGranted) {
-        status = await Permission.manageExternalStorage.request();
-      }
-      if (!status.isGranted) {
-        status = await Permission.storage.request();
-      }
-      dir = Directory('/storage/emulated/0/Download/FinanceApp/report');
+      // Use app-scoped storage to comply with Play policies (no MANAGE_EXTERNAL_STORAGE).
+      final externalDir = await getExternalStorageDirectory();
+      final basePath = externalDir?.path ?? (await getTemporaryDirectory()).path;
+      dir = Directory(p.join(basePath, 'FinanceApp', 'report'));
     } else {
       final downloads = await getDownloadsDirectory();
-      dir = Directory('${downloads?.path ?? (await getTemporaryDirectory()).path}/FinanceApp/report');
+      final basePath = downloads?.path ?? (await getApplicationDocumentsDirectory()).path;
+      dir = Directory(p.join(basePath, 'FinanceApp', 'report'));
     }
     if (!await dir.exists()) {
       await dir.create(recursive: true);
@@ -731,7 +647,7 @@ class ReportService {
   }
 
   static Future<pw.Font> _loadArabicFont() async {
-    final data = await rootBundle.load('assets/fonts/NotoNaskhArabic-Regular.ttf');
+    final data = await rootBundle.load('assets/fonts/ArbFONTS-IBMPlexArabic-Text.ttf');
     return pw.Font.ttf(data);
   }
 }
