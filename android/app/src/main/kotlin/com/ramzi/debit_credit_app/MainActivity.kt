@@ -1,13 +1,13 @@
 package com.ramzi.debit_credit_app
 
 import android.os.Bundle
-import androidx.core.view.WindowCompat
-import io.flutter.embedding.android.FlutterActivity
+import androidx.activity.enableEdgeToEdge
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Configure system bars using AndroidX edge-to-edge helper for Android 15+ compatibility.
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        // Enable edge-to-edge by letting content draw behind system bars
-        WindowCompat.setDecorFitsSystemWindows(window, false)
     }
 }

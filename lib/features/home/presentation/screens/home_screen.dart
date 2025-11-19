@@ -55,6 +55,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
+  static const double _categoryItemWidth = 120.0;
   final HomeController _controller = HomeController();
   HomeState _state = HomeState.initial();
   StreamSubscription<CategoryEvent>? _categoryEventSubscription;
@@ -81,8 +82,18 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _generateReportForCurrentCategory() async {
     if (_state.categories.isEmpty) return;
-    final cat = _state.categories.first;
+    final cat = _state.categories[_selectedCategoryIndex];
     final accounts = _state.accountsByCategory[cat.name] ?? [];
+    if (accounts.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('لا توجد حسابات مرتبطة بالفئة ${cat.name} لإنشاء التقرير'),
+          ),
+        );
+      }
+      return;
+    }
     await HomeReportCoordinator.generateCategoryReport(category: cat, accounts: accounts);
   }
 
@@ -236,18 +247,7 @@ class HomeScreenState extends State<HomeScreen> {
         }
         
         // Scroll category navigation to show selected category
-        if (mounted && _categoryScrollController?.hasClients == true && _state.categories.isNotEmpty) {
-          final itemWidth = 120.0; // Approximate width of each category item
-          final targetOffset = _selectedCategoryIndex * itemWidth;
-          final maxScrollExtent = _categoryScrollController!.position.maxScrollExtent;
-          final scrollOffset = targetOffset > maxScrollExtent ? maxScrollExtent : targetOffset;
-          
-          _categoryScrollController!.animateTo(
-            scrollOffset,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        }
+        _animateCategoryScrollToIndex(_selectedCategoryIndex);
       });
     } catch (e) {
       setState(() => _state = _state.copyWith(isLoading: false));
@@ -256,6 +256,20 @@ class HomeScreenState extends State<HomeScreen> {
             .showSnackBar(SnackBar(content: Text('خطأ في تحميل البيانات: $e'), backgroundColor: Colors.red));
       }
     }
+  }
+
+  void _animateCategoryScrollToIndex(int index) {
+    if (_categoryScrollController?.hasClients != true) return;
+    final maxScrollExtent = _categoryScrollController!.position.maxScrollExtent;
+    final desiredOffset = (index * _categoryItemWidth) - (_categoryItemWidth * 0.5);
+    final targetOffset =
+        desiredOffset.clamp(0, maxScrollExtent).toDouble();
+
+    _categoryScrollController!.animateTo(
+      targetOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -370,6 +384,7 @@ class HomeScreenState extends State<HomeScreen> {
                       setState(() {
                         _selectedCategoryIndex = index;
                       });
+                      _animateCategoryScrollToIndex(index);
                     },
                     itemCount: _state.categories.length,
                     itemBuilder: (context, index) {
@@ -461,6 +476,7 @@ class HomeScreenState extends State<HomeScreen> {
                  duration: const Duration(milliseconds: 300),
                  curve: Curves.easeInOut,
                );
+               _animateCategoryScrollToIndex(index);
              },
             child: Container(
               height: 24,

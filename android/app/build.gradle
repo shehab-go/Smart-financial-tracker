@@ -78,13 +78,11 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.release
-            // Enable code shrinking/obfuscation and resource shrinking for release
-            minifyEnabled true
-            shrinkResources true
+            // Disable minification to avoid unnecessary Play Core dependency.
+            minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // Include native debug symbols in the AAB for better crash analysis
             ndk {
-                // Options: 'NONE', 'SYMBOL_TABLE', 'FULL'. SYMBOL_TABLE balances detail and size.
                 debugSymbolLevel 'SYMBOL_TABLE'
             }
         }
@@ -99,7 +97,7 @@ dependencies {
             force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0'
         }
     }
-    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'androidx.activity:activity-ktx:1.9.3'
     implementation 'androidx.core:core-ktx:1.12.0'
 }
 
