@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:debit_credit_app/core/models/expense.dart';
 import 'package:debit_credit_app/core/models/category.dart';
 import 'package:debit_credit_app/core/models/currency.dart';
+import 'package:debit_credit_app/core/models/income_balance.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+import 'package:debit_credit_app/features/expenses/domain/expense_repository.dart';
 
 class AddExpenseDialog extends StatefulWidget {
   final ExpenseModel? expense;
@@ -21,16 +23,33 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   final _amountController = TextEditingController();
   final _detailController = TextEditingController();
   bool _isLoading = false;
-  
+
   List<CategoryModel> _categories = [];
   List<CurrencyModel> _currencies = [];
   String _selectedCategory = 'مصروفات';
   String _selectedCurrency = 'محلي';
 
+  final DatabaseHelper _db = DatabaseHelper();
+  List<IncomeBalanceModel> _incomeBalances = [];
+  List<_ExpenseBalanceAllocationInput> _allocationInputs = [];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _amountController.dispose();
+    _detailController.dispose();
+    for (final input in _allocationInputs) {
+      input.dispose();
+    }
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
     _loadData();
+    _initBalancesAndAllocations();
+
     if (widget.expense != null) {
       _nameController.text = widget.expense!.name;
       _amountController.text = widget.expense!.amount.toString();
@@ -45,7 +64,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
       final db = DatabaseHelper();
       final categories = await db.getCategories();
       final currencies = await db.getCurrencies();
-      
+
       setState(() {
         _categories = categories;
         _currencies = currencies;
@@ -55,12 +74,48 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     }
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _amountController.dispose();
-    _detailController.dispose();
-    super.dispose();
+  Future<void> _initBalancesAndAllocations() async {
+    try {
+      final balances = await _db.getIncomeBalances();
+      List<_ExpenseBalanceAllocationInput> allocationInputs = [];
+
+      if (widget.expense != null && widget.expense!.id != null) {
+        final existingAllocations =
+            await _db.getExpenseAllocations(widget.expense!.id!);
+        if (existingAllocations.isNotEmpty) {
+          allocationInputs = existingAllocations
+              .map(
+                (a) => _ExpenseBalanceAllocationInput(
+                  balanceId: a.balanceId,
+                  initialAmount: a.allocatedAmount.toString(),
+                ),
+              )
+              .toList();
+        }
+      }
+
+      if (allocationInputs.isEmpty) {
+        IncomeBalanceModel? defaultBalance;
+        if (balances.isNotEmpty) {
+          try {
+            defaultBalance = balances.firstWhere((b) => b.isDefault);
+          } catch (_) {
+            defaultBalance = balances.first;
+          }
+        }
+        allocationInputs = [
+          _ExpenseBalanceAllocationInput(balanceId: defaultBalance?.id),
+        ];
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _incomeBalances = balances;
+        _allocationInputs = allocationInputs;
+      });
+    } catch (e) {
+      print('Error loading income balances for expenses: $e');
+    }
   }
 
   void _saveExpense() async {
@@ -71,10 +126,77 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     });
 
     try {
+      final double totalAmount = double.parse(_amountController.text);
+
+      final List<_ExpenseBalanceAllocationInput> validInputs = _allocationInputs
+          .where((input) =>
+              input.balanceId != null &&
+              input.amountController.text.trim().isNotEmpty)
+          .toList();
+      final List<ExpenseAllocationInput> allocations = [];
+
+      if (validInputs.isEmpty) {
+        final defaultBalance = await _db.getDefaultIncomeBalance();
+        if (defaultBalance == null || defaultBalance.id == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('لا يوجد رصيد افتراضي متاح لتوزيع المبلغ'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+          return;
+        }
+        allocations.add(
+          ExpenseAllocationInput(
+            balanceId: defaultBalance.id!,
+            amount: totalAmount,
+          ),
+        );
+      } else {
+        double totalAllocated = 0.0;
+        for (final input in validInputs) {
+          final balanceId = input.balanceId;
+          if (balanceId == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('يرجى اختيار رصيد لكل سطر توزيع'),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+            return;
+          }
+          final text = input.amountController.text.trim();
+          final value = double.tryParse(text);
+          if (value == null || value <= 0) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('قيمة المبلغ في توزيع الأرصدة غير صحيحة'),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+            return;
+          }
+          totalAllocated += value;
+          allocations.add(
+            ExpenseAllocationInput(balanceId: balanceId, amount: value),
+          );
+        }
+
+        if ((totalAllocated - totalAmount).abs() > 0.01) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('مجموع مبالغ الأرصدة يجب أن يساوي المبلغ الكلي'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+          return;
+        }
+      }
+
       final expense = ExpenseModel(
         id: widget.expense?.id,
         name: _nameController.text.trim(),
-        amount: double.parse(_amountController.text),
+        amount: totalAmount,
         detail: _detailController.text.trim(),
         category: _selectedCategory,
         currency: _selectedCurrency,
@@ -82,7 +204,10 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         updatedDate: widget.expense != null ? DateTime.now() : null,
       );
 
-      Navigator.of(context).pop(expense);
+      Navigator.of(context).pop({
+        'expense': expense,
+        'allocations': allocations,
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

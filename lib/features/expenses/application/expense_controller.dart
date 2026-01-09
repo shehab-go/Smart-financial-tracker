@@ -33,9 +33,16 @@ class ExpenseController {
     }
   }
 
-  Future<bool> addExpense(ExpenseModel expense) async {
+  Future<bool> addExpense(
+    ExpenseModel expense, {
+    List<ExpenseAllocationInput> allocations = const [],
+  }) async {
     try {
-      await _repo.addExpense(expense);
+      if (allocations.isEmpty) {
+        await _repo.addExpense(expense);
+      } else {
+        await _repo.addExpenseWithAllocations(expense, allocations);
+      }
       await load(); // Refresh the list
       return true;
     } catch (e) {
@@ -44,9 +51,16 @@ class ExpenseController {
     }
   }
 
-  Future<bool> updateExpense(ExpenseModel expense) async {
+  Future<bool> updateExpense(
+    ExpenseModel expense, {
+    List<ExpenseAllocationInput> allocations = const [],
+  }) async {
     try {
-      await _repo.updateExpense(expense);
+      if (allocations.isEmpty) {
+        await _repo.updateExpense(expense);
+      } else {
+        await _repo.updateExpenseWithAllocations(expense, allocations);
+      }
       await load(); // Refresh the list
       return true;
     } catch (e) {

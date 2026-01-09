@@ -13,7 +13,7 @@ import 'database_helper.dart';
 /// - Detailed logging is provided for debugging and monitoring
 class MigrationHelper {
   /// Current database schema version
-  static const int currentVersion = 10;
+  static const int currentVersion = 11;
   
   // Constants for default values and common strings
   static const String defaultCurrencyName = 'محلي';
@@ -81,6 +81,10 @@ class MigrationHelper {
       if (oldVersion < 10) {
         print('[MigrationHelper] Applying migration to version 10');
         await _migrateToV10(db);
+      }
+      if (oldVersion < 11) {
+        print('[MigrationHelper] Applying migration to version 11');
+        await _migrateToV11(db);
       }
       
       print('[MigrationHelper] Database migration completed successfully');
@@ -533,6 +537,148 @@ class MigrationHelper {
       print('[MigrationHelper] Successfully completed migration to v10 - currencyName column fixed');
     } catch (e) {
       print('[MigrationHelper] ERROR in _migrateToV10: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 11: Add income resources, balances, and allocation tables
+  static Future<void> _migrateToV11(Database db) async {
+    try {
+      // Create income resources table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS income_resources (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          createdDate INTEGER NOT NULL
+        )
+      ''');
+
+      // Create income balances table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS income_balances (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          resourceId INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          currencyName TEXT NOT NULL DEFAULT 'محلي',
+          initialAmount REAL NOT NULL DEFAULT 0,
+          isDefault INTEGER NOT NULL DEFAULT 0,
+          createdDate INTEGER NOT NULL,
+          FOREIGN KEY (resourceId) REFERENCES income_resources (id) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create allocation tables
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS transaction_balance_allocations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          transactionId INTEGER NOT NULL,
+          balanceId INTEGER NOT NULL,
+          allocatedAmount REAL NOT NULL,
+          FOREIGN KEY (transactionId) REFERENCES transactions (id) ON DELETE CASCADE,
+          FOREIGN KEY (balanceId) REFERENCES income_balances (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS expense_balance_allocations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          expenseId INTEGER NOT NULL,
+          balanceId INTEGER NOT NULL,
+          allocatedAmount REAL NOT NULL,
+          FOREIGN KEY (expenseId) REFERENCES expenses (id) ON DELETE CASCADE,
+          FOREIGN KEY (balanceId) REFERENCES income_balances (id) ON DELETE CASCADE
+        )
+      ''');
+
+      final int now = DateTime.now().millisecondsSinceEpoch;
+
+      // Ensure there is at least one income resource
+      int resourceId;
+      final existingResources = await db.query(
+        'income_resources',
+        limit: 1,
+      );
+      if (existingResources.isEmpty) {
+        resourceId = await db.insert('income_resources', {
+          'name': 'المصدر الرئيسي',
+          'description': 'المصدر الافتراضي للرصيد',
+          'createdDate': now,
+        });
+      } else {
+        resourceId = existingResources.first['id'] as int;
+      }
+
+      // Ensure there is a default income balance
+      int defaultBalanceId;
+      final existingDefaultBalance = await db.query(
+        'income_balances',
+        where: 'isDefault = ?',
+        whereArgs: [1],
+        limit: 1,
+      );
+      if (existingDefaultBalance.isEmpty) {
+        defaultBalanceId = await db.insert('income_balances', {
+          'resourceId': resourceId,
+          'name': 'الرصيد الأساسي',
+          'currencyName': defaultCurrencyName,
+          'initialAmount': 0.0,
+          'isDefault': 1,
+          'createdDate': now,
+        });
+      } else {
+        defaultBalanceId = existingDefaultBalance.first['id'] as int;
+      }
+
+      // Backfill allocations for existing transactions
+      final transactions = await db.query('transactions');
+      for (final tx in transactions) {
+        final int? txId = tx['id'] as int?;
+        if (txId == null) continue;
+
+        final existingAllocations = await db.query(
+          'transaction_balance_allocations',
+          where: 'transactionId = ?',
+          whereArgs: [txId],
+          limit: 1,
+        );
+
+        if (existingAllocations.isEmpty) {
+          final double amount = (tx['amount'] as num?)?.toDouble() ?? 0.0;
+          await db.insert('transaction_balance_allocations', {
+            'transactionId': txId,
+            'balanceId': defaultBalanceId,
+            'allocatedAmount': amount,
+          });
+        }
+      }
+
+      // Backfill allocations for existing expenses
+      final expenses = await db.query('expenses');
+      for (final exp in expenses) {
+        final int? expId = exp['id'] as int?;
+        if (expId == null) continue;
+
+        final existingAllocations = await db.query(
+          'expense_balance_allocations',
+          where: 'expenseId = ?',
+          whereArgs: [expId],
+          limit: 1,
+        );
+
+        if (existingAllocations.isEmpty) {
+          final double amount = (exp['amount'] as num?)?.toDouble() ?? 0.0;
+          await db.insert('expense_balance_allocations', {
+            'expenseId': expId,
+            'balanceId': defaultBalanceId,
+            'allocatedAmount': amount,
+          });
+        }
+      }
+
+      print('[MigrationHelper] Successfully completed migration to v11 - income resources, balances, and allocations added');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV11: $e');
       rethrow;
     }
   }

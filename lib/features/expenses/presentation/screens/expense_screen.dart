@@ -8,6 +8,7 @@ import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/features/expenses/application/expense_controller.dart';
 import 'package:debit_credit_app/features/expenses/application/expense_state.dart';
 import 'package:debit_credit_app/features/expenses/presentation/dialogs/add_expense_dialog.dart';
+import 'package:debit_credit_app/features/expenses/domain/expense_repository.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/widgets/app_drawer.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/search_screen.dart';
@@ -103,19 +104,22 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   }
 
   Future<void> _showAddExpenseDialog({ExpenseModel? expense}) async {
-    final result = await showDialog<ExpenseModel>(
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AddExpenseDialog(expense: expense),
     );
 
     if (result != null) {
+      final ExpenseModel expenseResult = result['expense'] as ExpenseModel;
+      final List<ExpenseAllocationInput> allocations =
+          (result['allocations'] as List<ExpenseAllocationInput>?) ?? const [];
       bool success;
       if (expense != null) {
         // Update existing expense
-        success = await _controller.updateExpense(result);
+        success = await _controller.updateExpense(expenseResult, allocations: allocations);
       } else {
         // Add new expense
-        success = await _controller.addExpense(result);
+        success = await _controller.addExpense(expenseResult, allocations: allocations);
       }
       
       if (success && mounted) {

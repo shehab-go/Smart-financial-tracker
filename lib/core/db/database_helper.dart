@@ -6,6 +6,10 @@ import '../models/account.dart';
 import '../models/currency.dart';
 import '../models/user_profile.dart';
 import '../models/expense.dart';
+import '../models/income_resource.dart';
+import '../models/income_balance.dart';
+import '../models/transaction_balance_allocation.dart';
+import '../models/expense_balance_allocation.dart';
 import 'migration_helper.dart';
 
 class DatabaseHelper {
@@ -27,7 +31,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 10,
+      version: 11,
       onCreate: _createDatabase,
       onUpgrade: MigrationHelper.migrate,
     );
@@ -61,6 +65,28 @@ class DatabaseHelper {
         phone TEXT,
         address TEXT,
         workDetails TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE income_resources (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        createdDate INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE income_balances (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        resourceId INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        currencyName TEXT NOT NULL DEFAULT 'محلي',
+        initialAmount REAL NOT NULL DEFAULT 0,
+        isDefault INTEGER NOT NULL DEFAULT 0,
+        createdDate INTEGER NOT NULL,
+        FOREIGN KEY (resourceId) REFERENCES income_resources (id) ON DELETE CASCADE
       )
     ''');
 
@@ -107,6 +133,65 @@ class DatabaseHelper {
         updatedDate INTEGER
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE transaction_balance_allocations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transactionId INTEGER NOT NULL,
+        balanceId INTEGER NOT NULL,
+        allocatedAmount REAL NOT NULL,
+        FOREIGN KEY (transactionId) REFERENCES transactions (id) ON DELETE CASCADE,
+        FOREIGN KEY (balanceId) REFERENCES income_balances (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE expense_balance_allocations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        expenseId INTEGER NOT NULL,
+        balanceId INTEGER NOT NULL,
+        allocatedAmount REAL NOT NULL,
+        FOREIGN KEY (expenseId) REFERENCES expenses (id) ON DELETE CASCADE,
+        FOREIGN KEY (balanceId) REFERENCES income_balances (id) ON DELETE CASCADE
+      )
+    ''');
+
+    final int now = DateTime.now().millisecondsSinceEpoch;
+
+    int resourceId;
+    final existingResources = await db.query(
+      'income_resources',
+      limit: 1,
+    );
+    if (existingResources.isEmpty) {
+      resourceId = await db.insert('income_resources', {
+        'name': 'المصدر الرئيسي',
+        'description': 'المصدر الافتراضي للرصيد',
+        'createdDate': now,
+      });
+    } else {
+      resourceId = existingResources.first['id'] as int;
+    }
+
+    int defaultBalanceId;
+    final existingDefaultBalance = await db.query(
+      'income_balances',
+      where: 'isDefault = ?',
+      whereArgs: [1],
+      limit: 1,
+    );
+    if (existingDefaultBalance.isEmpty) {
+      defaultBalanceId = await db.insert('income_balances', {
+        'resourceId': resourceId,
+        'name': 'الرصيد الأساسي',
+        'currencyName': 'محلي',
+        'initialAmount': 0.0,
+        'isDefault': 1,
+        'createdDate': now,
+      });
+    } else {
+      defaultBalanceId = existingDefaultBalance.first['id'] as int;
+    }
 
     // Insert default categories
     final defaultCategories = CategoryModel.getDefaultCategories();
@@ -559,6 +644,164 @@ class DatabaseHelper {
     final db = await database;
     final result = await db.rawQuery('SELECT SUM(amount) as total FROM expenses');
     return result.first['total'] as double? ?? 0.0;
+  }
+
+  // Income resources operations
+  Future<List<IncomeResourceModel>> getIncomeResources() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'income_resources',
+      orderBy: 'createdDate DESC',
+    );
+    return List.generate(maps.length, (i) {
+      return IncomeResourceModel.fromMap(maps[i]);
+    });
+  }
+
+  Future<int> insertIncomeResource(IncomeResourceModel resource) async {
+    final db = await database;
+    return await db.insert('income_resources', resource.toMap());
+  }
+
+  Future<int> updateIncomeResource(IncomeResourceModel resource) async {
+    final db = await database;
+    return await db.update(
+      'income_resources',
+      resource.toMap(),
+      where: 'id = ?',
+      whereArgs: [resource.id],
+    );
+  }
+
+  Future<int> deleteIncomeResource(int id) async {
+    final db = await database;
+    return await db.delete(
+      'income_resources',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // Income balances operations
+  Future<List<IncomeBalanceModel>> getIncomeBalances() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'income_balances',
+      orderBy: 'createdDate DESC',
+    );
+    return List.generate(maps.length, (i) {
+      return IncomeBalanceModel.fromMap(maps[i]);
+    });
+  }
+
+  Future<List<IncomeBalanceModel>> getIncomeBalancesByResource(int resourceId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'income_balances',
+      where: 'resourceId = ?',
+      whereArgs: [resourceId],
+      orderBy: 'createdDate DESC',
+    );
+    return List.generate(maps.length, (i) {
+      return IncomeBalanceModel.fromMap(maps[i]);
+    });
+  }
+
+  Future<IncomeBalanceModel?> getDefaultIncomeBalance() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'income_balances',
+      where: 'isDefault = ?',
+      whereArgs: [1],
+      limit: 1,
+    );
+    if (maps.isEmpty) return null;
+    return IncomeBalanceModel.fromMap(maps.first);
+  }
+
+  Future<int> insertIncomeBalance(IncomeBalanceModel balance) async {
+    final db = await database;
+    return await db.insert('income_balances', balance.toMap());
+  }
+
+  Future<int> updateIncomeBalance(IncomeBalanceModel balance) async {
+    final db = await database;
+    return await db.update(
+      'income_balances',
+      balance.toMap(),
+      where: 'id = ?',
+      whereArgs: [balance.id],
+    );
+  }
+
+  Future<int> deleteIncomeBalance(int id) async {
+    final db = await database;
+    return await db.delete(
+      'income_balances',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // Allocation operations
+  Future<List<TransactionBalanceAllocation>> getTransactionAllocations(int transactionId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'transaction_balance_allocations',
+      where: 'transactionId = ?',
+      whereArgs: [transactionId],
+    );
+    return List.generate(maps.length, (i) {
+      return TransactionBalanceAllocation.fromMap(maps[i]);
+    });
+  }
+
+  Future<List<ExpenseBalanceAllocation>> getExpenseAllocations(int expenseId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'expense_balance_allocations',
+      where: 'expenseId = ?',
+      whereArgs: [expenseId],
+    );
+    return List.generate(maps.length, (i) {
+      return ExpenseBalanceAllocation.fromMap(maps[i]);
+    });
+  }
+
+  Future<void> insertTransactionAllocations(List<TransactionBalanceAllocation> allocations) async {
+    final db = await database;
+    final batch = db.batch();
+    for (final allocation in allocations) {
+      batch.insert('transaction_balance_allocations', allocation.toMap());
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<void> insertExpenseAllocations(List<ExpenseBalanceAllocation> allocations) async {
+    final db = await database;
+    final batch = db.batch();
+    for (final allocation in allocations) {
+      batch.insert('expense_balance_allocations', allocation.toMap());
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<void> deleteTransactionAllocations(int transactionId) async {
+    final db = await database;
+    await db.delete(
+      'transaction_balance_allocations',
+      where: 'transactionId = ?',
+      whereArgs: [transactionId],
+    );
+  }
+
+  Future<void> deleteExpenseAllocations(int expenseId) async {
+    final db = await database;
+    await db.delete(
+      'expense_balance_allocations',
+      where: 'expenseId = ?',
+      whereArgs: [expenseId],
+    );
   }
 
   Future<void> close() async {

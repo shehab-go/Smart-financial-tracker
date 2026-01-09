@@ -7,8 +7,22 @@ import 'package:path/path.dart' as path;
 import 'package:debit_credit_app/core/models/account.dart';
 import 'package:debit_credit_app/core/models/transaction.dart';
 import 'package:debit_credit_app/core/models/currency.dart';
+import 'package:debit_credit_app/core/models/income_balance.dart';
+import 'package:debit_credit_app/core/models/transaction_balance_allocation.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+
+class _BalanceAllocationInput {
+  int? balanceId;
+  final TextEditingController amountController;
+
+  _BalanceAllocationInput({this.balanceId, String initialAmount = ''})
+      : amountController = TextEditingController(text: initialAmount);
+
+  void dispose() {
+    amountController.dispose();
+  }
+}
 
 class AddTransactionDialog extends StatefulWidget {
   final String category;
@@ -35,6 +49,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
+  final DatabaseHelper _db = DatabaseHelper();
+
   DateTime _selectedDate = DateTime.now();
   String _selectedType = 'debit';
   String? _selectedCurrency;
@@ -42,6 +58,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   List<CurrencyModel> _currencies = [];
   bool _isLoading = false;
   List<String> _imagePaths = [];
+  List<IncomeBalanceModel> _incomeBalances = [];
+  List<_BalanceAllocationInput> _allocationInputs = [];
 
   bool get _isNewAccount => widget.accountId == null;
   bool get _isEditing => widget.transaction != null;
@@ -52,6 +70,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _amountController.dispose();
     _detailsController.dispose();
     _phoneController.dispose();
+    for (final input in _allocationInputs) {
+      input.dispose();
+    }
     super.dispose();
   }
 
@@ -97,6 +118,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   void initState() {
     super.initState();
     _initCurrency();
+    _initBalancesAndAllocations();
 
     if (_isEditing) {
       final t = widget.transaction!;
@@ -120,6 +142,50 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           _selectedCurrency = _currencies.first.name;
         }
       });
+    }
+  }
+
+  Future<void> _initBalancesAndAllocations() async {
+    try {
+      final balances = await _db.getIncomeBalances();
+      List<_BalanceAllocationInput> allocationInputs = [];
+
+      if (_isEditing && widget.transaction?.id != null) {
+        final existingAllocations =
+            await _db.getTransactionAllocations(widget.transaction!.id!);
+        if (existingAllocations.isNotEmpty) {
+          allocationInputs = existingAllocations
+              .map(
+                (a) => _BalanceAllocationInput(
+                  balanceId: a.balanceId,
+                  initialAmount: a.allocatedAmount.toString(),
+                ),
+              )
+              .toList();
+        }
+      }
+
+      if (allocationInputs.isEmpty) {
+        IncomeBalanceModel? defaultBalance;
+        if (balances.isNotEmpty) {
+          try {
+            defaultBalance = balances.firstWhere((b) => b.isDefault);
+          } catch (_) {
+            defaultBalance = balances.first;
+          }
+        }
+        allocationInputs = [
+          _BalanceAllocationInput(balanceId: defaultBalance?.id),
+        ];
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _incomeBalances = balances;
+        _allocationInputs = allocationInputs;
+      });
+    } catch (e) {
+      print('Error loading income balances: $e');
     }
   }
 
@@ -157,15 +223,94 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     int accountId = widget.accountId ?? -1;
     
     try {
+      final db = _db;
+      final double totalAmount = double.parse(_amountController.text);
+
+      final List<_BalanceAllocationInput> validInputs = _allocationInputs
+          .where((input) =>
+              input.balanceId != null &&
+              input.amountController.text.trim().isNotEmpty)
+          .toList();
+      final List<Map<String, dynamic>> allocationData = [];
+
+      if (validInputs.isEmpty) {
+        final defaultBalance = await db.getDefaultIncomeBalance();
+        if (defaultBalance == null || defaultBalance.id == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('لا يوجد رصيد افتراضي متاح لتوزيع المبلغ')),
+            );
+          }
+          return;
+        }
+        allocationData.add({
+          'balanceId': defaultBalance.id!,
+          'amount': totalAmount,
+        });
+      } else {
+        double totalAllocated = 0.0;
+        for (final input in validInputs) {
+          final balanceId = input.balanceId;
+          if (balanceId == null) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('يرجى اختيار رصيد لكل سطر توزيع')),
+              );
+            }
+            return;
+          }
+          final text = input.amountController.text.trim();
+          final value = double.tryParse(text);
+          if (value == null || value <= 0) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('قيمة المبلغ في توزيع الأرصدة غير صحيحة')),
+              );
+            }
+            return;
+          }
+          totalAllocated += value;
+          allocationData.add({
+            'balanceId': balanceId,
+            'amount': value,
+          });
+        }
+
+        if ((totalAllocated - totalAmount).abs() > 0.01) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('مجموع مبالغ الأرصدة يجب أن يساوي المبلغ الكلي')),
+            );
+          }
+          return;
+        }
+      }
+
       if (_isEditing) {
-        final updated = widget.transaction!.copyWith(
-          amount: double.parse(_amountController.text),
+        final existing = widget.transaction!;
+        final updated = existing.copyWith(
+          amount: totalAmount,
           type: _selectedType,
           date: _selectedDate,
           description: _detailsController.text.trim(),
           imagePaths: _imagePaths,
         );
-        await DatabaseHelper().updateTransaction(updated);
+        if (existing.id != null) {
+          await db.updateTransaction(updated);
+          await db.deleteTransactionAllocations(existing.id!);
+          final allocations = allocationData
+              .map(
+                (data) => TransactionBalanceAllocation(
+                  transactionId: existing.id!,
+                  balanceId: data['balanceId'] as int,
+                  allocatedAmount: data['amount'] as double,
+                ),
+              )
+              .toList();
+          await db.insertTransactionAllocations(allocations);
+        } else {
+          await db.updateTransaction(updated);
+        }
       } else {
         if (_isNewAccount) {
           // Use default currency if none selected
@@ -180,19 +325,29 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
             phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
             createdDate: DateTime.now(),
           );
-          accountId = await DatabaseHelper().insertAccount(account);
+          accountId = await db.insertAccount(account);
         }
 
         final transaction = TransactionModel(
           accountId: accountId,
-          amount: double.parse(_amountController.text),
+          amount: totalAmount,
           type: _selectedType,
           category: widget.category,
           date: _selectedDate,
           description: _detailsController.text.trim(),
           imagePaths: _imagePaths,
         );
-        await DatabaseHelper().insertTransaction(transaction);
+        final transactionId = await db.insertTransaction(transaction);
+        final allocations = allocationData
+            .map(
+              (data) => TransactionBalanceAllocation(
+                transactionId: transactionId,
+                balanceId: data['balanceId'] as int,
+                allocatedAmount: data['amount'] as double,
+              ),
+            )
+            .toList();
+        await db.insertTransactionAllocations(allocations);
       }
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
@@ -371,6 +526,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         validator: (v) => v == null || v.trim().isEmpty ? 'مطلوب' : null,
                       ),
                       const SizedBox(height: 16),
+                      if (_incomeBalances.isNotEmpty) ...[
+                        _buildBalanceAllocationSection(),
+                        const SizedBox(height: 16),
+                      ],
                       // Transaction type selection
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -909,6 +1068,159 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBalanceAllocationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'اختيار الأرصدة وتوزيع المبلغ',
+          style: TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Column(
+          children: List.generate(_allocationInputs.length, (index) {
+            final input = _allocationInputs[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: DropdownButtonFormField<int>(
+                      value: input.balanceId,
+                      decoration: InputDecoration(
+                        labelText: 'الرصيد',
+                        labelStyle: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: AppTheme.primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
+                      items: _incomeBalances
+                          .map(
+                            (balance) => DropdownMenuItem<int>(
+                              value: balance.id,
+                              child: Text(
+                                balance.name,
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          input.balanceId = value;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: input.amountController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: 'المبلغ',
+                        labelStyle: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: AppTheme.primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
+                    ),
+                  ),
+                  if (_allocationInputs.length > 1)
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          final removed = _allocationInputs.removeAt(index);
+                          removed.dispose();
+                        });
+                      },
+                      icon: const Icon(
+                        Icons.remove_circle_outline,
+                        color: AppTheme.errorColor,
+                        size: 20,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _allocationInputs.add(_BalanceAllocationInput());
+              });
+            },
+            icon: const Icon(
+              Icons.add,
+              size: 18,
+              color: AppTheme.primaryColor,
+            ),
+            label: const Text(
+              'إضافة رصيد آخر',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
