@@ -18,6 +18,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
   Map<String, Map<String, int>> _usageByName = <String, Map<String, int>>{};
   Set<String> _favoriteCurrencyNames = {};
   Iterable<FiatCurrency>? _allFiatCurrencies;
+  String? _defaultCurrencyName;
 
   @override
   void initState() {
@@ -63,6 +64,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
       final currencies = await db.getCurrencies();
       final usage = await db.getCurrencyUsageCountsByName();
       final favorites = await db.getFavoriteCurrencies();
+      final defaultName = await db.getDefaultCurrencyName();
 
       // Sort: favorites first, then by total usage (accounts+balances+expenses)
       // descending, then by display name alphabetically.
@@ -91,6 +93,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
         _currencies = sorted;
         _usageByName = usage;
         _favoriteCurrencyNames = favorites;
+        _defaultCurrencyName = defaultName;
         _isLoading = false;
       });
     } catch (e) {
@@ -249,6 +252,8 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                             final int expensesCount = usage?['expenses'] ?? 0;
                             final bool isFavorite =
                                 _favoriteCurrencyNames.contains(currency.name);
+                            final bool isDefault =
+                                _defaultCurrencyName == currency.name;
                             final int totalUsage =
                                 accountsCount + balancesCount + expensesCount;
 
@@ -336,21 +341,52 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                                             ),
                                         ],
                                       ),
-                                trailing: IconButton(
-                                  icon: Icon(
-                                    isFavorite
-                                        ? Icons.star_rounded
-                                        : Icons.star_border_rounded,
-                                    color: isFavorite
-                                        ? AppTheme.primaryColor
-                                        : Colors.grey.shade500,
-                                    size: 20,
-                                  ),
-                                  tooltip: isFavorite
-                                      ? 'إزالة من المفضلة'
-                                      : 'إضافة للمفضلة',
-                                  onPressed: () => _toggleFavorite(currency),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (isDefault)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsetsDirectional.only(end: 8),
+                                        child: Icon(
+                                          Icons.check_circle,
+                                          color: AppTheme.primaryColor,
+                                          size: 18,
+                                        ),
+                                      ),
+                                    IconButton(
+                                      icon: Icon(
+                                        isFavorite
+                                            ? Icons.star_rounded
+                                            : Icons.star_border_rounded,
+                                        color: isFavorite
+                                            ? AppTheme.primaryColor
+                                            : Colors.grey.shade500,
+                                        size: 20,
+                                      ),
+                                      tooltip: isFavorite
+                                          ? 'إزالة من المفضلة'
+                                          : 'إضافة للمفضلة',
+                                      onPressed: () => _toggleFavorite(currency),
+                                    ),
+                                  ],
                                 ),
+                                onTap: () async {
+                                  // Set this currency as the global default
+                                  _defaultCurrencyName = currency.name;
+                                  setState(() {});
+                                  await DatabaseHelper()
+                                      .setDefaultCurrencyName(currency.name);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'تم تعيين "${currency.name}" كعملة افتراضية'),
+                                        backgroundColor: AppTheme.successColor,
+                                      ),
+                                    );
+                                  }
+                                },
                               ),
                             );
                           },

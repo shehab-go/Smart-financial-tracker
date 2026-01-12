@@ -64,6 +64,11 @@ class HomeScreenState extends State<HomeScreen> {
   late PageController _pageController;
   ScrollController? _categoryScrollController;
   bool _isDrawerOpen = false;
+
+  // Filters for accounts view
+  String _selectedTypeFilter = 'all'; // all, credit, debit
+  String _selectedCurrencyFilter = 'all'; // 'all' or specific currencyName
+  String _selectedDateFilter = 'all'; // all, today, this_month, this_year
   
   // State for selection mode
   bool _isSelectionMode = false;
@@ -360,8 +365,8 @@ class HomeScreenState extends State<HomeScreen> {
           ? _buildEmptyState()
           : Column(
               children: [
-                // Horizontal Category Navigation
-                _buildCategoryNavigation(),
+                // Filters bar (category, type, currency, date)
+                _buildFiltersBar(),
                 // Swipeable Category Content
                 Expanded(
                   child: PageView.builder(
@@ -393,6 +398,223 @@ class HomeScreenState extends State<HomeScreen> {
               ),
             )
           : null,
+    );
+  }
+
+  Widget _buildFiltersBar() {
+    final categories = _state.categories;
+    if (categories.isEmpty) return const SizedBox.shrink();
+
+    // Ensure selected index is within bounds
+    int safeIndex = _selectedCategoryIndex;
+    if (safeIndex >= categories.length) {
+      safeIndex = 0;
+    }
+    final selectedCategory = categories[safeIndex];
+
+    // Collect distinct currencies from all accounts
+    final Set<String> currencySet = {};
+    _state.accountsByCategory.forEach((_, accounts) {
+      for (final account in accounts) {
+        currencySet.add(account.currencyName);
+      }
+    });
+    final List<String> currencies = currencySet.toList()..sort();
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.08),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                // Category dropdown
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: selectedCategory.name,
+                    decoration: InputDecoration(
+                      labelText: 'الفئة',
+                      labelStyle: const TextStyle(fontSize: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      isDense: true,
+                    ),
+                    items: categories
+                        .map(
+                          (c) => DropdownMenuItem<String>(
+                            value: c.name,
+                            child: Text(
+                              c.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      final index =
+                          categories.indexWhere((c) => c.name == value);
+                      if (index == -1) return;
+                      setState(() {
+                        _selectedCategoryIndex = index;
+                      });
+                      if (_pageController.hasClients) {
+                        _pageController.animateToPage(
+                          index,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Currency dropdown
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedCurrencyFilter,
+                    decoration: InputDecoration(
+                      labelStyle: const TextStyle(fontSize: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      isDense: true,
+                    ),
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: 'all',
+                        child: Text('العملة'),
+                      ),
+                      ...currencies.map(
+                        (cur) => DropdownMenuItem<String>(
+                          value: cur,
+                          child: Text(
+                            cur,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCurrencyFilter = value ?? 'all';
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                // Type dropdown
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedTypeFilter,
+                    decoration: InputDecoration(
+                      labelStyle: const TextStyle(fontSize: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      isDense: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem<String>(
+                        value: 'all',
+                        child: Text('الحاله'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'credit',
+                        child: Text('له'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'debit',
+                        child: Text('عليه'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _selectedTypeFilter = value;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Date dropdown
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedDateFilter,
+                    decoration: InputDecoration(
+                      // labelText: 'التاريخ',
+                      labelStyle: const TextStyle(fontSize: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      isDense: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem<String>(
+                        value: 'all',
+                        child: Text('التاريخ'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'today',
+                        child: Text('اليوم'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'this_month',
+                        child: Text('هذا الشهر'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'this_year',
+                        child: Text('هذه السنة'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _selectedDateFilter = value;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -503,128 +725,174 @@ class HomeScreenState extends State<HomeScreen> {
     
     return _buildCategoryWithStickyHeader(selectedCategory, accounts);
   }
+List<AccountModel> _filterAccounts(List<AccountModel> accounts) {
+  return accounts.where((account) {
+    // 1) Currency filter
+    if (_selectedCurrencyFilter != 'all' &&
+        account.currencyName != _selectedCurrencyFilter) {
+      return false;
+    }
 
-  Widget _buildCategoryWithStickyHeader(CategoryModel category, List<AccountModel> accounts) {
-    return Container(
-      margin: const EdgeInsets.only(left: 8, right: 8, top: 2, bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header Section
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              children: [
-                const SizedBox(height: 4),
-                Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Row(
-                    children: [
-                      // Account Name Header
-                       const Expanded(
-                         flex: 6,
-                         child: Text(
-                           'اسم الحساب',
-                           style: TextStyle(
-                             fontSize: 14,
-                             color: AppTheme.textSecondary,
-                           ),
-                         ),
-                       ),
-                       // Credit Header
-                       const Expanded(
-                         flex: 2,
-                         child: Align(
-                           alignment: Alignment.centerRight,
-                           child: Text(
-                             'له',
-                             style: TextStyle(
-                               fontSize: 14,
-                               color: AppTheme.textSecondary,
-                             ),
-                           ),
-                         ),
-                       ),
-                       // Debit Header
-                       const Expanded(
-                         flex: 2,
-                         child: Center(
-                           child: Text(
-                             'عليه',
-                             style: TextStyle(
-                               fontSize: 14,
-                               color: AppTheme.textSecondary,
-                             ),
-                           ),
-                         ),
-                       ),
-                       // Currency Header
-                       const Expanded(
-                         flex: 2,
-                         child: Align(
-                           alignment: Alignment.centerLeft,
-                           child: Text(
-                             'العملة',
-                             style: TextStyle(
-                               fontSize: 14,
-                               color: AppTheme.textSecondary,
-                             ),
-                           ),
-                         ),
-                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: Colors.grey),
-          // Accounts list - Scrollable
-          Expanded(
-            child: accounts.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.backgroundColor,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'لا توجد حسابات في هذه الفئة',
+    // 2) Type filter (credit / debit / all)
+    // net > 0 => له (credit), net < 0 => عليه (debit)
+    final double net = account.totalCredit - account.totalDebit;
+    if (_selectedTypeFilter == 'credit' && net <= 0) {
+      return false;
+    }
+    if (_selectedTypeFilter == 'debit' && net >= 0) {
+      return false;
+    }
+
+    // 3) Date filter based on account.createdDate
+    if (_selectedDateFilter != 'all') {
+      final DateTime now = DateTime.now();
+      final DateTime d = account.createdDate;
+
+      if (_selectedDateFilter == 'today') {
+        if (d.year != now.year || d.month != now.month || d.day != now.day) {
+          return false;
+        }
+      } else if (_selectedDateFilter == 'this_month') {
+        if (d.year != now.year || d.month != now.month) {
+          return false;
+        }
+      } else if (_selectedDateFilter == 'this_year') {
+        if (d.year != now.year) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }).toList();
+}
+ Widget _buildCategoryWithStickyHeader(
+  CategoryModel category,
+  List<AccountModel> accounts,
+) {
+  final filteredAccounts = _filterAccounts(accounts);
+
+  return Container(
+    margin: const EdgeInsets.only(left: 8, right: 8, top: 2, bottom: 8),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header Section
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            children: [
+              const SizedBox(height: 4),
+              Directionality(
+                textDirection: TextDirection.rtl,
+                child: Row(
+                  children: [
+                    // Account Name Header
+                    const Expanded(
+                      flex: 6,
+                      child: Text(
+                        'اسم الحساب',
                         style: TextStyle(
-                          color: AppTheme.textSecondary,
                           fontSize: 14,
+                          color: AppTheme.textSecondary,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
-                  )
-                : ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      ...accounts.map((account) => _buildAccountTile(account)).toList(),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
+                    // Credit Header
+                    const Expanded(
+                      flex: 2,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          'له',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Debit Header
+                    const Expanded(
+                      flex: 2,
+                      child: Center(
+                        child: Text(
+                          'عليه',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Currency Header
+                    const Expanded(
+                      flex: 2,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'العملة',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
+        ),
+        const Divider(height: 1, color: Colors.grey),
+        // Accounts list (filtered)
+        Expanded(
+          child: filteredAccounts.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.backgroundColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'لا توجد حسابات في هذه الفئة',
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              : ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    ...filteredAccounts
+                        .map((account) => _buildAccountTile(account))
+                        .toList(),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+        ),
+      ],
+    ),
+  );
+}
 
 
   Widget _buildCategoryCard(CategoryModel category) {

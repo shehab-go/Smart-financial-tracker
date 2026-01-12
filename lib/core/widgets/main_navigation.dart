@@ -14,6 +14,7 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
   bool _isDrawerOpen = false;
+  int _balancesTabVersion = 0;
 
   void _onDrawerChanged(bool isOpen) {
     setState(() {
@@ -24,7 +25,10 @@ class _MainNavigationState extends State<MainNavigation> {
   List<Widget> get _screens => [
     HomeScreen(onDrawerChanged: _onDrawerChanged),
     ExpenseScreen(onDrawerChanged: _onDrawerChanged),
-    IncomeBalancesScreen(onDrawerChanged: _onDrawerChanged),
+    IncomeBalancesScreen(
+      key: ValueKey<int>(_balancesTabVersion),
+      onDrawerChanged: _onDrawerChanged,
+    ),
   ];
 
   @override
@@ -52,6 +56,10 @@ class _MainNavigationState extends State<MainNavigation> {
             onTap: (index) {
               setState(() {
                 _currentIndex = index;
+                if (index == 2) {
+                  // Force IncomeBalancesScreen to rebuild and reload balances
+                  _balancesTabVersion++;
+                }
               });
             },
             type: BottomNavigationBarType.fixed,

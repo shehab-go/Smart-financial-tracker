@@ -1246,7 +1246,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
         );
         return;
       }
-
+      // Favorites for quick selection in the picker
       final Set<String> favorites = await _db.getFavoriteCurrencies();
 
       final formKey = GlobalKey<FormState>();
@@ -1255,7 +1255,11 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
         text: balance != null ? balance.initialAmount.toString() : '',
       );
 
+      // Prefill currency: existing balance currency or global default for new
       String? selectedCurrency = balance?.currencyName;
+      if (selectedCurrency == null) {
+        selectedCurrency = await _db.getDefaultCurrencyName();
+      }
       bool isDefault = balance?.isDefault ?? false;
       final int resourceId = balance?.resourceId ?? resource.id!;
 
@@ -1839,6 +1843,24 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
   }
 
   Future<void> _confirmDeleteBalance(IncomeBalanceModel balance) async {
+    if (balance.id == null) return;
+
+    // First, check if this balance is used in any transactions or expenses
+    final usage = await _getBalanceAllocationsDetails(balance.id!);
+    final bool hasTransactions = usage['transactions']?.isNotEmpty ?? false;
+    final bool hasExpenses = usage['expenses']?.isNotEmpty ?? false;
+
+    if (hasTransactions || hasExpenses) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('لا يمكن حذف الرصيد لوجود حركات أو مصروفات مرتبطة به'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => Directionality(
@@ -1869,7 +1891,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
       ),
     );
 
-    if (confirmed == true && balance.id != null) {
+    if (confirmed == true) {
       try {
         await _db.deleteIncomeBalance(balance.id!);
         await _loadBalances();

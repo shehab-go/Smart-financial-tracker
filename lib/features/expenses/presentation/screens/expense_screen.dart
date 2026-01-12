@@ -657,39 +657,9 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                   ],
                   
                   const SizedBox(height: 24),
-                  
-                  // Action Buttons
-                  Container(
-                    width: double.infinity,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextButton.icon(
-                            onPressed: () {
-                               Navigator.of(context).pop();
-                               _showAddExpenseDialog(expense: expense);
-                             },
-                            icon: const Icon(Icons.edit, color: Colors.white),
-                            label: const Text(
-                              'تعديل',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                            style: TextButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+
+                  // Action Buttons (edit + delete)
+                  _buildActionButtons(expense),
                 ],
               ),
             ),

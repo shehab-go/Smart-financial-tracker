@@ -39,6 +39,20 @@ class DatabaseHelper {
     );
   }
 
+  /// Returns the configured default currency display name, or null if none set.
+  /// This is stored in app_meta under the key 'default_currency'.
+  Future<String?> getDefaultCurrencyName() async {
+    final raw = await getMetaValue('default_currency');
+    if (raw == null || raw.trim().isEmpty) return null;
+    return raw;
+  }
+
+  /// Sets the global default currency display name used for new transactions,
+  /// expenses, and balances.
+  Future<void> setDefaultCurrencyName(String name) async {
+    await setMetaValue('default_currency', name);
+  }
+
   Future<void> _createDatabase(Database db, int version) async {
     // Create categories table
     await db.execute('''

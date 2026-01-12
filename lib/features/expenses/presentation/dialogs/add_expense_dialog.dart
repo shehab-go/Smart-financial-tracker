@@ -69,7 +69,17 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
       _detailController.text = widget.expense!.detail;
       _selectedCategory = widget.expense!.category;
       _selectedCurrency = widget.expense!.currency;
+    } else {
+      _initDefaultCurrency();
     }
+  }
+
+  Future<void> _initDefaultCurrency() async {
+    final String? defaultName = await _db.getDefaultCurrencyName();
+    if (!mounted) return;
+    setState(() {
+      _selectedCurrency = defaultName;
+    });
   }
 
   Future<void> _pickCurrency() async {
@@ -800,7 +810,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'اختيار الأرصدة وتوزيع المبلغ',
+          'ربط او تقسيم المبلغ بين الارصدة',
           style: TextStyle(
             color: AppTheme.textPrimary,
             fontSize: 14,
@@ -950,7 +960,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
               color: AppTheme.primaryColor,
             ),
             label: const Text(
-              'إضافة رصيد آخر',
+              'اضف تقسيم آخر',
               style: TextStyle(
                 color: AppTheme.primaryColor,
                 fontSize: 13,

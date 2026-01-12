@@ -130,14 +130,25 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   }
 
   Future<void> _initCurrency() async {
+    // Priority:
+    // 1) accountCurrencyCode passed from the account (if any)
+    // 2) existing transaction's currency (for editing) if available
+    // 3) global default currency stored in DatabaseHelper (app_meta)
+    String? initial;
+    if (widget.accountCurrencyCode != null &&
+        widget.accountCurrencyCode!.isNotEmpty) {
+      initial = widget.accountCurrencyCode;
+    } else if (_isEditing && widget.transaction != null) {
+      // Existing transactions currently don't store currency name separately,
+      // so nothing to use here; reserved for future extension.
+      initial = null;
+    } else {
+      initial = await _db.getDefaultCurrencyName();
+    }
+
     if (!mounted) return;
     setState(() {
-      if (widget.accountCurrencyCode != null &&
-          widget.accountCurrencyCode!.isNotEmpty) {
-        _selectedCurrency = widget.accountCurrencyCode;
-      } else {
-        _selectedCurrency = null;
-      }
+      _selectedCurrency = initial;
     });
   }
 
@@ -692,11 +703,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      if (_incomeBalances.isNotEmpty) ...[
-                        _buildBalanceAllocationSection(),
-                        const SizedBox(height: 16),
-                      ],
                       // Transaction type selection
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -796,7 +802,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 4),
+                        const SizedBox(height: 4),
                       // Currency and Date row
                       Row(
                         children: [
@@ -806,6 +812,13 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      if (_incomeBalances.isNotEmpty) ...[
+                        _buildBalanceAllocationSection(),
+                        const SizedBox(height: 16),
+                      ],                  
+                      
+                     
                       const SizedBox(height: 4),
                       TextFormField(
                         controller: _detailsController,
@@ -1202,7 +1215,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'اختيار الأرصدة وتوزيع المبلغ',
+          'ربط او تقسيم المبلغ بين الارصدة',
           style: TextStyle(
             color: AppTheme.textPrimary,
             fontSize: 14,
@@ -1355,7 +1368,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               color: AppTheme.primaryColor,
             ),
             label: const Text(
-              'إضافة رصيد آخر',
+              'اضف تقسيم آخر',
               style: TextStyle(
                 color: AppTheme.primaryColor,
                 fontSize: 13,
