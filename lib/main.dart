@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:debit_credit_app/core/widgets/main_navigation.dart';
+import 'package:debit_credit_app/core/widgets/currency_migration_gate.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:world_countries/world_countries.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +38,17 @@ class PersonalFinanceApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       // Avoid wrapping a global SafeArea; handle paddings per-screen using MediaQuery insets.
       builder: (context, child) => child ?? const SizedBox.shrink(),
-      home: const MainNavigation(),
+      locale: const Locale('ar'),
+      supportedLocales: const [
+        Locale('ar'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        TypedLocaleDelegate(),
+      ],
+      home: const CurrencyMigrationGate(),
     );
   }
 }

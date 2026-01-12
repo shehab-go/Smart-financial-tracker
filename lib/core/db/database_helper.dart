@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/transaction.dart';
@@ -31,7 +33,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 11,
+      version: 12,
       onCreate: _createDatabase,
       onUpgrade: MigrationHelper.migrate,
     );
@@ -43,6 +45,14 @@ class DatabaseHelper {
       CREATE TABLE categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE
+      )
+    ''');
+
+    // Create app_meta table for storing global app flags (e.g., currency migration)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS app_meta (
+        key TEXT PRIMARY KEY,
+        value TEXT
       )
     ''');
 
@@ -344,6 +354,207 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  /// Returns usage counts (accounts, income balances, expenses) for each
+  /// currency name present in the currencies table, keyed by the currency
+  /// display name stored in `currencies.name`.
+  ///
+  /// The inner map uses keys: `accounts`, `balances`, `expenses`.
+  Future<Map<String, Map<String, int>>> getCurrencyUsageCountsByName() async {
+    final db = await database;
+    final List<Map<String, Object?>> rows = await db.rawQuery('''
+      SELECT c.name AS name,
+        (SELECT COUNT(*) FROM accounts a WHERE a.currencyName = c.name) AS accountsCount,
+        (SELECT COUNT(*) FROM income_balances b WHERE b.currencyName = c.name) AS balancesCount,
+        (SELECT COUNT(*) FROM expenses e WHERE e.currency = c.name) AS expensesCount
+      FROM currencies c
+    ''');
+
+    final Map<String, Map<String, int>> result = {};
+    for (final row in rows) {
+      final Object? nameValue = row['name'];
+      if (nameValue == null) continue;
+      final String name = nameValue.toString();
+
+      final int accounts = (row['accountsCount'] as num?)?.toInt() ?? 0;
+      final int balances = (row['balancesCount'] as num?)?.toInt() ?? 0;
+      final int expenses = (row['expensesCount'] as num?)?.toInt() ?? 0;
+
+      result[name] = <String, int>{
+        'accounts': accounts,
+        'balances': balances,
+        'expenses': expenses,
+      };
+    }
+
+    return result;
+  }
+
+  /// Returns the set of favorite currency display names as stored in app_meta.
+  Future<Set<String>> getFavoriteCurrencies() async {
+    final raw = await getMetaValue('favorite_currencies');
+    if (raw == null || raw.trim().isEmpty) return <String>{};
+
+    try {
+      final List<dynamic> decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded.whereType<String>().toSet();
+    } catch (_) {
+      // If anything goes wrong with parsing, treat as no favorites.
+      return <String>{};
+    }
+  }
+
+  /// Persists the given set of favorite currency display names into app_meta.
+  Future<void> setFavoriteCurrencies(Set<String> favorites) async {
+    final String encoded = jsonEncode(favorites.toList());
+    await setMetaValue('favorite_currencies', encoded);
+  }
+
+  // App meta operations (key-value storage for global flags)
+  Future<String?> getMetaValue(String key) async {
+    final db = await database;
+    final List<Map<String, dynamic>> rows = await db.query(
+      'app_meta',
+      where: 'key = ?',
+      whereArgs: [key],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    final Object? value = rows.first['value'];
+    return value?.toString();
+  }
+
+  Future<void> setMetaValue(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      'app_meta',
+      {
+        'key': key,
+        'value': value,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<bool> isCurrencyMigrationCompleted() async {
+    final value = await getMetaValue('currency_migration_completed');
+    return value == 'true';
+  }
+
+  /// Returns all distinct legacy currency names that are actually used
+  /// in accounts with transactions, income balances with allocations,
+  /// or expenses. Used to drive the world_countries migration UI.
+  Future<List<String>> getUsedCurrenciesForMigration() async {
+    final db = await database;
+    final Set<String> names = {};
+
+    // Accounts that have transactions
+    final List<Map<String, Object?>> accountRows = await db.rawQuery('''
+      SELECT DISTINCT a.currencyName AS name
+      FROM accounts a
+      JOIN transactions t ON t.accountId = a.id
+      WHERE a.currencyName IS NOT NULL AND a.currencyName != ''
+    ''');
+    for (final row in accountRows) {
+      final Object? nameValue = row['name'];
+      if (nameValue == null) continue;
+      final String name = nameValue.toString().trim();
+      if (name.isNotEmpty) names.add(name);
+    }
+
+    // Income balances that have any allocations (transactions or expenses)
+    final List<Map<String, Object?>> balanceRows = await db.rawQuery('''
+      SELECT DISTINCT b.currencyName AS name
+      FROM income_balances b
+      JOIN transaction_balance_allocations ta ON ta.balanceId = b.id
+      JOIN transactions t ON t.id = ta.transactionId
+      WHERE b.currencyName IS NOT NULL AND b.currencyName != ''
+      UNION
+      SELECT DISTINCT b.currencyName AS name
+      FROM income_balances b
+      JOIN expense_balance_allocations ea ON ea.balanceId = b.id
+      JOIN expenses e ON e.id = ea.expenseId
+      WHERE b.currencyName IS NOT NULL AND b.currencyName != ''
+    ''');
+    for (final row in balanceRows) {
+      final Object? nameValue = row['name'];
+      if (nameValue == null) continue;
+      final String name = nameValue.toString().trim();
+      if (name.isNotEmpty) names.add(name);
+    }
+
+    // Expenses
+    final List<Map<String, Object?>> expenseRows = await db.rawQuery('''
+      SELECT DISTINCT currency AS name
+      FROM expenses
+      WHERE currency IS NOT NULL AND currency != ''
+    ''');
+    for (final row in expenseRows) {
+      final Object? nameValue = row['name'];
+      if (nameValue == null) continue;
+      final String name = nameValue.toString().trim();
+      if (name.isNotEmpty) names.add(name);
+    }
+
+    return names.toList();
+  }
+
+  /// Applies a mapping from legacy currency display names to new
+  /// world_countries-based display names (Arabic), updating all
+  /// relevant tables and marking the migration as completed.
+  Future<void> applyCurrencyMappings(Map<String, String> mappings) async {
+    if (mappings.isEmpty) return;
+    final db = await database;
+
+    await db.transaction((txn) async {
+      for (final entry in mappings.entries) {
+        final String oldName = entry.key;
+        final String newName = entry.value;
+
+        // Update accounts
+        await txn.update(
+          'accounts',
+          {'currencyName': newName},
+          where: 'currencyName = ?',
+          whereArgs: [oldName],
+        );
+
+        // Update income balances
+        await txn.update(
+          'income_balances',
+          {'currencyName': newName},
+          where: 'currencyName = ?',
+          whereArgs: [oldName],
+        );
+
+        // Update expenses
+        await txn.update(
+          'expenses',
+          {'currency': newName},
+          where: 'currency = ?',
+          whereArgs: [oldName],
+        );
+
+        // Update currencies table
+        await txn.update(
+          'currencies',
+          {'name': newName},
+          where: 'name = ?',
+          whereArgs: [oldName],
+        );
+      }
+
+      // Mark migration as completed
+      await txn.insert(
+        'app_meta',
+        {
+          'key': 'currency_migration_completed',
+          'value': 'true',
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
   }
 
 

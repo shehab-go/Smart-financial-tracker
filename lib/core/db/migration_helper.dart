@@ -13,7 +13,7 @@ import 'database_helper.dart';
 /// - Detailed logging is provided for debugging and monitoring
 class MigrationHelper {
   /// Current database schema version
-  static const int currentVersion = 11;
+  static const int currentVersion = 12;
   
   // Constants for default values and common strings
   static const String defaultCurrencyName = 'محلي';
@@ -85,6 +85,10 @@ class MigrationHelper {
       if (oldVersion < 11) {
         print('[MigrationHelper] Applying migration to version 11');
         await _migrateToV11(db);
+      }
+      if (oldVersion < 12) {
+        print('[MigrationHelper] Applying migration to version 12');
+        await _migrateToV12(db);
       }
       
       print('[MigrationHelper] Database migration completed successfully');
@@ -679,6 +683,23 @@ class MigrationHelper {
       print('[MigrationHelper] Successfully completed migration to v11 - income resources, balances, and allocations added');
     } catch (e) {
       print('[MigrationHelper] ERROR in _migrateToV11: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 12: Create app_meta table for global app flags
+  static Future<void> _migrateToV12(Database db) async {
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS app_meta (
+          key TEXT PRIMARY KEY,
+          value TEXT
+        )
+      ''');
+
+      print('[MigrationHelper] Successfully created app_meta table (v12)');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV12: $e');
       rethrow;
     }
   }

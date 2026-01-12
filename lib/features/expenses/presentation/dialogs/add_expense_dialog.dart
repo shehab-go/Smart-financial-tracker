@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:debit_credit_app/core/models/expense.dart';
 import 'package:debit_credit_app/core/models/category.dart';
-import 'package:debit_credit_app/core/models/currency.dart';
 import 'package:debit_credit_app/core/models/income_balance.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/features/expenses/domain/expense_repository.dart';
+import 'package:world_countries/world_countries.dart';
 
 class _ExpenseBalanceAllocationInput {
   int? balanceId;
@@ -37,9 +37,8 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   bool _isLoading = false;
 
   List<CategoryModel> _categories = [];
-  List<CurrencyModel> _currencies = [];
   String _selectedCategory = 'مصروفات';
-  String _selectedCurrency = 'محلي';
+  String? _selectedCurrency;
 
   final DatabaseHelper _db = DatabaseHelper();
   List<IncomeBalanceModel> _incomeBalances = [];
@@ -73,15 +72,170 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     }
   }
 
+  Future<void> _pickCurrency() async {
+    try {
+      final Set<String> favorites = await _db.getFavoriteCurrencies();
+      FiatCurrency? chosen;
+
+      await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (dialogContext) {
+          return Dialog(
+            insetPadding: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Container(
+                constraints:
+                    const BoxConstraints(maxWidth: 380, maxHeight: 520),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.payments_outlined,
+                              color: AppTheme.primaryColor,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'اختيار العملة',
+                              style: TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            icon: const Icon(
+                              Icons.close,
+                              color: AppTheme.textSecondary,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: AppTheme.dividerColor),
+                    // Favorites strip (quick selection)
+                    if (favorites.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 40,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                          ),
+                          children: favorites
+                              .map(
+                                (name) => Padding(
+                                  padding:
+                                      const EdgeInsetsDirectional.only(start: 4, end: 4),
+                                  child: ActionChip(
+                                    label: Text(
+                                      name,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(dialogContext).pop();
+                                      setState(() {
+                                        _selectedCurrency = name;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                    ],
+                    // Content
+                    Flexible(
+                      child: CurrencyPicker(
+                        onSelect: (FiatCurrency currency) {
+                          chosen = currency;
+                          Navigator.of(dialogContext).pop();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+
+      if (chosen != null && mounted) {
+        final typedLocale = context.maybeLocale;
+        String displayName;
+        if (typedLocale != null) {
+          displayName =
+              chosen!.maybeCommonNameFor(typedLocale) ?? chosen!.internationalName;
+        } else {
+          displayName = chosen!.internationalName;
+        }
+
+        setState(() {
+          _selectedCurrency = displayName;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('خطأ في اختيار العملة: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _loadData() async {
     try {
       final db = DatabaseHelper();
       final categories = await db.getCategories();
-      final currencies = await db.getCurrencies();
 
       setState(() {
         _categories = categories;
-        _currencies = currencies;
       });
     } catch (e) {
       print('Error loading data: $e');
@@ -134,6 +288,16 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
 
   void _saveExpense() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى اختيار العملة'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -213,7 +377,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         amount: totalAmount,
         detail: _detailController.text.trim(),
         category: _selectedCategory,
-        currency: _selectedCurrency,
+        currency: _selectedCurrency!,
         createdDate: widget.expense?.createdDate ?? DateTime.now(),
         updatedDate: widget.expense != null ? DateTime.now() : null,
       );
@@ -576,77 +740,58 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   }
 
   Widget _buildCurrencyDropdown() {
-    final items = _currencies
-        .map(
-          (currency) => DropdownMenuItem<String>(
-            value: currency.name,
-            child: Text(
-              currency.name,
-              style: const TextStyle(fontSize: 13),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: InkWell(
+        onTap: _pickCurrency,
+        borderRadius: BorderRadius.circular(8),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'العملة *',
+            labelStyle: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 14,
+            ),
+            prefixIcon: const Icon(
+              Icons.payments_outlined,
+              color: AppTheme.textSecondary,
+              size: 18,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: Colors.grey.shade300,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: Colors.grey.shade300,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: AppTheme.primaryColor,
+                width: 1.5,
+              ),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          child: Text(
+            _selectedCurrency ?? 'العملة',
+            style: TextStyle(
+              fontSize: 14,
+              color: _selectedCurrency == null
+                  ? AppTheme.textSecondary.withOpacity(0.7)
+                  : AppTheme.textPrimary,
             ),
           ),
-        )
-        .toList();
-
-    return DropdownButtonFormField<String>(
-      value: _selectedCurrency,
-      decoration: InputDecoration(
-        labelText: 'العملة *',
-        labelStyle: const TextStyle(
-          color: AppTheme.textSecondary,
-          fontSize: 14,
         ),
-        prefixIcon: const Icon(
-          Icons.payments_outlined,
-          color: AppTheme.textSecondary,
-          size: 18,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Colors.grey.shade300,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Colors.grey.shade300,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: AppTheme.primaryColor,
-            width: 1.5,
-          ),
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
-      items: items,
-      onChanged: (val) {
-        if (val != null) {
-          setState(() {
-            _selectedCurrency = val;
-          });
-        }
-      },
-      isExpanded: true,
-      style: const TextStyle(
-        fontSize: 14,
-        color: AppTheme.textPrimary,
-      ),
-      menuMaxHeight: 200,
-      dropdownColor: Colors.white,
-      alignment: AlignmentDirectional.centerStart,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'يرجى اختيار العملة';
-        }
-        return null;
-      },
     );
   }
 
@@ -666,8 +811,10 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         Column(
           children: List.generate(_allocationInputs.length, (index) {
             final input = _allocationInputs[index];
-            final String? effectiveCurrency =
-                _selectedCurrency.isNotEmpty ? _selectedCurrency : null;
+            final String? effectiveCurrency = (_selectedCurrency != null &&
+                    _selectedCurrency!.isNotEmpty)
+                ? _selectedCurrency
+                : null;
 
             final List<IncomeBalanceModel> balancesForDropdown =
                 _incomeBalances.where((balance) {

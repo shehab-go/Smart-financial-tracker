@@ -214,6 +214,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.0"
+  flutter_localizations:
+    dependency: "direct main"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   flutter_native_contact_picker:
     dependency: "direct main"
     description:
@@ -340,10 +345,10 @@ packages:
     dependency: "direct main"
     description:
       name: intl
-      sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
+      sha256: d6f56758b7d3014a48af9701c085700aac781a92a87a62b1333b46d8879661cf
       url: "https://pub.dev"
     source: hosted
-    version: "0.20.2"
+    version: "0.19.0"
   json_annotation:
     dependency: transitive
     description:
@@ -352,6 +357,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.9.0"
+  l10n_countries:
+    dependency: transitive
+    description:
+      name: l10n_countries
+      sha256: "3ce25e801479534de4c0e8ac964e1a0f3bd53837f7b06db24407c4673e9ba289"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
+  l10n_currencies:
+    dependency: transitive
+    description:
+      name: l10n_currencies
+      sha256: "2e3d1d7be7bc12a37ef4bcc53805a0ce218f25ea959b3386779cb220d1181340"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
+  l10n_languages:
+    dependency: transitive
+    description:
+      name: l10n_languages
+      sha256: "324e115dbc4d20e9bb504930e843848c233648ecbba40da59af4d6a0fc24bcfa"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   leak_tracker:
     dependency: transitive
     description:
@@ -672,6 +701,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  sealed_countries:
+    dependency: transitive
+    description:
+      name: sealed_countries
+      sha256: "4ef84eb25b16c09804c2d73df478ecb314d13e2a83d622782a2d6bbcc7dd9389"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
+  sealed_currencies:
+    dependency: transitive
+    description:
+      name: sealed_currencies
+      sha256: ad767afcd3355fa6ef1a0d7bf393b6c0f8f682e4e7219dcd12fe55d5ca90b5bc
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
+  sealed_languages:
+    dependency: transitive
+    description:
+      name: sealed_languages
+      sha256: "07dc4f463eed36a208dcf251a26cdb301ecad1d3f2a178081a78524145fd60d4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
   share_plus:
     dependency: "direct main"
     description:
@@ -909,6 +962,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.10.1"
+  world_countries:
+    dependency: "direct main"
+    description:
+      name: world_countries
+      sha256: "89329b1be1583f9d522c9d502f5677c4163c50a8441fabb84155a2a938d0830a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.0"
+  world_flags:
+    dependency: transitive
+    description:
+      name: world_flags
+      sha256: "13ca63d56cd6f81c642d34166f0372f8f75d0d87d3149b0f23483ac299b64017"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
   xdg_directories:
     dependency: transitive
     description:

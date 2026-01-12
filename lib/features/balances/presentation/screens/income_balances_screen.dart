@@ -3,9 +3,9 @@ import 'package:intl/intl.dart' hide TextDirection;
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/models/income_balance.dart';
 import 'package:debit_credit_app/core/models/income_resource.dart';
-import 'package:debit_credit_app/core/models/currency.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/widgets/app_drawer.dart';
+import 'package:world_countries/world_countries.dart';
 
 class IncomeBalancesScreen extends StatefulWidget {
   final Function(bool)? onDrawerChanged;
@@ -1247,10 +1247,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
         return;
       }
 
-      final List<CurrencyModel> dbCurrencies = await _db.getCurrencies();
-      final allCurrencies = dbCurrencies.isEmpty
-          ? CurrencyModel.getDefaultCurrencies()
-          : dbCurrencies;
+      final Set<String> favorites = await _db.getFavoriteCurrencies();
 
       final formKey = GlobalKey<FormState>();
       final nameController = TextEditingController(text: balance?.name ?? '');
@@ -1258,8 +1255,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
         text: balance != null ? balance.initialAmount.toString() : '',
       );
 
-      String selectedCurrency = balance?.currencyName ??
-          (allCurrencies.isNotEmpty ? allCurrencies.first.name : 'محلي');
+      String? selectedCurrency = balance?.currencyName;
       bool isDefault = balance?.isDefault ?? false;
       final int resourceId = balance?.resourceId ?? resource.id!;
 
@@ -1412,35 +1408,255 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
                                 },
                               ),
                               const SizedBox(height: 16),
-                              DropdownButtonFormField<String>(
-                                value: selectedCurrency,
-                                decoration: InputDecoration(
-                                  labelText: 'العملة *',
-                                  labelStyle:
-                                      const TextStyle(fontSize: 14),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                              InkWell(
+                                onTap: () async {
+                                  try {
+                                    FiatCurrency? chosen;
+
+                                    await showDialog(
+                                      context: dialogContext,
+                                      barrierDismissible: true,
+                                      builder: (pickerContext) {
+                                        return Dialog(
+                                          insetPadding:
+                                              const EdgeInsets.all(16),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: Directionality(
+                                            textDirection: TextDirection.rtl,
+                                            child: Container(
+                                              constraints:
+                                                  const BoxConstraints(
+                                                maxWidth: 380,
+                                                maxHeight: 520,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withOpacity(0.05),
+                                                    blurRadius: 10,
+                                                    offset:
+                                                        const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Column(
+                                                mainAxisSize:
+                                                    MainAxisSize.min,
+                                                children: [
+                                                  // Header
+                                                  Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 16,
+                                                    ),
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      color: Colors.white,
+                                                      borderRadius:
+                                                          BorderRadius.only(
+                                                        topLeft:
+                                                            Radius.circular(
+                                                                12),
+                                                        topRight:
+                                                            Radius.circular(
+                                                                12),
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        Container(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(8),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: AppTheme
+                                                                .primaryColor
+                                                                .withOpacity(
+                                                                    0.1),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                          ),
+                                                          child: const Icon(
+                                                            Icons
+                                                                .payments_outlined,
+                                                            color: AppTheme
+                                                                .primaryColor,
+                                                            size: 18,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 12),
+                                                        const Expanded(
+                                                          child: Text(
+                                                            'اختيار العملة',
+                                                            style: TextStyle(
+                                                              color: AppTheme
+                                                                  .textPrimary,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              fontSize: 18,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        IconButton(
+                                                          onPressed: () =>
+                                                              Navigator.of(
+                                                                      pickerContext)
+                                                                  .pop(),
+                                                          icon: const Icon(
+                                                            Icons.close,
+                                                            color: AppTheme
+                                                                .textSecondary,
+                                                            size: 18,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  const Divider(
+                                                    height: 1,
+                                                    color:
+                                                        AppTheme.dividerColor,
+                                                  ),
+                                                  // Favorites strip (quick selection)
+                                                  if (favorites.isNotEmpty)
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets
+                                                              .symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 8,
+                                                      ),
+                                                      child: SizedBox(
+                                                        height: 32,
+                                                        child: ListView(
+                                                          scrollDirection:
+                                                              Axis.horizontal,
+                                                          children: favorites
+                                                              .map(
+                                                                (name) =>
+                                                                    Padding(
+                                                                  padding:
+                                                                      const EdgeInsetsDirectional
+                                                                          .only(
+                                                                    start: 4,
+                                                                    end: 4,
+                                                                  ),
+                                                                  child:
+                                                                      ActionChip(
+                                                                    label:
+                                                                        Text(
+                                                                      name,
+                                                                      style: const TextStyle(
+                                                                          fontSize:
+                                                                              12),
+                                                                    ),
+                                                                    onPressed:
+                                                                        () {
+                                                                      selectedCurrency =
+                                                                          name;
+                                                                      (dialogContext
+                                                                              as Element)
+                                                                          .markNeedsBuild();
+                                                                      Navigator.of(
+                                                                              pickerContext)
+                                                                          .pop();
+                                                                    },
+                                                                  ),
+                                                                ),
+                                                              )
+                                                              .toList(),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  // Content
+                                                  Flexible(
+                                                    child: CurrencyPicker(
+                                                      onSelect:
+                                                          (FiatCurrency c) {
+                                                        chosen = c;
+                                                        Navigator.of(
+                                                                pickerContext)
+                                                            .pop();
+                                                      },
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+
+                                    if (chosen != null) {
+                                      final typedLocale =
+                                          dialogContext.maybeLocale;
+                                      String displayName;
+                                      if (typedLocale != null) {
+                                        displayName = chosen!
+                                                .maybeCommonNameFor(
+                                                    typedLocale) ??
+                                            chosen!.internationalName;
+                                      } else {
+                                        displayName =
+                                            chosen!.internationalName;
+                                      }
+                                      selectedCurrency = displayName;
+                                      (dialogContext as Element)
+                                          .markNeedsBuild();
+                                    }
+                                  } catch (e) {
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'خطأ في اختيار العملة: $e'),
+                                        backgroundColor:
+                                            AppTheme.errorColor,
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'العملة *',
+                                    labelStyle:
+                                        const TextStyle(fontSize: 14),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: const BorderSide(
+                                        color: AppTheme.primaryColor,
+                                      ),
+                                    ),
                                   ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: const BorderSide(
-                                      color: AppTheme.primaryColor,
+                                  child: Text(
+                                    selectedCurrency ?? 'العملة',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: selectedCurrency == null
+                                          ? AppTheme.textSecondary
+                                              .withOpacity(0.7)
+                                          : AppTheme.textPrimary,
                                     ),
                                   ),
                                 ),
-                                items: allCurrencies
-                                    .map(
-                                      (c) => DropdownMenuItem<String>(
-                                        value: c.name,
-                                        child: Text(c.name),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    selectedCurrency = value;
-                                  }
-                                },
                               ),
                               const SizedBox(height: 8),
                               CheckboxListTile(
@@ -1512,13 +1728,26 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
                                     ? 0.0
                                     : double.parse(amountText);
 
+                                if (selectedCurrency == null ||
+                                    selectedCurrency!.isEmpty) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('يرجى اختيار العملة'),
+                                        backgroundColor: AppTheme.errorColor,
+                                      ),
+                                    );
+                                  }
+                                  return;
+                                }
+
                                 try {
                                   int? affectId = balance?.id;
                                   if (balance == null) {
                                     final newBalance = IncomeBalanceModel(
                                       resourceId: resourceId,
                                       name: name,
-                                      currencyName: selectedCurrency,
+                                      currencyName: selectedCurrency!,
                                       initialAmount: initialAmount,
                                       isDefault: isDefault,
                                       createdDate: DateTime.now(),
@@ -1529,7 +1758,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
                                   } else {
                                     final updated = balance.copyWith(
                                       name: name,
-                                      currencyName: selectedCurrency,
+                                      currencyName: selectedCurrency!,
                                       initialAmount: initialAmount,
                                       isDefault: isDefault,
                                     );
