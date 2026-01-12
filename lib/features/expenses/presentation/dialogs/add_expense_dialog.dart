@@ -8,6 +8,18 @@ import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/features/expenses/domain/expense_repository.dart';
 
+class _ExpenseBalanceAllocationInput {
+  int? balanceId;
+  final TextEditingController amountController;
+
+  _ExpenseBalanceAllocationInput({this.balanceId, String initialAmount = ''})
+      : amountController = TextEditingController(text: initialAmount);
+
+  void dispose() {
+    amountController.dispose();
+  }
+}
+
 class AddExpenseDialog extends StatefulWidget {
   final ExpenseModel? expense;
 
@@ -309,6 +321,10 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                   },
                 ),
                 const SizedBox(height: 16),
+                if (_incomeBalances.isNotEmpty) ...[
+                  _buildBalanceAllocationSection(),
+                  const SizedBox(height: 16),
+                ],
                 // Detail field
                 TextFormField(
                   controller: _detailController,
@@ -449,6 +465,159 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBalanceAllocationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'اختيار الأرصدة وتوزيع المبلغ',
+          style: TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Column(
+          children: List.generate(_allocationInputs.length, (index) {
+            final input = _allocationInputs[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: DropdownButtonFormField<int>(
+                      value: input.balanceId,
+                      decoration: InputDecoration(
+                        labelText: 'الرصيد',
+                        labelStyle: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: AppTheme.primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
+                      items: _incomeBalances
+                          .map(
+                            (balance) => DropdownMenuItem<int>(
+                              value: balance.id,
+                              child: Text(
+                                balance.name,
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          input.balanceId = value;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: input.amountController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: 'المبلغ',
+                        labelStyle: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: AppTheme.primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
+                    ),
+                  ),
+                  if (_allocationInputs.length > 1)
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          final removed = _allocationInputs.removeAt(index);
+                          removed.dispose();
+                        });
+                      },
+                      icon: const Icon(
+                        Icons.remove_circle_outline,
+                        color: AppTheme.errorColor,
+                        size: 20,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _allocationInputs.add(_ExpenseBalanceAllocationInput());
+              });
+            },
+            icon: const Icon(
+              Icons.add,
+              size: 18,
+              color: AppTheme.primaryColor,
+            ),
+            label: const Text(
+              'إضافة رصيد آخر',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

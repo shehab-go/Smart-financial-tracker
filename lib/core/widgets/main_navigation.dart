@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
 import 'package:debit_credit_app/features/expenses/presentation/screens/expense_screen.dart';
+import 'package:debit_credit_app/features/balances/presentation/screens/income_balances_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -23,6 +24,7 @@ class _MainNavigationState extends State<MainNavigation> {
   List<Widget> get _screens => [
     HomeScreen(onDrawerChanged: _onDrawerChanged),
     ExpenseScreen(onDrawerChanged: _onDrawerChanged),
+    IncomeBalancesScreen(onDrawerChanged: _onDrawerChanged),
   ];
 
   @override
@@ -75,6 +77,11 @@ class _MainNavigationState extends State<MainNavigation> {
                 icon: Icon(Icons.receipt_long_rounded),
                 activeIcon: Icon(Icons.receipt_long_rounded),
                 label: 'المصروفات',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.savings_rounded),
+                activeIcon: Icon(Icons.savings_rounded),
+                label: 'الأرصدة',
               ),
             ],
           ),
