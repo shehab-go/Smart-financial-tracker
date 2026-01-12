@@ -453,10 +453,11 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                             ),
                             suffixIcon: IconButton(
                               icon: const Icon(
-                                Icons.person_outline,
-                                color: AppTheme.textSecondary,
-                                size: 18,
+                                Icons.contacts_rounded,
+                                color: AppTheme.primaryColor,
+                                size: 20,
                               ),
+                              tooltip: 'اختيار من جهات الاتصال',
                               onPressed: _pickContactForName,
                             ),
                             border: OutlineInputBorder(
@@ -1091,6 +1092,24 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         Column(
           children: List.generate(_allocationInputs.length, (index) {
             final input = _allocationInputs[index];
+
+            final String? effectiveCurrency = _isNewAccount
+                ? _selectedCurrency
+                : (widget.accountCurrencyCode != null &&
+                        widget.accountCurrencyCode!.isNotEmpty
+                    ? widget.accountCurrencyCode!
+                    : null);
+
+            final List<IncomeBalanceModel> balancesForDropdown =
+                _incomeBalances.where((balance) {
+              if (input.balanceId != null && balance.id == input.balanceId) {
+                return true;
+              }
+              if (effectiveCurrency == null) {
+                return true;
+              }
+              return balance.currencyName == effectiveCurrency;
+            }).toList();
             return Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Row(
@@ -1127,7 +1146,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         contentPadding:
                             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
-                      items: _incomeBalances
+                      items: balancesForDropdown
                           .map(
                             (balance) => DropdownMenuItem<int>(
                               value: balance.id,
