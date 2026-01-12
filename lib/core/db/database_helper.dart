@@ -743,8 +743,98 @@ class DatabaseHelper {
     );
   }
 
-  // Allocation operations
-  Future<List<TransactionBalanceAllocation>> getTransactionAllocations(int transactionId) async {
+  Future<Map<int, double>> getIncomeBalanceCurrentAmounts() async {
+    final db = await database;
+
+    final List<Map<String, Object?>> rows = await db.rawQuery('''
+      SELECT
+        b.id AS id,
+        b.initialAmount
+          + IFNULL((
+              SELECT SUM(
+                       ta.allocatedAmount * CASE
+                         WHEN t.type = 'credit' THEN 1
+                         WHEN t.type = 'debit'  THEN -1
+                         ELSE 0
+                       END
+                     )
+              FROM transaction_balance_allocations ta
+              JOIN transactions t ON t.id = ta.transactionId
+              WHERE ta.balanceId = b.id
+            ), 0)
+          - IFNULL((
+              SELECT SUM(ea.allocatedAmount)
+              FROM expense_balance_allocations ea
+              WHERE ea.balanceId = b.id
+            ), 0) AS currentAmount
+      FROM income_balances b
+    ''');
+
+    final Map<int, double> result = {};
+    for (final row in rows) {
+      final Object? idValue = row['id'];
+      if (idValue == null) continue;
+
+      int id;
+      if (idValue is int) {
+        id = idValue;
+      } else if (idValue is num) {
+        id = idValue.toInt();
+      } else {
+        continue;
+      }
+
+      final num? current = row['currentAmount'] as num?;
+      result[id] = current?.toDouble() ?? 0.0;
+    }
+
+    return result;
+  }
+
+  Future<List<Map<String, Object?>>> getBalanceTransactionAllocationsWithDetails(
+      int balanceId) async {
+    final db = await database;
+    final List<Map<String, Object?>> rows = await db.rawQuery('''
+      SELECT
+        ta.id AS allocationId,
+        t.id AS transactionId,
+        t.amount AS transactionAmount,
+        t.type AS transactionType,
+        t.date AS transactionDate,
+        t.description AS transactionDescription,
+        a.name AS accountName,
+        ta.allocatedAmount AS allocatedAmount
+      FROM transaction_balance_allocations ta
+      JOIN transactions t ON t.id = ta.transactionId
+      JOIN accounts a ON a.id = t.accountId
+      WHERE ta.balanceId = ?
+      ORDER BY t.date DESC, ta.id DESC
+    ''', [balanceId]);
+    return rows;
+  }
+
+  Future<List<Map<String, Object?>>> getBalanceExpenseAllocationsWithDetails(
+      int balanceId) async {
+    final db = await database;
+    final List<Map<String, Object?>> rows = await db.rawQuery('''
+      SELECT
+        ea.id AS allocationId,
+        e.id AS expenseId,
+        e.name AS expenseName,
+        e.amount AS expenseAmount,
+        e.createdDate AS expenseDate,
+        e.detail AS expenseDetail,
+        ea.allocatedAmount AS allocatedAmount
+      FROM expense_balance_allocations ea
+      JOIN expenses e ON e.id = ea.expenseId
+      WHERE ea.balanceId = ?
+      ORDER BY e.createdDate DESC, ea.id DESC
+    ''', [balanceId]);
+    return rows;
+  }
+
+  Future<List<TransactionBalanceAllocation>> getTransactionAllocations(
+      int transactionId) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'transaction_balance_allocations',
@@ -756,7 +846,8 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<ExpenseBalanceAllocation>> getExpenseAllocations(int expenseId) async {
+  Future<List<ExpenseBalanceAllocation>> getExpenseAllocations(
+      int expenseId) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'expense_balance_allocations',
@@ -768,7 +859,54 @@ class DatabaseHelper {
     });
   }
 
-  Future<void> insertTransactionAllocations(List<TransactionBalanceAllocation> allocations) async {
+  Future<List<Map<String, Object?>>> getResourceTransactionAllocationsWithDetails(
+      int resourceId) async {
+    final db = await database;
+    final List<Map<String, Object?>> rows = await db.rawQuery('''
+      SELECT
+        ta.id AS allocationId,
+        t.id AS transactionId,
+        t.amount AS transactionAmount,
+        t.type AS transactionType,
+        t.date AS transactionDate,
+        t.description AS transactionDescription,
+        a.name AS accountName,
+        b.name AS balanceName,
+        ta.allocatedAmount AS allocatedAmount
+      FROM transaction_balance_allocations ta
+      JOIN transactions t ON t.id = ta.transactionId
+      JOIN accounts a ON a.id = t.accountId
+      JOIN income_balances b ON b.id = ta.balanceId
+      WHERE b.resourceId = ?
+      ORDER BY t.date DESC, ta.id DESC
+    ''', [resourceId]);
+    return rows;
+  }
+
+  Future<List<Map<String, Object?>>> getResourceExpenseAllocationsWithDetails(
+      int resourceId) async {
+    final db = await database;
+    final List<Map<String, Object?>> rows = await db.rawQuery('''
+      SELECT
+        ea.id AS allocationId,
+        e.id AS expenseId,
+        e.name AS expenseName,
+        e.amount AS expenseAmount,
+        e.createdDate AS expenseDate,
+        e.detail AS expenseDetail,
+        b.name AS balanceName,
+        ea.allocatedAmount AS allocatedAmount
+      FROM expense_balance_allocations ea
+      JOIN expenses e ON e.id = ea.expenseId
+      JOIN income_balances b ON b.id = ea.balanceId
+      WHERE b.resourceId = ?
+      ORDER BY e.createdDate DESC, ea.id DESC
+    ''', [resourceId]);
+    return rows;
+  }
+
+  Future<void> insertTransactionAllocations(
+      List<TransactionBalanceAllocation> allocations) async {
     final db = await database;
     final batch = db.batch();
     for (final allocation in allocations) {

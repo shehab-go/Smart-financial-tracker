@@ -486,44 +486,55 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         ),
                         const SizedBox(height: 16),
                       ],
-                      TextFormField(
-                        controller: _amountController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'المبلغ',
-                          labelStyle: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 14,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.attach_money,
-                            color: AppTheme.textSecondary,
-                            size: 18,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: Colors.grey.shade300,
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: TextFormField(
+                              controller: _amountController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'المبلغ',
+                                labelStyle: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 14,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 16),
+                              ),
+                              validator: (v) =>
+                                  v == null || v.trim().isEmpty ? 'مطلوب' : null,
                             ),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: Colors.grey.shade300,
-                            ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: _isNewAccount
+                                ? _buildCurrencyDropdown()
+                                : _buildCurrencyReadonly(),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: AppTheme.primaryColor,
-                              width: 1.5,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        ),
-                        validator: (v) => v == null || v.trim().isEmpty ? 'مطلوب' : null,
+                        ],
                       ),
                       const SizedBox(height: 16),
                       if (_incomeBalances.isNotEmpty) ...[
@@ -633,13 +644,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       // Currency and Date row
                       Row(
                         children: [
-                          // Currency selection - only show when creating new account
-                          if (_isNewAccount) ...[
-                            Expanded(
-                              child: _buildCurrencyDropdown(),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
                           // Date picker
                           Expanded(
                             child: _buildDatePicker(context),
@@ -940,7 +944,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
             fontSize: 14,
           ),
           prefixIcon: const Icon(
-            Icons.monetization_on,
+            Icons.payments_outlined,
             color: AppTheme.textSecondary,
             size: 18,
           ),

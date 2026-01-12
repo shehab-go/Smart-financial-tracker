@@ -22,6 +22,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
   List<IncomeResourceModel> _resources = [];
   List<IncomeBalanceModel> _balances = [];
   Map<int, List<IncomeBalanceModel>> _balancesByResource = {};
+  Map<int, double> _currentBalanceAmounts = {};
   bool _isLoading = true;
   bool _isDrawerOpen = false;
 
@@ -35,6 +36,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
     try {
       final resources = await _db.getIncomeResources();
       final balances = await _db.getIncomeBalances();
+      final currentAmounts = await _db.getIncomeBalanceCurrentAmounts();
       if (!mounted) return;
 
       final Map<int, List<IncomeBalanceModel>> grouped = {};
@@ -49,6 +51,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
         _resources = resources;
         _balances = balances;
         _balancesByResource = grouped;
+        _currentBalanceAmounts = currentAmounts;
         _isLoading = false;
       });
     } catch (e) {
@@ -63,6 +66,624 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
         ),
       );
     }
+  }
+
+  Future<Map<String, List<Map<String, Object?>>>> _getBalanceAllocationsDetails(
+      int balanceId) async {
+    final transactions =
+        await _db.getBalanceTransactionAllocationsWithDetails(balanceId);
+    final expenses =
+        await _db.getBalanceExpenseAllocationsWithDetails(balanceId);
+    return {
+      'transactions': transactions,
+      'expenses': expenses,
+    };
+  }
+
+  Future<Map<String, List<Map<String, Object?>>>> _getResourceAllocationsDetails(
+      int resourceId) async {
+    final transactions =
+        await _db.getResourceTransactionAllocationsWithDetails(resourceId);
+    final expenses =
+        await _db.getResourceExpenseAllocationsWithDetails(resourceId);
+    return {
+      'transactions': transactions,
+      'expenses': expenses,
+    };
+  }
+
+  String _formatDateFromMillis(int? millis) {
+    if (millis == null) return '';
+    final dt = DateTime.fromMillisecondsSinceEpoch(millis);
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final year = dt.year.toString().padLeft(4, '0');
+    final month = twoDigits(dt.month);
+    final day = twoDigits(dt.day);
+    return '$year-$month-$day';
+  }
+
+  Widget _buildTransactionAllocationItem(Map<String, Object?> row) {
+    final accountName = (row['accountName'] ?? '') as String;
+    final balanceNameValue = row['balanceName'];
+    final balanceName =
+        balanceNameValue == null ? '' : balanceNameValue.toString();
+    final transactionType = (row['transactionType'] ?? '') as String;
+    final allocated =
+        (row['allocatedAmount'] as num?)?.toDouble() ?? 0.0;
+    final transactionAmount =
+        (row['transactionAmount'] as num?)?.toDouble() ?? 0.0;
+    final dateMillis = row['transactionDate'] as int?;
+    final dateText = _formatDateFromMillis(dateMillis);
+    final descriptionValue = row['transactionDescription'];
+    final description =
+        descriptionValue == null ? '' : descriptionValue.toString();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.grey.shade300,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  accountName.isEmpty ? 'معاملة' : accountName,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                if (dateText.isNotEmpty)
+                  Text(
+                    dateText,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                if (description.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textSecondary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                if (balanceName.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'الرصيد: $balanceName',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 2),
+                Text(
+                  transactionType == 'credit'
+                      ? 'معاملة دائنة (له)'
+                      : 'معاملة مدينة (عليه)',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                _amountFormat.format(allocated),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'من إجمالي ${_amountFormat.format(transactionAmount)}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showResourceDetailsDialog({
+    required IncomeResourceModel resource,
+  }) async {
+    if (resource.id == null) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  resource.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (resource.description != null &&
+                    resource.description!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    resource.description!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: FutureBuilder<
+                  Map<String, List<Map<String, Object?>>>>(
+                future: _getResourceAllocationsDetails(resource.id!),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Text(
+                      'حدث خطأ أثناء تحميل التفاصيل: ${snapshot.error}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.errorColor,
+                      ),
+                    );
+                  }
+
+                  final data = snapshot.data ?? {
+                    'transactions': <Map<String, Object?>>[],
+                    'expenses': <Map<String, Object?>>[],
+                  };
+
+                  final txAlloc =
+                      List<Map<String, Object?>>.from(data['transactions']!);
+                  final expAlloc =
+                      List<Map<String, Object?>>.from(data['expenses']!);
+
+                  final creditAlloc = txAlloc
+                      .where((row) => row['transactionType'] == 'credit')
+                      .toList();
+                  final debitAlloc = txAlloc
+                      .where((row) => row['transactionType'] == 'debit')
+                      .toList();
+
+                  if (creditAlloc.isEmpty &&
+                      debitAlloc.isEmpty &&
+                      expAlloc.isEmpty) {
+                    return const Text(
+                      'لا توجد عمليات مرتبطة بهذا المصدر حتى الآن',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.textSecondary,
+                      ),
+                    );
+                  }
+
+                  return SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'المعاملات الدائنة (له)',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (creditAlloc.isEmpty)
+                          const Text(
+                            'لا توجد معاملات دائنة لهذا المصدر',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                            ),
+                          )
+                        else
+                          Column(
+                            children: creditAlloc
+                                .map(_buildTransactionAllocationItem)
+                                .toList(),
+                          ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'المعاملات المدينة (عليه)',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (debitAlloc.isEmpty)
+                          const Text(
+                            'لا توجد معاملات مدينة لهذا المصدر',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                            ),
+                          )
+                        else
+                          Column(
+                            children: debitAlloc
+                                .map(_buildTransactionAllocationItem)
+                                .toList(),
+                          ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'المصروفات',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (expAlloc.isEmpty)
+                          const Text(
+                            'لا توجد مصروفات مخصصة لهذا المصدر',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                            ),
+                          )
+                        else
+                          Column(
+                            children: expAlloc
+                                .map(_buildExpenseAllocationItem)
+                                .toList(),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text(
+                  'إغلاق',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildExpenseAllocationItem(Map<String, Object?> row) {
+    final expenseName = (row['expenseName'] ?? '') as String;
+    final balanceNameValue = row['balanceName'];
+    final balanceName =
+        balanceNameValue == null ? '' : balanceNameValue.toString();
+    final allocated =
+        (row['allocatedAmount'] as num?)?.toDouble() ?? 0.0;
+    final expenseAmount =
+        (row['expenseAmount'] as num?)?.toDouble() ?? 0.0;
+    final dateMillis = row['expenseDate'] as int?;
+    final dateText = _formatDateFromMillis(dateMillis);
+    final detailValue = row['expenseDetail'];
+    final detail = detailValue == null ? '' : detailValue.toString();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.grey.shade300,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  expenseName.isEmpty ? 'مصروف' : expenseName,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                if (dateText.isNotEmpty)
+                  Text(
+                    dateText,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                if (detail.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    detail,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textSecondary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                _amountFormat.format(allocated),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'من إجمالي ${_amountFormat.format(expenseAmount)}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showBalanceDetailsDialog({
+    required IncomeResourceModel resource,
+    required IncomeBalanceModel balance,
+  }) async {
+    if (balance.id == null) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            title: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        balance.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        balance.currencyName,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () async {
+                    Navigator.of(dialogContext).pop();
+                    await _showEditBalanceDialog(
+                      resource: resource,
+                      balance: balance,
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.edit,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                  tooltip: 'تعديل الرصيد',
+                ),
+              ],
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: FutureBuilder<
+                  Map<String, List<Map<String, Object?>>>>(
+                future: _getBalanceAllocationsDetails(balance.id!),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Text(
+                      'حدث خطأ أثناء تحميل التفاصيل: ${snapshot.error}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.errorColor,
+                      ),
+                    );
+                  }
+
+                  final data = snapshot.data ?? {
+                    'transactions': <Map<String, Object?>>[],
+                    'expenses': <Map<String, Object?>>[],
+                  };
+
+                  final txAlloc =
+                      List<Map<String, Object?>>.from(data['transactions']!);
+                  final expAlloc =
+                      List<Map<String, Object?>>.from(data['expenses']!);
+
+                  final creditAlloc = txAlloc
+                      .where((row) => row['transactionType'] == 'credit')
+                      .toList();
+                  final debitAlloc = txAlloc
+                      .where((row) => row['transactionType'] == 'debit')
+                      .toList();
+
+                  if (creditAlloc.isEmpty &&
+                      debitAlloc.isEmpty &&
+                      expAlloc.isEmpty) {
+                    return const Text(
+                      'لا توجد عمليات مرتبطة بهذا الرصيد حتى الآن',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.textSecondary,
+                      ),
+                    );
+                  }
+
+                  return SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'المعاملات الدائنة (له)',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (creditAlloc.isEmpty)
+                          const Text(
+                            'لا توجد معاملات دائنة لهذا الرصيد',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                            ),
+                          )
+                        else
+                          Column(
+                            children: creditAlloc
+                                .map(_buildTransactionAllocationItem)
+                                .toList(),
+                          ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'المعاملات المدينة (عليه)',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (debitAlloc.isEmpty)
+                          const Text(
+                            'لا توجد معاملات مدينة لهذا الرصيد',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                            ),
+                          )
+                        else
+                          Column(
+                            children: debitAlloc
+                                .map(_buildTransactionAllocationItem)
+                                .toList(),
+                          ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'المصروفات',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (expAlloc.isEmpty)
+                          const Text(
+                            'لا توجد مصروفات مخصصة لهذا الرصيد',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                            ),
+                          )
+                        else
+                          Column(
+                            children: expAlloc
+                                .map(_buildExpenseAllocationItem)
+                                .toList(),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text(
+                  'إغلاق',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _showEditResourceDialog({IncomeResourceModel? resource}) async {
@@ -687,6 +1308,16 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
                           ? _balancesByResource[resource.id!] ?? []
                           : const <IncomeBalanceModel>[];
 
+                      final Map<String, double> totalsByCurrency = {};
+                      for (final balance in balances) {
+                        if (balance.id == null) continue;
+                        final currentAmount =
+                            _currentBalanceAmounts[balance.id!] ?? balance.initialAmount;
+                        totalsByCurrency[balance.currencyName] =
+                            (totalsByCurrency[balance.currencyName] ?? 0.0) +
+                                currentAmount;
+                      }
+
                       return Container(
                         margin: const EdgeInsets.symmetric(vertical: 6),
                         padding: const EdgeInsets.all(12),
@@ -711,7 +1342,13 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: Column(
+                                  child: InkWell(
+                                    onTap: resource.id == null
+                                        ? null
+                                        : () => _showResourceDetailsDialog(
+                                              resource: resource,
+                                            ),
+                                    child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
@@ -736,8 +1373,49 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
                                             ),
                                           ),
                                         ),
+                                      if (totalsByCurrency.isNotEmpty)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 4.0),
+                                          child: Wrap(
+                                            spacing: 8,
+                                            runSpacing: 4,
+                                            children: totalsByCurrency.entries
+                                                .map(
+                                                  (entry) => Container(
+                                                    padding:
+                                                        const EdgeInsets
+                                                            .symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: AppTheme
+                                                          .primaryColor
+                                                          .withOpacity(0.04),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12),
+                                                    ),
+                                                    child: Text(
+                                                      '${_amountFormat.format(entry.value)} ${entry.key}',
+                                                      style:
+                                                          const TextStyle(
+                                                        fontSize: 11,
+                                                        color: AppTheme
+                                                            .primaryColor,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList(),
+                                          ),
+                                        ),
                                     ],
                                   ),
+                                ),
                                 ),
                                 PopupMenuButton<String>(
                                   icon: const Icon(
@@ -808,10 +1486,13 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
                             else
                               Column(
                                 children: balances.map((balance) {
+                                  final double currentAmount = balance.id != null
+                                      ? (_currentBalanceAmounts[balance.id!] ??
+                                          balance.initialAmount)
+                                      : balance.initialAmount;
                                   return InkWell(
-                                    onTap: () => _showEditBalanceDialog(
-                                        resource: resource,
-                                        balance: balance),
+                                    onTap: () => _showBalanceDetailsDialog(
+                                        resource: resource, balance: balance),
                                     child: Container(
                                       margin: const EdgeInsets.symmetric(
                                           vertical: 4),
@@ -865,8 +1546,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
                                               children: [
                                                 Text(
                                                   _amountFormat.format(
-                                                      balance
-                                                          .initialAmount),
+                                                      currentAmount),
                                                   style: const TextStyle(
                                                     fontSize: 13,
                                                     color: AppTheme
