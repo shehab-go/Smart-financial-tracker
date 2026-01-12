@@ -221,175 +221,281 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  resource.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textPrimary,
-                    fontWeight: FontWeight.w600,
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 380, maxHeight: 520),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                if (resource.description != null &&
-                    resource.description!.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    resource.description!,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.analytics_outlined,
+                            color: AppTheme.primaryColor,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                resource.name,
+                                style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              if (resource.description != null &&
+                                  resource.description!.isNotEmpty)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(top: 2.0),
+                                  child: Text(
+                                    resource.description!,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          icon: Icon(
+                            Icons.close,
+                            color: AppTheme.textSecondary,
+                            size: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: AppTheme.dividerColor),
+                  // Content
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: SizedBox(
+                        width: double.maxFinite,
+                        child: FutureBuilder<
+                            Map<String, List<Map<String, Object?>>>>(
+                          future:
+                              _getResourceAllocationsDetails(resource.id!),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            if (snapshot.hasError) {
+                              return Text(
+                                'حدث خطأ أثناء تحميل التفاصيل: ${snapshot.error}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.errorColor,
+                                ),
+                              );
+                            }
+
+                            final data = snapshot.data ?? {
+                              'transactions': <Map<String, Object?>>[],
+                              'expenses': <Map<String, Object?>>[],
+                            };
+
+                            final txAlloc = List<Map<String, Object?>>.from(
+                                data['transactions']!);
+                            final expAlloc = List<Map<String, Object?>>.from(
+                                data['expenses']!);
+
+                            final creditAlloc = txAlloc
+                                .where((row) =>
+                                    row['transactionType'] == 'credit')
+                                .toList();
+                            final debitAlloc = txAlloc
+                                .where(
+                                    (row) => row['transactionType'] == 'debit')
+                                .toList();
+
+                            if (creditAlloc.isEmpty &&
+                                debitAlloc.isEmpty &&
+                                expAlloc.isEmpty) {
+                              return const Text(
+                                'لا توجد عمليات مرتبطة بهذا المصدر حتى الآن',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              );
+                            }
+
+                            return SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'المعاملات الدائنة (له)',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (creditAlloc.isEmpty)
+                                    const Text(
+                                      'لا توجد معاملات دائنة لهذا المصدر',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    )
+                                  else
+                                    Column(
+                                      children: creditAlloc
+                                          .map(
+                                              _buildTransactionAllocationItem)
+                                          .toList(),
+                                    ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'المعاملات المدينة (عليه)',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (debitAlloc.isEmpty)
+                                    const Text(
+                                      'لا توجد معاملات مدينة لهذا المصدر',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    )
+                                  else
+                                    Column(
+                                      children: debitAlloc
+                                          .map(
+                                              _buildTransactionAllocationItem)
+                                          .toList(),
+                                    ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'المصروفات',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (expAlloc.isEmpty)
+                                    const Text(
+                                      'لا توجد مصروفات مخصصة لهذا المصدر',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    )
+                                  else
+                                    Column(
+                                      children: expAlloc
+                                          .map(_buildExpenseAllocationItem)
+                                          .toList(),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Actions
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.grey.shade100,
+                              foregroundColor: AppTheme.textSecondary,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              'إغلاق',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
-              ],
-            ),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: FutureBuilder<
-                  Map<String, List<Map<String, Object?>>>>(
-                future: _getResourceAllocationsDetails(resource.id!),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return Text(
-                      'حدث خطأ أثناء تحميل التفاصيل: ${snapshot.error}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.errorColor,
-                      ),
-                    );
-                  }
-
-                  final data = snapshot.data ?? {
-                    'transactions': <Map<String, Object?>>[],
-                    'expenses': <Map<String, Object?>>[],
-                  };
-
-                  final txAlloc =
-                      List<Map<String, Object?>>.from(data['transactions']!);
-                  final expAlloc =
-                      List<Map<String, Object?>>.from(data['expenses']!);
-
-                  final creditAlloc = txAlloc
-                      .where((row) => row['transactionType'] == 'credit')
-                      .toList();
-                  final debitAlloc = txAlloc
-                      .where((row) => row['transactionType'] == 'debit')
-                      .toList();
-
-                  if (creditAlloc.isEmpty &&
-                      debitAlloc.isEmpty &&
-                      expAlloc.isEmpty) {
-                    return const Text(
-                      'لا توجد عمليات مرتبطة بهذا المصدر حتى الآن',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textSecondary,
-                      ),
-                    );
-                  }
-
-                  return SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'المعاملات الدائنة (له)',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        if (creditAlloc.isEmpty)
-                          const Text(
-                            'لا توجد معاملات دائنة لهذا المصدر',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary,
-                            ),
-                          )
-                        else
-                          Column(
-                            children: creditAlloc
-                                .map(_buildTransactionAllocationItem)
-                                .toList(),
-                          ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'المعاملات المدينة (عليه)',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        if (debitAlloc.isEmpty)
-                          const Text(
-                            'لا توجد معاملات مدينة لهذا المصدر',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary,
-                            ),
-                          )
-                        else
-                          Column(
-                            children: debitAlloc
-                                .map(_buildTransactionAllocationItem)
-                                .toList(),
-                          ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'المصروفات',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        if (expAlloc.isEmpty)
-                          const Text(
-                            'لا توجد مصروفات مخصصة لهذا المصدر',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary,
-                            ),
-                          )
-                        else
-                          Column(
-                            children: expAlloc
-                                .map(_buildExpenseAllocationItem)
-                                .toList(),
-                          ),
-                      ],
-                    ),
-                  );
-                },
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text(
-                  'إغلاق',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-            ],
           ),
         );
       },
@@ -494,192 +600,281 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        balance.name,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        balance.currencyName,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                    ],
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 380, maxHeight: 520),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                IconButton(
-                  onPressed: () async {
-                    Navigator.of(dialogContext).pop();
-                    await _showEditBalanceDialog(
-                      resource: resource,
-                      balance: balance,
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.edit,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                  tooltip: 'تعديل الرصيد',
-                ),
-              ],
-            ),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: FutureBuilder<
-                  Map<String, List<Map<String, Object?>>>>(
-                future: _getBalanceAllocationsDetails(balance.id!),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return Text(
-                      'حدث خطأ أثناء تحميل التفاصيل: ${snapshot.error}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.errorColor,
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
                       ),
-                    );
-                  }
-
-                  final data = snapshot.data ?? {
-                    'transactions': <Map<String, Object?>>[],
-                    'expenses': <Map<String, Object?>>[],
-                  };
-
-                  final txAlloc =
-                      List<Map<String, Object?>>.from(data['transactions']!);
-                  final expAlloc =
-                      List<Map<String, Object?>>.from(data['expenses']!);
-
-                  final creditAlloc = txAlloc
-                      .where((row) => row['transactionType'] == 'credit')
-                      .toList();
-                  final debitAlloc = txAlloc
-                      .where((row) => row['transactionType'] == 'debit')
-                      .toList();
-
-                  if (creditAlloc.isEmpty &&
-                      debitAlloc.isEmpty &&
-                      expAlloc.isEmpty) {
-                    return const Text(
-                      'لا توجد عمليات مرتبطة بهذا الرصيد حتى الآن',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textSecondary,
-                      ),
-                    );
-                  }
-
-                  return SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+                    ),
+                    child: Row(
                       children: [
-                        const Text(
-                          'المعاملات الدائنة (له)',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.w600,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.account_balance_wallet_outlined,
+                            color: AppTheme.primaryColor,
+                            size: 18,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        if (creditAlloc.isEmpty)
-                          const Text(
-                            'لا توجد معاملات دائنة لهذا الرصيد',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary,
-                            ),
-                          )
-                        else
-                          Column(
-                            children: creditAlloc
-                                .map(_buildTransactionAllocationItem)
-                                .toList(),
-                          ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'المعاملات المدينة (عليه)',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        if (debitAlloc.isEmpty)
-                          const Text(
-                            'لا توجد معاملات مدينة لهذا الرصيد',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary,
-                            ),
-                          )
-                        else
-                          Column(
-                            children: debitAlloc
-                                .map(_buildTransactionAllocationItem)
-                                .toList(),
-                          ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'المصروفات',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.w600,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                balance.name,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  color: AppTheme.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                balance.currencyName,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        if (expAlloc.isEmpty)
-                          const Text(
-                            'لا توجد مصروفات مخصصة لهذا الرصيد',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary,
-                            ),
-                          )
-                        else
-                          Column(
-                            children: expAlloc
-                                .map(_buildExpenseAllocationItem)
-                                .toList(),
+                        IconButton(
+                          onPressed: () async {
+                            Navigator.of(dialogContext).pop();
+                            await _showEditBalanceDialog(
+                              resource: resource,
+                              balance: balance,
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.edit,
+                            color: AppTheme.primaryColor,
+                            size: 20,
                           ),
+                          tooltip: 'تعديل الرصيد',
+                        ),
                       ],
                     ),
-                  );
-                },
+                  ),
+                  const Divider(height: 1, color: AppTheme.dividerColor),
+                  // Content
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: SizedBox(
+                        width: double.maxFinite,
+                        child: FutureBuilder<
+                            Map<String, List<Map<String, Object?>>>>(
+                          future: _getBalanceAllocationsDetails(balance.id!),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            if (snapshot.hasError) {
+                              return Text(
+                                'حدث خطأ أثناء تحميل التفاصيل: ${snapshot.error}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.errorColor,
+                                ),
+                              );
+                            }
+
+                            final data = snapshot.data ?? {
+                              'transactions': <Map<String, Object?>>[],
+                              'expenses': <Map<String, Object?>>[],
+                            };
+
+                            final txAlloc = List<Map<String, Object?>>.from(
+                                data['transactions']!);
+                            final expAlloc = List<Map<String, Object?>>.from(
+                                data['expenses']!);
+
+                            final creditAlloc = txAlloc
+                                .where((row) =>
+                                    row['transactionType'] == 'credit')
+                                .toList();
+                            final debitAlloc = txAlloc
+                                .where(
+                                    (row) => row['transactionType'] == 'debit')
+                                .toList();
+
+                            if (creditAlloc.isEmpty &&
+                                debitAlloc.isEmpty &&
+                                expAlloc.isEmpty) {
+                              return const Text(
+                                'لا توجد عمليات مرتبطة بهذا الرصيد حتى الآن',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              );
+                            }
+
+                            return SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'المعاملات الدائنة (له)',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (creditAlloc.isEmpty)
+                                    const Text(
+                                      'لا توجد معاملات دائنة لهذا الرصيد',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    )
+                                  else
+                                    Column(
+                                      children: creditAlloc
+                                          .map(
+                                              _buildTransactionAllocationItem)
+                                          .toList(),
+                                    ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'المعاملات المدينة (عليه)',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (debitAlloc.isEmpty)
+                                    const Text(
+                                      'لا توجد معاملات مدينة لهذا الرصيد',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    )
+                                  else
+                                    Column(
+                                      children: debitAlloc
+                                          .map(
+                                              _buildTransactionAllocationItem)
+                                          .toList(),
+                                    ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'المصروفات',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (expAlloc.isEmpty)
+                                    const Text(
+                                      'لا توجد مصروفات مخصصة لهذا الرصيد',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    )
+                                  else
+                                    Column(
+                                      children: expAlloc
+                                          .map(_buildExpenseAllocationItem)
+                                          .toList(),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Actions
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.grey.shade100,
+                              foregroundColor: AppTheme.textSecondary,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              'إغلاق',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text(
-                  'إغلاق',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-            ],
           ),
         );
       },
@@ -695,133 +890,252 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: Text(
-              resource == null ? 'إضافة مصدر دخل جديد' : 'تعديل مصدر الدخل',
-              style: const TextStyle(fontSize: 14),
-            ),
-            content: Form(
-              key: formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: nameController,
-                      decoration: InputDecoration(
-                        labelText: 'اسم المصدر *',
-                        labelStyle: const TextStyle(fontSize: 14),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide:
-                              const BorderSide(color: AppTheme.primaryColor),
-                        ),
-                      ),
-                      style: const TextStyle(fontSize: 14),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'يرجى إدخال اسم المصدر';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: descriptionController,
-                      decoration: InputDecoration(
-                        labelText: 'الوصف',
-                        labelStyle: const TextStyle(fontSize: 14),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide:
-                              const BorderSide(color: AppTheme.primaryColor),
-                        ),
-                      ),
-                      maxLines: 2,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text(
-                  'إلغاء',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  if (!formKey.currentState!.validate()) return;
-
-                  final name = nameController.text.trim();
-                  final desc = descriptionController.text.trim().isEmpty
-                      ? null
-                      : descriptionController.text.trim();
-
-                  try {
-                    if (resource == null) {
-                      final newResource = IncomeResourceModel(
-                        name: name,
-                        description: desc,
-                        createdDate: DateTime.now(),
-                      );
-                      await _db.insertIncomeResource(newResource);
-                    } else {
-                      final updated = resource.copyWith(
-                        name: name,
-                        description: desc,
-                      );
-                      await _db.updateIncomeResource(updated);
-                    }
-
-                    if (mounted) {
-                      Navigator.of(dialogContext).pop();
-                      await _loadBalances();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(resource == null
-                              ? 'تم إضافة المصدر بنجاح'
-                              : 'تم تحديث المصدر بنجاح'),
-                          backgroundColor: AppTheme.successColor,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('حدث خطأ أثناء حفظ المصدر: $e'),
-                          backgroundColor: AppTheme.errorColor,
-                        ),
-                      );
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 380, maxHeight: 520),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                child: const Text(
-                  'حفظ',
-                  style: TextStyle(fontSize: 14),
-                ),
+                ],
               ),
-            ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            resource == null
+                                ? Icons.add
+                                : Icons.edit_outlined,
+                            color: AppTheme.primaryColor,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            resource == null
+                                ? 'إضافة مصدر دخل جديد'
+                                : 'تعديل مصدر الدخل',
+                            style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          icon: Icon(
+                            Icons.close,
+                            color: AppTheme.textSecondary,
+                            size: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: AppTheme.dividerColor),
+                  // Content
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Form(
+                        key: formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextFormField(
+                              controller: nameController,
+                              decoration: InputDecoration(
+                                labelText: 'اسم المصدر *',
+                                labelStyle: const TextStyle(fontSize: 14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              style: const TextStyle(fontSize: 14),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'يرجى إدخال اسم المصدر';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: descriptionController,
+                              decoration: InputDecoration(
+                                labelText: 'الوصف',
+                                labelStyle: const TextStyle(fontSize: 14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              maxLines: 2,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Actions
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.grey.shade100,
+                              foregroundColor: AppTheme.textSecondary,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              'إلغاء',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (!formKey.currentState!.validate()) return;
+
+                              final name = nameController.text.trim();
+                              final desc =
+                                  descriptionController.text.trim().isEmpty
+                                      ? null
+                                      : descriptionController.text.trim();
+
+                              try {
+                                if (resource == null) {
+                                  final newResource = IncomeResourceModel(
+                                    name: name,
+                                    description: desc,
+                                    createdDate: DateTime.now(),
+                                  );
+                                  await _db.insertIncomeResource(newResource);
+                                } else {
+                                  final updated = resource.copyWith(
+                                    name: name,
+                                    description: desc,
+                                  );
+                                  await _db.updateIncomeResource(updated);
+                                }
+
+                                if (mounted) {
+                                  Navigator.of(dialogContext).pop();
+                                  await _loadBalances();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(resource == null
+                                          ? 'تم إضافة المصدر بنجاح'
+                                          : 'تم تحديث المصدر بنجاح'),
+                                      backgroundColor: AppTheme.successColor,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          'حدث خطأ أثناء حفظ المصدر: $e'),
+                                      backgroundColor: AppTheme.errorColor,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'حفظ',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -952,204 +1266,334 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) {
-          return Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              title: Text(
-                balance == null
-                    ? 'إضافة رصيد جديد لمصدر: ${resource.name}'
-                    : 'تعديل رصيد في مصدر: ${resource.name}',
-                style: const TextStyle(fontSize: 14),
-              ),
-              content: Form(
-                key: formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextFormField(
-                        controller: nameController,
-                        decoration: InputDecoration(
-                          labelText: 'اسم الرصيد *',
-                          labelStyle: const TextStyle(fontSize: 14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide:
-                                const BorderSide(color: AppTheme.primaryColor),
-                          ),
-                        ),
-                        style: const TextStyle(fontSize: 14),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'يرجى إدخال اسم الرصيد';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: amountController,
-                        decoration: InputDecoration(
-                          labelText: 'الرصيد المبدئي',
-                          labelStyle: const TextStyle(fontSize: 14),
-                          hintText: '0.00',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide:
-                                const BorderSide(color: AppTheme.primaryColor),
-                          ),
-                        ),
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
-                        style: const TextStyle(fontSize: 14),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return null; // اختياري، يعامل كـ 0
-                          }
-                          final parsed = double.tryParse(value);
-                          if (parsed == null || parsed < 0) {
-                            return 'يرجى إدخال رقم صحيح';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        value: selectedCurrency,
-                        decoration: InputDecoration(
-                          labelText: 'العملة *',
-                          labelStyle: const TextStyle(fontSize: 14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide:
-                                const BorderSide(color: AppTheme.primaryColor),
-                          ),
-                        ),
-                        items: allCurrencies
-                            .map(
-                              (c) => DropdownMenuItem<String>(
-                                value: c.name,
-                                child: Text(c.name),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            selectedCurrency = value;
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      CheckboxListTile(
-                        value: isDefault,
-                        onChanged: (value) {
-                          if (value != null) {
-                            isDefault = value;
-                            (dialogContext as Element).markNeedsBuild();
-                          }
-                        },
-                        title: const Text(
-                          'تعيين كرصيد افتراضي',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        controlAffinity: ListTileControlAffinity.leading,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text(
-                    'إلغاء',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (!formKey.currentState!.validate()) return;
-
-                    final name = nameController.text.trim();
-                    final amountText = amountController.text.trim();
-                    final initialAmount =
-                        amountText.isEmpty ? 0.0 : double.parse(amountText);
-
-                    try {
-                      int? affectId = balance?.id;
-                      if (balance == null) {
-                        final newBalance = IncomeBalanceModel(
-                          resourceId: resourceId,
-                          name: name,
-                          currencyName: selectedCurrency,
-                          initialAmount: initialAmount,
-                          isDefault: isDefault,
-                          createdDate: DateTime.now(),
-                        );
-                        final newId =
-                            await _db.insertIncomeBalance(newBalance);
-                        affectId = newId;
-                      } else {
-                        final updated = balance.copyWith(
-                          name: name,
-                          currencyName: selectedCurrency,
-                          initialAmount: initialAmount,
-                          isDefault: isDefault,
-                        );
-                        await _db.updateIncomeBalance(updated);
-                      }
-
-                      if (isDefault && affectId != null) {
-                        await _setDefaultBalance(affectId);
-                      }
-
-                      if (mounted) {
-                        Navigator.of(dialogContext).pop();
-                        await _loadBalances();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(balance == null
-                                ? 'تم إضافة الرصيد بنجاح'
-                                : 'تم تحديث الرصيد بنجاح'),
-                            backgroundColor: AppTheme.successColor,
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content:
-                                Text('حدث خطأ أثناء حفظ الرصيد: $e'),
-                            backgroundColor: AppTheme.errorColor,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+          return Dialog(
+            insetPadding: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Container(
+                constraints:
+                    const BoxConstraints(maxWidth: 380, maxHeight: 520),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                  child: const Text(
-                    'حفظ',
-                    style: TextStyle(fontSize: 14),
-                  ),
+                  ],
                 ),
-              ],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              balance == null
+                                  ? Icons.add
+                                  : Icons.edit_outlined,
+                              color: AppTheme.primaryColor,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              balance == null
+                                  ? 'إضافة رصيد جديد لمصدر: ${resource.name}'
+                                  : 'تعديل رصيد في مصدر: ${resource.name}',
+                              style: const TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(),
+                            icon: Icon(
+                              Icons.close,
+                              color: AppTheme.textSecondary,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: AppTheme.dividerColor),
+                    // Content
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Form(
+                          key: formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextFormField(
+                                controller: nameController,
+                                decoration: InputDecoration(
+                                  labelText: 'اسم الرصيد *',
+                                  labelStyle:
+                                      const TextStyle(fontSize: 14),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                ),
+                                style: const TextStyle(fontSize: 14),
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.trim().isEmpty) {
+                                    return 'يرجى إدخال اسم الرصيد';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: amountController,
+                                decoration: InputDecoration(
+                                  labelText: 'الرصيد المبدئي',
+                                  labelStyle:
+                                      const TextStyle(fontSize: 14),
+                                  hintText: '0.00',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                ),
+                                keyboardType: const TextInputType
+                                        .numberWithOptions(decimal: true),
+                                style: const TextStyle(fontSize: 14),
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.trim().isEmpty) {
+                                    return null; // اختياري، يعامل كـ 0
+                                  }
+                                  final parsed = double.tryParse(value);
+                                  if (parsed == null || parsed < 0) {
+                                    return 'يرجى إدخال رقم صحيح';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              DropdownButtonFormField<String>(
+                                value: selectedCurrency,
+                                decoration: InputDecoration(
+                                  labelText: 'العملة *',
+                                  labelStyle:
+                                      const TextStyle(fontSize: 14),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                ),
+                                items: allCurrencies
+                                    .map(
+                                      (c) => DropdownMenuItem<String>(
+                                        value: c.name,
+                                        child: Text(c.name),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    selectedCurrency = value;
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 8),
+                              CheckboxListTile(
+                                value: isDefault,
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    isDefault = value;
+                                    (dialogContext as Element)
+                                        .markNeedsBuild();
+                                  }
+                                },
+                                title: const Text(
+                                  'تعيين كرصيد افتراضي',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Actions
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(12),
+                          bottomRight: Radius.circular(12),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.grey.shade100,
+                                foregroundColor: AppTheme.textSecondary,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                'إلغاء',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (!formKey.currentState!.validate()) return;
+
+                                final name = nameController.text.trim();
+                                final amountText = amountController.text.trim();
+                                final initialAmount = amountText.isEmpty
+                                    ? 0.0
+                                    : double.parse(amountText);
+
+                                try {
+                                  int? affectId = balance?.id;
+                                  if (balance == null) {
+                                    final newBalance = IncomeBalanceModel(
+                                      resourceId: resourceId,
+                                      name: name,
+                                      currencyName: selectedCurrency,
+                                      initialAmount: initialAmount,
+                                      isDefault: isDefault,
+                                      createdDate: DateTime.now(),
+                                    );
+                                    final newId = await _db
+                                        .insertIncomeBalance(newBalance);
+                                    affectId = newId;
+                                  } else {
+                                    final updated = balance.copyWith(
+                                      name: name,
+                                      currencyName: selectedCurrency,
+                                      initialAmount: initialAmount,
+                                      isDefault: isDefault,
+                                    );
+                                    await _db.updateIncomeBalance(updated);
+                                  }
+
+                                  if (isDefault && affectId != null) {
+                                    await _setDefaultBalance(affectId);
+                                  }
+
+                                  if (mounted) {
+                                    Navigator.of(dialogContext).pop();
+                                    await _loadBalances();
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(balance == null
+                                            ? 'تم إضافة الرصيد بنجاح'
+                                            : 'تم تحديث الرصيد بنجاح'),
+                                        backgroundColor:
+                                            AppTheme.successColor,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'حدث خطأ أثناء حفظ الرصيد: $e'),
+                                        backgroundColor:
+                                            AppTheme.errorColor,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: const Text(
+                                'حفظ',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
         },

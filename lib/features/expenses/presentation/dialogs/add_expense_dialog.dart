@@ -45,6 +45,8 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   List<IncomeBalanceModel> _incomeBalances = [];
   List<_ExpenseBalanceAllocationInput> _allocationInputs = [];
 
+  bool get _isEditing => widget.expense != null;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -236,235 +238,415 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: AlertDialog(
-        title: Text(
-          widget.expense == null ? 'إضافة مصروف جديد' : 'تعديل المصروف',
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        content: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Name field
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'اسم المصروف *',
-                    labelStyle: const TextStyle(fontSize: 14),
-                    hintText: 'مثال: فاتورة كهرباء',
-                    hintStyle: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade500,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor),
-                    ),
-                  ),
-                  style: const TextStyle(fontSize: 14),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'يرجى إدخال اسم المصروف';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Amount field
-                TextFormField(
-                  controller: _amountController,
-                  decoration: InputDecoration(
-                    labelText: 'المبلغ *',
-                    labelStyle: const TextStyle(fontSize: 14),
-                    hintText: '0.00',
-                    hintStyle: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade500,
-                    ),
-                    suffixText: 'ر.س',
-                    suffixStyle: const TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.textSecondary,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor),
-                    ),
-                  ),
-                  style: const TextStyle(fontSize: 14),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-                  ],
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'يرجى إدخال المبلغ';
-                    }
-                    final amount = double.tryParse(value);
-                    if (amount == null || amount <= 0) {
-                      return 'يرجى إدخال مبلغ صحيح';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                if (_incomeBalances.isNotEmpty) ...[
-                  _buildBalanceAllocationSection(),
-                  const SizedBox(height: 16),
-                ],
-                // Detail field
-                TextFormField(
-                  controller: _detailController,
-                  decoration: InputDecoration(
-                    labelText: 'التفاصيل *',
-                    labelStyle: const TextStyle(fontSize: 14),
-                    hintText: 'وصف تفصيلي للمصروف',
-                    hintStyle: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade500,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor),
-                    ),
-                  ),
-                  style: const TextStyle(fontSize: 14),
-                  maxLines: 3,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'يرجى إدخال تفاصيل المصروف';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Category dropdown
-                DropdownButtonFormField<String>(
-                  value: _selectedCategory,
-                  decoration: InputDecoration(
-                    labelText: 'الفئة *',
-                    labelStyle: const TextStyle(fontSize: 14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor),
-                    ),
-                  ),
-                  style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
-                  items: _categories.map((category) {
-                    return DropdownMenuItem<String>(
-                      value: category.name,
-                      child: Text(category.name),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    }
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'يرجى اختيار الفئة';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Currency dropdown
-                DropdownButtonFormField<String>(
-                  value: _selectedCurrency,
-                  decoration: InputDecoration(
-                    labelText: 'العملة *',
-                    labelStyle: const TextStyle(fontSize: 14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor),
-                    ),
-                  ),
-                  style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
-                  items: _currencies.map((currency) {
-                    return DropdownMenuItem<String>(
-                      value: currency.name,
-                      child: Text(currency.name),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedCurrency = value;
-                      });
-                    }
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'يرجى اختيار العملة';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-            child: const Text(
-              'إلغاء',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: _isLoading ? null : _saveExpense,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    widget.expense == null ? 'إضافة' : 'حفظ',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-          ),
-        ],
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 380, maxHeight: 520),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        _isEditing ? Icons.edit_outlined : Icons.add,
+                        color: AppTheme.primaryColor,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _isEditing ? 'تعديل مصروف' : 'إضافة مصروف جديد',
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.close,
+                        color: AppTheme.textSecondary,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: AppTheme.dividerColor),
+              // Content
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Name field
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            labelText: 'اسم المصروف *',
+                            labelStyle: const TextStyle(fontSize: 14),
+                            hintText: 'مثال: فاتورة كهرباء',
+                            hintStyle: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide:
+                                  const BorderSide(color: AppTheme.primaryColor),
+                            ),
+                          ),
+                          style: const TextStyle(fontSize: 14),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'يرجى إدخال اسم المصروف';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        // Amount and currency row
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: TextFormField(
+                                controller: _amountController,
+                                decoration: InputDecoration(
+                                  labelText: 'المبلغ *',
+                                  labelStyle: const TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 14,
+                                  ),
+                                  hintText: '0.00',
+                                  hintStyle: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: AppTheme.primaryColor,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                ),
+                                style: const TextStyle(fontSize: 14),
+                                keyboardType: const TextInputType.numberWithOptions(
+                                    decimal: true),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'^\d*\.?\d*'),
+                                  ),
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'يرجى إدخال المبلغ';
+                                  }
+                                  final amount = double.tryParse(value);
+                                  if (amount == null || amount <= 0) {
+                                    return 'يرجى إدخال مبلغ صحيح';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 2,
+                              child: _buildCurrencyDropdown(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        if (_incomeBalances.isNotEmpty) ...[
+                          _buildBalanceAllocationSection(),
+                          const SizedBox(height: 16),
+                        ],
+                        // Detail field
+                        TextFormField(
+                          controller: _detailController,
+                          decoration: InputDecoration(
+                            labelText: 'التفاصيل *',
+                            labelStyle: const TextStyle(fontSize: 14),
+                            hintText: 'وصف تفصيلي للمصروف',
+                            hintStyle: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide:
+                                  const BorderSide(color: AppTheme.primaryColor),
+                            ),
+                          ),
+                          style: const TextStyle(fontSize: 14),
+                          maxLines: 3,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'يرجى إدخال تفاصيل المصروف';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        // Category dropdown
+                        DropdownButtonFormField<String>(
+                          value: _selectedCategory,
+                          decoration: InputDecoration(
+                            labelText: 'الفئة *',
+                            labelStyle: const TextStyle(fontSize: 14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide:
+                                  const BorderSide(color: AppTheme.primaryColor),
+                            ),
+                          ),
+                          style: const TextStyle(
+                              fontSize: 14, color: AppTheme.textPrimary),
+                          items: _categories.map((category) {
+                            return DropdownMenuItem<String>(
+                              value: category.name,
+                              child: Text(category.name),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                _selectedCategory = value;
+                              });
+                            }
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'يرجى اختيار الفئة';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Actions
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.grey.shade100,
+                          foregroundColor: AppTheme.textSecondary,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'إلغاء',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _saveExpense,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text(
+                                'حفظ',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrencyDropdown() {
+    final items = _currencies
+        .map(
+          (currency) => DropdownMenuItem<String>(
+            value: currency.name,
+            child: Text(
+              currency.name,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+        )
+        .toList();
+
+    return DropdownButtonFormField<String>(
+      value: _selectedCurrency,
+      decoration: InputDecoration(
+        labelText: 'العملة *',
+        labelStyle: const TextStyle(
+          color: AppTheme.textSecondary,
+          fontSize: 14,
+        ),
+        prefixIcon: const Icon(
+          Icons.payments_outlined,
+          color: AppTheme.textSecondary,
+          size: 18,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(
+            color: AppTheme.primaryColor,
+            width: 1.5,
+          ),
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+      items: items,
+      onChanged: (val) {
+        if (val != null) {
+          setState(() {
+            _selectedCurrency = val;
+          });
+        }
+      },
+      isExpanded: true,
+      style: const TextStyle(
+        fontSize: 14,
+        color: AppTheme.textPrimary,
+      ),
+      menuMaxHeight: 200,
+      dropdownColor: Colors.white,
+      alignment: AlignmentDirectional.centerStart,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'يرجى اختيار العملة';
+        }
+        return null;
+      },
     );
   }
 
@@ -484,6 +666,19 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         Column(
           children: List.generate(_allocationInputs.length, (index) {
             final input = _allocationInputs[index];
+            final String? effectiveCurrency =
+                _selectedCurrency.isNotEmpty ? _selectedCurrency : null;
+
+            final List<IncomeBalanceModel> balancesForDropdown =
+                _incomeBalances.where((balance) {
+              if (input.balanceId != null && balance.id == input.balanceId) {
+                return true;
+              }
+              if (effectiveCurrency == null) {
+                return true;
+              }
+              return balance.currencyName == effectiveCurrency;
+            }).toList();
             return Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Row(
@@ -520,7 +715,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                         contentPadding:
                             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
-                      items: _incomeBalances
+                      items: balancesForDropdown
                           .map(
                             (balance) => DropdownMenuItem<int>(
                               value: balance.id,
