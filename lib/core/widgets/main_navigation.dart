@@ -77,8 +77,8 @@ class _MainNavigationState extends State<MainNavigation> {
             elevation: 0,
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(Icons.account_balance_wallet_rounded),
-                activeIcon: Icon(Icons.account_balance_wallet_rounded),
+                icon: Icon( Icons.payments_outlined,),
+                activeIcon: Icon( Icons.payments_outlined,),
                 label: 'الديون',
               ),
               BottomNavigationBarItem(

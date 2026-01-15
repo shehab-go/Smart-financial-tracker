@@ -337,7 +337,9 @@ class ReportService {
     required PdfColor primaryColor,
   }) async {
     final pdf = pw.Document();
-    const int maxRowsPerPage = 25; // Safe limit for single PDF
+    // Use a conservative limit so that first page (which also has header cards)
+    // never overflows; larger datasets are handled by the explicit multi-page logic below.
+    const int maxRowsPerPage = 13;
     
     if (tableData.length <= maxRowsPerPage) {
       // Single page approach
@@ -731,7 +733,8 @@ class ReportService {
   }
 
   static Future<pw.Font> _loadArabicFont() async {
-    final data = await rootBundle.load('assets/fonts/NotoNaskhArabic-Regular.ttf');
+    final data = await rootBundle
+        .load('assets/fonts/IBM_Plex_Sans_Arabic/IBMPlexSansArabic-Regular.ttf');
     return pw.Font.ttf(data);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/models/income_balance.dart';
@@ -6,6 +7,13 @@ import 'package:debit_credit_app/core/models/income_resource.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/widgets/app_drawer.dart';
 import 'package:world_countries/world_countries.dart';
+import 'package:debit_credit_app/features/balances/application/reports/all_income_balances_report_generator.dart';
+import 'package:debit_credit_app/features/balances/application/reports/all_income_resources_report_generator.dart';
+
+enum IncomeSection {
+  resources,
+  balances,
+}
 
 class IncomeBalancesScreen extends StatefulWidget {
   final Function(bool)? onDrawerChanged;
@@ -25,6 +33,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
   Map<int, double> _currentBalanceAmounts = {};
   bool _isLoading = true;
   bool _isDrawerOpen = false;
+  IncomeSection _selectedSection = IncomeSection.resources;
 
   @override
   void initState() {
@@ -1916,6 +1925,540 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
     }
   }
 
+  Future<void> _generateAllIncomeResourcesReport() async {
+    if (_resources.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('لا توجد مصادر دخل لعرض التقرير'),
+        ),
+      );
+      return;
+    }
+
+    await AllIncomeResourcesReportGenerator.generate(
+      resources: _resources,
+      balancesByResource: _balancesByResource,
+      currentBalanceAmounts: _currentBalanceAmounts,
+    );
+  }
+
+  Future<void> _generateAllIncomeBalancesReport() async {
+    if (_balances.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('لا توجد أرصدة دخل لعرض التقرير'),
+        ),
+      );
+      return;
+    }
+
+    await AllIncomeBalancesReportGenerator.generate(
+      balances: _balances,
+      resources: _resources,
+      currentBalanceAmounts: _currentBalanceAmounts,
+    );
+  }
+
+  void _showReportOptions() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(
+                    Icons.analytics_outlined,
+                    color: AppTheme.primaryColor,
+                  ),
+                  title: const Text('تقرير جميع مصادر الدخل'),
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    await _generateAllIncomeResourcesReport();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    color: AppTheme.primaryColor,
+                  ),
+                  title: const Text('تقرير جميع أرصدة الدخل'),
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    await _generateAllIncomeBalancesReport();
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBalancesList() {
+    if (_balances.isEmpty) {
+      return Center(
+        child: Text(
+          'لا توجد أرصدة دخل متاحة',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      );
+    }
+
+    final Map<int, IncomeResourceModel> resourceById = {
+      for (final r in _resources)
+        if (r.id != null) r.id!: r,
+    };
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: _balances.length,
+      itemBuilder: (context, index) {
+        final balance = _balances[index];
+        final resource = resourceById[balance.resourceId];
+
+        final double currentAmount = balance.id != null
+            ? (_currentBalanceAmounts[balance.id!] ?? balance.initialAmount)
+            : balance.initialAmount;
+
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+            border: Border.all(
+              color: Colors.grey.shade300,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                resource?.name ?? 'مصدر غير معروف',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          balance.name,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          balance.currencyName,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        _amountFormat.format(currentAmount),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (balance.isDefault) ...[
+                        const SizedBox(height: 2),
+                        const Text(
+                          'افتراضي',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMainContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_resources.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'لا توجد مصادر دخل متاحة',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: _showEditResourceDialog,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              icon: const Icon(Icons.add),
+              label: const Text('إضافة مصدر دخل'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_selectedSection == IncomeSection.balances) {
+      return _buildBalancesList();
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: _resources.length,
+      itemBuilder: (context, index) {
+        final resource = _resources[index];
+        final balances = resource.id != null
+            ? _balancesByResource[resource.id!] ?? []
+            : const <IncomeBalanceModel>[];
+
+        final Map<String, double> totalsByCurrency = {};
+        for (final balance in balances) {
+          if (balance.id == null) continue;
+          final currentAmount =
+              _currentBalanceAmounts[balance.id!] ?? balance.initialAmount;
+          totalsByCurrency[balance.currencyName] =
+              (totalsByCurrency[balance.currencyName] ?? 0.0) + currentAmount;
+        }
+
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+            border: Border.all(
+              color: Colors.grey.shade300,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: resource.id == null
+                          ? null
+                          : () => _showResourceDetailsDialog(
+                                resource: resource,
+                              ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            resource.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (resource.description != null &&
+                              resource.description!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text(
+                                resource.description!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ),
+                          if (totalsByCurrency.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
+                                children: totalsByCurrency.entries
+                                    .map(
+                                      (entry) => Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.primaryColor
+                                              .withOpacity(0.04),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          '${_amountFormat.format(entry.value)} ${entry.key}',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AppTheme.primaryColor,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(
+                      Icons.more_vert,
+                      color: AppTheme.textSecondary,
+                    ),
+                    onSelected: (value) async {
+                      if (value == 'edit') {
+                        await _showEditResourceDialog(resource: resource);
+                      } else if (value == 'delete') {
+                        await _confirmDeleteResource(resource);
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Text('تعديل المصدر'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Text(
+                          'حذف المصدر',
+                          style: TextStyle(
+                            color: AppTheme.errorColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: resource.id == null
+                      ? null
+                      : () => _showEditBalanceDialog(
+                            resource: resource,
+                          ),
+                  icon: const Icon(
+                    Icons.add,
+                    size: 18,
+                    color: AppTheme.primaryColor,
+                  ),
+                  label: const Text(
+                    'إضافة رصيد لهذا المصدر',
+                    style: TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (balances.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4.0),
+                  child: Text(
+                    'لا توجد أرصدة لهذا المصدر',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                )
+              else
+                Column(
+                  children: balances.map((balance) {
+                    final double currentAmount = balance.id != null
+                        ? (_currentBalanceAmounts[balance.id!] ??
+                            balance.initialAmount)
+                        : balance.initialAmount;
+                    return InkWell(
+                      onTap: () => _showBalanceDetailsDialog(
+                          resource: resource, balance: balance),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: balance.isDefault
+                                ? AppTheme.primaryColor
+                                : Colors.grey.shade300,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    balance.name,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    balance.currencyName,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    _amountFormat.format(currentAmount),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textPrimary,
+                                    ),
+                                  ),
+                                  if (balance.isDefault)
+                                    const SizedBox(height: 2),
+                                  if (balance.isDefault)
+                                    const Text(
+                                      'افتراضي',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppTheme.primaryColor,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            PopupMenuButton<String>(
+                              icon: const Icon(
+                                Icons.more_vert,
+                                color: AppTheme.textSecondary,
+                              ),
+                              onSelected: (value) async {
+                                if (value == 'edit') {
+                                  await _showEditBalanceDialog(
+                                    resource: resource,
+                                    balance: balance,
+                                  );
+                                } else if (value == 'default' &&
+                                    balance.id != null) {
+                                  await _setDefaultBalance(balance.id!);
+                                  await _loadBalances();
+                                } else if (value == 'delete') {
+                                  await _confirmDeleteBalance(balance);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem<String>(
+                                  value: 'edit',
+                                  child: Text('تعديل الرصيد'),
+                                ),
+                                if (!balance.isDefault)
+                                  const PopupMenuItem<String>(
+                                    value: 'default',
+                                    child: Text('تعيين كرصيد افتراضي'),
+                                  ),
+                                const PopupMenuItem<String>(
+                                  value: 'delete',
+                                  child: Text(
+                                    'حذف الرصيد',
+                                    style: TextStyle(
+                                      color: AppTheme.errorColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -1933,6 +2476,15 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
           automaticallyImplyLeading: false,
           leading: null,
           actions: [
+            IconButton(
+              icon: SvgPicture.asset(
+                'assets/images/report_icons/pdf_report.svg',
+                width: 24,
+                height: 24,
+              ),
+              tooltip: 'تقرير مصادر وأرصدة الدخل',
+              onPressed: _showReportOptions,
+            ),
             if (!_isDrawerOpen)
               Builder(
                 builder: (context) => IconButton(
@@ -1964,364 +2516,46 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
             size: 24,
           ),
         ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _resources.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'لا توجد مصادر دخل متاحة',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          onPressed: _showEditResourceDialog,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          icon: const Icon(Icons.add),
-                          label: const Text('إضافة مصدر دخل'),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(8),
-                    itemCount: _resources.length,
-                    itemBuilder: (context, index) {
-                      final resource = _resources[index];
-                      final balances = resource.id != null
-                          ? _balancesByResource[resource.id!] ?? []
-                          : const <IncomeBalanceModel>[];
-
-                      final Map<String, double> totalsByCurrency = {};
-                      for (final balance in balances) {
-                        if (balance.id == null) continue;
-                        final currentAmount =
-                            _currentBalanceAmounts[balance.id!] ?? balance.initialAmount;
-                        totalsByCurrency[balance.currencyName] =
-                            (totalsByCurrency[balance.currencyName] ?? 0.0) +
-                                currentAmount;
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ChoiceChip(
+                    label: const Text('مصادر الدخل'),
+                    selected: _selectedSection == IncomeSection.resources,
+                    onSelected: (selected) {
+                      if (selected &&
+                          _selectedSection != IncomeSection.resources) {
+                        setState(() {
+                          _selectedSection = IncomeSection.resources;
+                        });
                       }
-
-                      return Container(
-                        margin: const EdgeInsets.symmetric(vertical: 6),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                          border: Border.all(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: InkWell(
-                                    onTap: resource.id == null
-                                        ? null
-                                        : () => _showResourceDetailsDialog(
-                                              resource: resource,
-                                            ),
-                                    child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        resource.name,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: AppTheme.textPrimary,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      if (resource.description != null &&
-                                          resource.description!.isNotEmpty)
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 4.0),
-                                          child: Text(
-                                            resource.description!,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppTheme.textSecondary,
-                                            ),
-                                          ),
-                                        ),
-                                      if (totalsByCurrency.isNotEmpty)
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 4.0),
-                                          child: Wrap(
-                                            spacing: 8,
-                                            runSpacing: 4,
-                                            children: totalsByCurrency.entries
-                                                .map(
-                                                  (entry) => Container(
-                                                    padding:
-                                                        const EdgeInsets
-                                                            .symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: AppTheme
-                                                          .primaryColor
-                                                          .withOpacity(0.04),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              12),
-                                                    ),
-                                                    child: Text(
-                                                      '${_amountFormat.format(entry.value)} ${entry.key}',
-                                                      style:
-                                                          const TextStyle(
-                                                        fontSize: 11,
-                                                        color: AppTheme
-                                                            .primaryColor,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                )
-                                                .toList(),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                ),
-                                PopupMenuButton<String>(
-                                  icon: const Icon(
-                                    Icons.more_vert,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                  onSelected: (value) async {
-                                    if (value == 'edit') {
-                                      await _showEditResourceDialog(
-                                          resource: resource);
-                                    } else if (value == 'delete') {
-                                      await _confirmDeleteResource(resource);
-                                    }
-                                  },
-                                  itemBuilder: (context) => const [
-                                    PopupMenuItem<String>(
-                                      value: 'edit',
-                                      child: Text('تعديل المصدر'),
-                                    ),
-                                    PopupMenuItem<String>(
-                                      value: 'delete',
-                                      child: Text(
-                                        'حذف المصدر',
-                                        style: TextStyle(
-                                          color: AppTheme.errorColor,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: TextButton.icon(
-                                onPressed: resource.id == null
-                                    ? null
-                                    : () => _showEditBalanceDialog(
-                                          resource: resource,
-                                        ),
-                                icon: const Icon(
-                                  Icons.add,
-                                  size: 18,
-                                  color: AppTheme.primaryColor,
-                                ),
-                                label: const Text(
-                                  'إضافة رصيد لهذا المصدر',
-                                  style: TextStyle(
-                                    color: AppTheme.primaryColor,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            if (balances.isEmpty)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 4.0),
-                                child: Text(
-                                  'لا توجد أرصدة لهذا المصدر',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                ),
-                              )
-                            else
-                              Column(
-                                children: balances.map((balance) {
-                                  final double currentAmount = balance.id != null
-                                      ? (_currentBalanceAmounts[balance.id!] ??
-                                          balance.initialAmount)
-                                      : balance.initialAmount;
-                                  return InkWell(
-                                    onTap: () => _showBalanceDetailsDialog(
-                                        resource: resource, balance: balance),
-                                    child: Container(
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 4),
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: balance.isDefault
-                                              ? AppTheme.primaryColor
-                                              : Colors.grey.shade300,
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            flex: 3,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  balance.name,
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color:
-                                                        AppTheme.textPrimary,
-                                                    fontWeight:
-                                                        FontWeight.w600,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  balance.currencyName,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    color: AppTheme
-                                                        .textSecondary,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              children: [
-                                                Text(
-                                                  _amountFormat.format(
-                                                      currentAmount),
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color: AppTheme
-                                                        .textPrimary,
-                                                  ),
-                                                ),
-                                                if (balance.isDefault)
-                                                  const SizedBox(height: 2),
-                                                if (balance.isDefault)
-                                                  const Text(
-                                                    'افتراضي',
-                                                    style: TextStyle(
-                                                      fontSize: 11,
-                                                      color: AppTheme
-                                                          .primaryColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                          PopupMenuButton<String>(
-                                            icon: const Icon(
-                                              Icons.more_vert,
-                                              color:
-                                                  AppTheme.textSecondary,
-                                            ),
-                                            onSelected: (value) async {
-                                              if (value == 'edit') {
-                                                await _showEditBalanceDialog(
-                                                  resource: resource,
-                                                  balance: balance,
-                                                );
-                                              } else if (value ==
-                                                      'default' &&
-                                                  balance.id != null) {
-                                                await _setDefaultBalance(
-                                                    balance.id!);
-                                                await _loadBalances();
-                                              } else if (value ==
-                                                  'delete') {
-                                                await _confirmDeleteBalance(
-                                                    balance);
-                                              }
-                                            },
-                                            itemBuilder: (context) => [
-                                              const PopupMenuItem<String>(
-                                                value: 'edit',
-                                                child: Text('تعديل الرصيد'),
-                                              ),
-                                              if (!balance.isDefault)
-                                                const PopupMenuItem<String>(
-                                                  value: 'default',
-                                                  child: Text(
-                                                      'تعيين كرصيد افتراضي'),
-                                                ),
-                                              const PopupMenuItem<String>(
-                                                value: 'delete',
-                                                child: Text(
-                                                  'حذف الرصيد',
-                                                  style: TextStyle(
-                                                    color:
-                                                        AppTheme.errorColor,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                          ],
-                        ),
-                      );
                     },
                   ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('أرصدة الدخل'),
+                    selected: _selectedSection == IncomeSection.balances,
+                    onSelected: (selected) {
+                      if (selected &&
+                          _selectedSection != IncomeSection.balances) {
+                        setState(() {
+                          _selectedSection = IncomeSection.balances;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _buildMainContent(),
+            ),
+          ],
+        ),
       ),
     );
   }

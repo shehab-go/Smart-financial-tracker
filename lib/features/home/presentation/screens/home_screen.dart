@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:debit_credit_app/core/models/account.dart';
 import 'package:debit_credit_app/core/models/category.dart';
 import 'package:debit_credit_app/core/widgets/app_drawer.dart';
@@ -86,9 +87,19 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _generateReportForCurrentCategory() async {
     if (_state.categories.isEmpty) return;
-    final cat = _state.categories.first;
+
+    // Use the currently selected category (from dropdown/PageView), with bounds safety
+    int safeIndex = _selectedCategoryIndex;
+    if (safeIndex >= _state.categories.length) {
+      safeIndex = 0;
+    }
+
+    final cat = _state.categories[safeIndex];
     final accounts = _state.accountsByCategory[cat.name] ?? [];
-    await HomeReportCoordinator.generateCategoryReport(category: cat, accounts: accounts);
+    await HomeReportCoordinator.generateCategoryReport(
+      category: cat,
+      accounts: accounts,
+    );
   }
 
   Future<void> _generateReportForAll() async {
@@ -177,6 +188,31 @@ class HomeScreenState extends State<HomeScreen> {
         }
       }
     }
+  }
+
+  Future<void> _generateReportForSelectedAccounts() async {
+    if (_selectedAccountIds.isEmpty) return;
+
+    // Resolve selected accounts across all categories by ID
+    final selectedIdInts = _selectedAccountIds
+        .map((id) => int.tryParse(id))
+        .whereType<int>()
+        .toSet();
+
+    final List<AccountModel> selectedAccounts = [];
+    _state.accountsByCategory.forEach((_, accounts) {
+      for (final account in accounts) {
+        if (selectedIdInts.contains(account.id)) {
+          selectedAccounts.add(account);
+        }
+      }
+    });
+
+    if (selectedAccounts.isEmpty) return;
+
+    await HomeReportCoordinator.generateSelectedAccountsReport(
+      selected: selectedAccounts,
+    );
   }
 
   @override
@@ -318,6 +354,13 @@ class HomeScreenState extends State<HomeScreen> {
                   tooltip: 'تحديد الكل',
                 ),
                 IconButton(
+                  icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+                  onPressed: _selectedAccountIds.isNotEmpty
+                      ? _generateReportForSelectedAccounts
+                      : null,
+                  tooltip: 'تقرير الحسابات المحددة',
+                ),
+                IconButton(
                   icon: const Icon(Icons.delete, color: Colors.white),
                   onPressed: _selectedAccountIds.isNotEmpty ? _deleteSelectedAccounts : null,
                   tooltip: 'حذف',
@@ -349,7 +392,11 @@ class HomeScreenState extends State<HomeScreen> {
                   tooltip: 'بحث',
                 ),
                 IconButton(
-                  icon: const Icon(Icons.assessment_rounded, color: AppTheme.primaryColor),
+                  icon: SvgPicture.asset(
+                    'assets/images/report_icons/pdf_report.svg',
+                    width: 24,
+                    height: 24,
+                  ),
                   onPressed: _showReportOptions,
                 ),
                 if (!_isDrawerOpen)
@@ -400,223 +447,133 @@ class HomeScreenState extends State<HomeScreen> {
           : null,
     );
   }
-
+ 
   Widget _buildFiltersBar() {
-    final categories = _state.categories;
-    if (categories.isEmpty) return const SizedBox.shrink();
+  final categories = _state.categories;
+  if (categories.isEmpty) return const SizedBox.shrink();
 
-    // Ensure selected index is within bounds
-    int safeIndex = _selectedCategoryIndex;
-    if (safeIndex >= categories.length) {
-      safeIndex = 0;
+  int safeIndex = _selectedCategoryIndex;
+  if (safeIndex >= categories.length) safeIndex = 0;
+  final selectedCategory = categories[safeIndex];
+
+  final Set<String> currencySet = {};
+  _state.accountsByCategory.forEach((_, accounts) {
+    for (final account in accounts) {
+      currencySet.add(account.currencyName);
     }
-    final selectedCategory = categories[safeIndex];
+  });
+  final List<String> currencies = currencySet.toList()..sort();
 
-    // Collect distinct currencies from all accounts
-    final Set<String> currencySet = {};
-    _state.accountsByCategory.forEach((_, accounts) {
-      for (final account in accounts) {
-        currencySet.add(account.currencyName);
-      }
-    });
-    final List<String> currencies = currencySet.toList()..sort();
+  // Helper to build a consistent minimal decoration
+  InputDecoration minimalDecoration() => InputDecoration(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        isDense: true,
+      );
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.08),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                // Category dropdown
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: selectedCategory.name,
-                    decoration: InputDecoration(
-                      labelText: 'الفئة',
-                      labelStyle: const TextStyle(fontSize: 12),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      isDense: true,
-                    ),
-                    items: categories
-                        .map(
-                          (c) => DropdownMenuItem<String>(
-                            value: c.name,
-                            child: Text(
-                              c.name,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      final index =
-                          categories.indexWhere((c) => c.name == value);
-                      if (index == -1) return;
-                      setState(() {
-                        _selectedCategoryIndex = index;
-                      });
-                      if (_pageController.hasClients) {
-                        _pageController.animateToPage(
-                          index,
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Currency dropdown
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _selectedCurrencyFilter,
-                    decoration: InputDecoration(
-                      labelStyle: const TextStyle(fontSize: 12),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      isDense: true,
-                    ),
-                    items: [
-                      const DropdownMenuItem<String>(
-                        value: 'all',
-                        child: Text('العملة'),
-                      ),
-                      ...currencies.map(
-                        (cur) => DropdownMenuItem<String>(
-                          value: cur,
-                          child: Text(
-                            cur,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCurrencyFilter = value ?? 'all';
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                // Type dropdown
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _selectedTypeFilter,
-                    decoration: InputDecoration(
-                      labelStyle: const TextStyle(fontSize: 12),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      isDense: true,
-                    ),
-                    items: const [
-                      DropdownMenuItem<String>(
-                        value: 'all',
-                        child: Text('الحاله'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'credit',
-                        child: Text('له'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'debit',
-                        child: Text('عليه'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() {
-                        _selectedTypeFilter = value;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Date dropdown
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _selectedDateFilter,
-                    decoration: InputDecoration(
-                      // labelText: 'التاريخ',
-                      labelStyle: const TextStyle(fontSize: 12),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      isDense: true,
-                    ),
-                    items: const [
-                      DropdownMenuItem<String>(
-                        value: 'all',
-                        child: Text('التاريخ'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'today',
-                        child: Text('اليوم'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'this_month',
-                        child: Text('هذا الشهر'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'this_year',
-                        child: Text('هذه السنة'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() {
-                        _selectedDateFilter = value;
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+  // Helper for text style to keep it professional and tiny
+  const itemTextStyle = TextStyle(fontSize: 14,color: AppTheme.textSecondary, fontWeight: FontWeight.w500);
+
+  return Directionality(
+    textDirection: TextDirection.rtl,
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.all(4), // Reduced padding
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
-    );
-  }
+      child: Row(
+        children: [
+          // 1. Category
+          Expanded(
+            child: DropdownButtonFormField<String>(
+              value: selectedCategory.name,
+              icon: const SizedBox.shrink(), // Hides the arrow
+              decoration: minimalDecoration(),
+              isExpanded: true,
+              items: categories.map((c) => DropdownMenuItem(
+                value: c.name,
+                child: Text(c.name, style: itemTextStyle, overflow: TextOverflow.ellipsis),
+              )).toList(),
+              onChanged: (value) {
+                if (value == null) return;
+                final index = categories.indexWhere((c) => c.name == value);
+                if (index == -1) return;
+                setState(() => _selectedCategoryIndex = index);
+                if (_pageController.hasClients) {
+                  _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                }
+              },
+            ),
+          ),
+          const SizedBox(width: 4),
+
+          // 2. Currency
+          Expanded(
+            child: DropdownButtonFormField<String>(
+              value: _selectedCurrencyFilter,
+              icon: const SizedBox.shrink(),
+              decoration: minimalDecoration(),
+              isExpanded: true,
+              items: [
+                const DropdownMenuItem(value: 'all', child: Text('العملة', style: itemTextStyle)),
+                ...currencies.map((cur) => DropdownMenuItem(
+                  value: cur,
+                  child: Text(cur, style: itemTextStyle, overflow: TextOverflow.ellipsis),
+                )),
+              ],
+              onChanged: (value) => setState(() => _selectedCurrencyFilter = value ?? 'all'),
+            ),
+          ),
+          const SizedBox(width: 4),
+
+          // 3. Status/Type
+          Expanded(
+            child: DropdownButtonFormField<String>(
+              value: _selectedTypeFilter,
+              icon: const SizedBox.shrink(),
+              decoration: minimalDecoration(),
+              isExpanded: true,
+              items: const [
+                DropdownMenuItem(value: 'all', child: Text('الحالة', style: itemTextStyle)),
+                DropdownMenuItem(value: 'credit', child: Text('له', style: itemTextStyle)),
+                DropdownMenuItem(value: 'debit', child: Text('عليه', style: itemTextStyle)),
+              ],
+              onChanged: (value) => setState(() => _selectedTypeFilter = value ?? 'all'),
+            ),
+          ),
+          const SizedBox(width: 4),
+
+          // 4. Date
+          Expanded(
+            child: DropdownButtonFormField<String>(
+              value: _selectedDateFilter,
+              icon: const SizedBox.shrink(),
+              decoration: minimalDecoration(),
+              isExpanded: true,
+              items: const [
+                DropdownMenuItem(value: 'all', child: Text('التاريخ', style: itemTextStyle)),
+                DropdownMenuItem(value: 'today', child: Text('اليوم', style: itemTextStyle)),
+                DropdownMenuItem(value: 'this_month', child: Text('الشهر', style: itemTextStyle)),
+                DropdownMenuItem(value: 'this_year', child: Text('السنة', style: itemTextStyle)),
+              ],
+              onChanged: (value) => setState(() => _selectedDateFilter = value ?? 'all'),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   Widget _buildEmptyState() {
     return Center(

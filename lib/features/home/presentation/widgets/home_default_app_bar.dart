@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:debit_credit_app/core/models/category.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 
@@ -63,10 +64,10 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
             ],
           ),
           child: IconButton(
-            icon: const Icon(
-              Icons.description,
-              color: Colors.white,
-              size: 24,
+            icon: SvgPicture.asset(
+              'assets/images/report_icons/pdf_report.svg',
+              width: 24,
+              height: 24,
             ),
             tooltip: 'تقرير',
             onPressed: onShowReportOptions,

@@ -1,5 +1,6 @@
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/models/expense.dart';
+import 'package:debit_credit_app/core/models/expense_account.dart';
 import 'package:debit_credit_app/core/models/expense_balance_allocation.dart';
 
 class ExpenseAllocationInput {
@@ -82,6 +83,18 @@ class ExpenseRepository {
 
   Future<double> getTotalExpenses() {
     return _db.getTotalExpenses();
+  }
+
+  Future<List<ExpenseAccountModel>> fetchExpenseAccountsWithStats() {
+    return _db.getExpenseAccountsWithStats();
+  }
+
+  Future<List<ExpenseModel>> fetchExpensesByAccount(int expenseAccountId) {
+    return _db.getExpensesByAccountId(expenseAccountId);
+  }
+
+  Future<int> addExpenseAccount(ExpenseAccountModel account) {
+    return _db.insertExpenseAccount(account);
   }
 
   Future<void> deleteExpenses(Iterable<int> ids) async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:flutter_native_contact_picker/flutter_native_contact_picker.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:debit_credit_app/core/models/transaction.dart';
 import 'package:debit_credit_app/core/models/account.dart';
 import 'package:debit_credit_app/core/models/currency.dart';
@@ -11,6 +12,7 @@ import 'package:debit_credit_app/features/accounts/presentation/dialogs/add_tran
 import 'package:debit_credit_app/core/services/report_service.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:debit_credit_app/features/accounts/application/reports/account_report_generator.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
@@ -622,195 +624,10 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   bool get _selectionMode => _selectedIds.isNotEmpty;
 
   Future<void> _generateReportForAccount() async {
-    // Account Information Section - Compact 3-line format
-    final accountInfo = pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 20),
-      padding: const pw.EdgeInsets.all(15),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.grey100,
-        borderRadius: pw.BorderRadius.circular(8),
-        border: pw.Border.all(color: PdfColors.grey300),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          // Line 1: Account name, category, and currency
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                'الحساب: ${widget.account.name}',
-                style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: primaryColor),
-                textDirection: pw.TextDirection.rtl,
-              ),
-              pw.Text(
-                'الفئة: ${widget.account.category}',
-                style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
-                textDirection: pw.TextDirection.rtl,
-              ),
-              pw.Text(
-                'العملة: ${widget.account.currencyName}',
-                style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 6),
-          // Line 2: Contact info and creation date
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                widget.account.phone?.isNotEmpty == true ? 'الهاتف: ${widget.account.phone}' : 'الهاتف: غير محدد',
-                style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
-                textDirection: pw.TextDirection.rtl,
-              ),
-              pw.Text(
-                widget.account.address?.isNotEmpty == true ? 'العنوان: ${widget.account.address}' : 'العنوان: غير محدد',
-                style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
-                textDirection: pw.TextDirection.rtl,
-              ),
-              pw.Text(
-                'تاريخ الإنشاء: ${DateFormat('yyyy/MM/dd').format(widget.account.createdDate)}',
-                style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 6),
-          // Line 3: Work details and transaction statistics
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Expanded(
-                flex: 2,
-                child: pw.Text(
-                  widget.account.workDetails?.isNotEmpty == true ? 'العمل: ${widget.account.workDetails}' : 'العمل: غير محدد',
-                  style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
-                  textDirection: pw.TextDirection.rtl,
-                ),
-              ),
-              pw.Expanded(
-                child: pw.Text(
-                  'المعاملات: ${widget.account.transactionCount}',
-                  style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: primaryColor),
-                  textDirection: pw.TextDirection.rtl,
-                  textAlign: pw.TextAlign.center,
-                ),
-              ),
-              pw.Expanded(
-                child: pw.Text(
-                  'الدائن: ${NumberFormat('#,##0').format(widget.account.totalCredit)}',
-                  style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.green600),
-                  textDirection: pw.TextDirection.rtl,
-                  textAlign: pw.TextAlign.center,
-                ),
-              ),
-              pw.Expanded(
-                child: pw.Text(
-                  'المدين: ${NumberFormat('#,##0').format(widget.account.totalDebit)}',
-                  style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.red600),
-                  textDirection: pw.TextDirection.rtl,
-                  textAlign: pw.TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-
-    // Financial Summary Section - Condensed to 2 lines
-    final financialSummary = pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 20),
-      padding: const pw.EdgeInsets.all(12),
-      decoration: pw.BoxDecoration(
-        color: primaryColor,
-        borderRadius: pw.BorderRadius.circular(8),
-        border: pw.Border.all(color: primaryColor),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-             'الملخص المالي',
-             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
-             textDirection: pw.TextDirection.rtl,
-           ),
-          pw.SizedBox(height: 8),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-            children: [
-              pw.Text(
-                 'له: ${NumberFormat('#,##0').format(_totals['credit']!)}',
-                 style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
-                 textDirection: pw.TextDirection.rtl,
-               ),
-               pw.Text(
-                 'عليه: ${NumberFormat('#,##0').format(_totals['debit']!)}',
-                 style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
-                 textDirection: pw.TextDirection.rtl,
-               ),
-               pw.Text(
-                 '${_totals['credit']! >= _totals['debit']! ? 'المتبقي له' : 'المتبقي عليه'}: ${NumberFormat('#,##0').format(_totals['net']!.abs())}',
-                 style: pw.TextStyle(
-                   fontSize: 14,
-                   fontWeight: pw.FontWeight.bold,
-                   color: PdfColors.white,
-                 ),
-                 textDirection: pw.TextDirection.rtl,
-               ),
-            ],
-          ),
-        ],
-      ),
-    );
-
-    // Transactions Table
-    final rows = _transactions.map((t) => [
-          DateFormat('yyyy/MM/dd').format(t.date),
-          t.description ?? '-',
-          t.type == 'credit' ? NumberFormat('#,##0').format(t.amount) : '-',
-          t.type == 'debit' ? NumberFormat('#,##0').format(t.amount) : '-',
-        ]).toList();
-
-    final table = pw.Table.fromTextArray(
-      headers: ['التاريخ', 'تفاصيل', 'له', 'عليه'],
-      data: rows,
-      headerStyle: pw.TextStyle(
-        fontWeight: pw.FontWeight.bold,
-        fontSize: 12,
-        color: PdfColors.white,
-      ),
-      headerDecoration: pw.BoxDecoration(
-        color: primaryColor,
-      ),
-      cellStyle: const pw.TextStyle(fontSize: 11),
-      cellAlignment: pw.Alignment.center,
-      cellPadding: const pw.EdgeInsets.all(8),
-      border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-      oddRowDecoration: const pw.BoxDecoration(
-        color: PdfColors.grey50,
-      ),
-    );
-
-
-
-    await ReportService.generateAndOpenPdfWithTableData(
-      title: 'تقرير حساب ${widget.account.name}',
-      headerContent: [
-        accountInfo,
-        financialSummary,
-        pw.SizedBox(height: 10),
-        pw.Text(
-          'تفاصيل المعاملات',
-          style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: primaryColor),
-          textDirection: pw.TextDirection.rtl,
-        ),
-        pw.SizedBox(height: 10),
-      ],
-      tableHeaders: ['التاريخ', 'تفاصيل', 'له', 'عليه'],
-      tableData: rows,
+    await AccountReportGenerator.generate(
+      account: widget.account,
+      transactions: _transactions,
+      totals: _totals,
     );
   }
 
@@ -1427,7 +1244,11 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                 children: [
 
                   IconButton(
-                    icon: const Icon(Icons.assessment),
+                    icon: SvgPicture.asset(
+                      'assets/images/report_icons/pdf_report.svg',
+                      width: 24,
+                      height: 24,
+                    ),
                     onPressed: _generateReportForAccount,
                     tooltip: 'عرض التقرير',
                   ),

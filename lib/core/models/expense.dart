@@ -7,6 +7,7 @@ class ExpenseModel {
   final String currency;
   final DateTime createdDate;
   final DateTime? updatedDate;
+  final int? expenseAccountId;
 
   ExpenseModel({
     this.id,
@@ -17,6 +18,7 @@ class ExpenseModel {
     this.currency = 'محلي',
     required this.createdDate,
     this.updatedDate,
+    this.expenseAccountId,
   });
 
   Map<String, dynamic> toMap() {
@@ -29,6 +31,7 @@ class ExpenseModel {
       'currency': currency,
       'createdDate': createdDate.millisecondsSinceEpoch,
       'updatedDate': updatedDate?.millisecondsSinceEpoch,
+      'expenseAccountId': expenseAccountId,
     };
   }
 
@@ -44,6 +47,7 @@ class ExpenseModel {
       updatedDate: map['updatedDate'] != null 
           ? DateTime.fromMillisecondsSinceEpoch(map['updatedDate'])
           : null,
+      expenseAccountId: map['expenseAccountId'] as int?,
     );
   }
 
@@ -56,6 +60,7 @@ class ExpenseModel {
     String? currency,
     DateTime? createdDate,
     DateTime? updatedDate,
+    int? expenseAccountId,
   }) {
     return ExpenseModel(
       id: id ?? this.id,
@@ -66,12 +71,13 @@ class ExpenseModel {
       currency: currency ?? this.currency,
       createdDate: createdDate ?? this.createdDate,
       updatedDate: updatedDate ?? this.updatedDate,
+      expenseAccountId: expenseAccountId ?? this.expenseAccountId,
     );
   }
 
   @override
   String toString() {
-    return 'ExpenseModel(id: $id, name: $name, amount: $amount, detail: $detail, category: $category, currency: $currency, createdDate: $createdDate, updatedDate: $updatedDate)';
+    return 'ExpenseModel(id: $id, name: $name, amount: $amount, detail: $detail, category: $category, currency: $currency, createdDate: $createdDate, updatedDate: $updatedDate, expenseAccountId: $expenseAccountId)';
   }
 
   @override
@@ -85,7 +91,8 @@ class ExpenseModel {
         other.category == category &&
         other.currency == currency &&
         other.createdDate == createdDate &&
-        other.updatedDate == updatedDate;
+        other.updatedDate == updatedDate &&
+        other.expenseAccountId == expenseAccountId;
   }
 
   @override
@@ -97,6 +104,7 @@ class ExpenseModel {
         category.hashCode ^
         currency.hashCode ^
         createdDate.hashCode ^
-        updatedDate.hashCode;
+        updatedDate.hashCode ^
+        expenseAccountId.hashCode;
   }
 }

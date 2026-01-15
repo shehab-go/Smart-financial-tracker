@@ -8,6 +8,7 @@ import '../models/account.dart';
 import '../models/currency.dart';
 import '../models/user_profile.dart';
 import '../models/expense.dart';
+import '../models/expense_account.dart';
 import '../models/income_resource.dart';
 import '../models/income_balance.dart';
 import '../models/transaction_balance_allocation.dart';
@@ -33,7 +34,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 12,
+      version: 13,
       onCreate: _createDatabase,
       onUpgrade: MigrationHelper.migrate,
     );
@@ -144,6 +145,17 @@ class DatabaseHelper {
       )
     ''');
 
+    // Create expense accounts table
+    await db.execute('''
+      CREATE TABLE expense_accounts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'مصروفات',
+        currencyName TEXT NOT NULL DEFAULT 'محلي',
+        createdDate INTEGER NOT NULL
+      )
+    ''');
+
     // Create expenses table
     await db.execute('''
       CREATE TABLE expenses (
@@ -154,7 +166,8 @@ class DatabaseHelper {
         category TEXT NOT NULL DEFAULT 'مصروفات',
         currency TEXT NOT NULL DEFAULT 'محلي',
         createdDate INTEGER NOT NULL,
-        updatedDate INTEGER
+        updatedDate INTEGER,
+        expenseAccountId INTEGER
       )
     ''');
 
@@ -869,6 +882,57 @@ class DatabaseHelper {
     final db = await database;
     final result = await db.rawQuery('SELECT SUM(amount) as total FROM expenses');
     return result.first['total'] as double? ?? 0.0;
+  }
+
+  // Expense account operations
+  Future<List<ExpenseAccountModel>> getExpenseAccountsWithStats() async {
+    final db = await database;
+    final List<Map<String, dynamic>> rows = await db.rawQuery('''
+      SELECT ea.*, 
+             COUNT(e.id) AS expenseCount,
+             IFNULL(SUM(e.amount), 0) AS totalAmount
+      FROM expense_accounts ea
+      LEFT JOIN expenses e ON e.expenseAccountId = ea.id
+      GROUP BY ea.id
+      ORDER BY ea.createdDate DESC
+    ''');
+
+    return List.generate(rows.length, (i) => ExpenseAccountModel.fromMap(rows[i]));
+  }
+
+  Future<int> insertExpenseAccount(ExpenseAccountModel account) async {
+    final db = await database;
+    return await db.insert('expense_accounts', account.toMap());
+  }
+
+  Future<int> updateExpenseAccount(ExpenseAccountModel account) async {
+    final db = await database;
+    return await db.update(
+      'expense_accounts',
+      account.toMap(),
+      where: 'id = ?',
+      whereArgs: [account.id],
+    );
+  }
+
+  Future<int> deleteExpenseAccount(int id) async {
+    final db = await database;
+    return await db.delete(
+      'expense_accounts',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<ExpenseModel>> getExpensesByAccountId(int expenseAccountId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'expenses',
+      where: 'expenseAccountId = ?',
+      whereArgs: [expenseAccountId],
+      orderBy: 'createdDate DESC',
+    );
+    return List.generate(maps.length, (i) => ExpenseModel.fromMap(maps[i]));
   }
 
   // Income resources operations

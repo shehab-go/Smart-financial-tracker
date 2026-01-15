@@ -13,7 +13,7 @@ import 'database_helper.dart';
 /// - Detailed logging is provided for debugging and monitoring
 class MigrationHelper {
   /// Current database schema version
-  static const int currentVersion = 12;
+  static const int currentVersion = 13;
   
   // Constants for default values and common strings
   static const String defaultCurrencyName = 'محلي';
@@ -89,6 +89,10 @@ class MigrationHelper {
       if (oldVersion < 12) {
         print('[MigrationHelper] Applying migration to version 12');
         await _migrateToV12(db);
+      }
+      if (oldVersion < 13) {
+        print('[MigrationHelper] Applying migration to version 13');
+        await _migrateToV13(db);
       }
       
       print('[MigrationHelper] Database migration completed successfully');
@@ -700,6 +704,81 @@ class MigrationHelper {
       print('[MigrationHelper] Successfully created app_meta table (v12)');
     } catch (e) {
       print('[MigrationHelper] ERROR in _migrateToV12: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 13: Introduce expense_accounts and link existing
+  /// expenses so each becomes its own main expense account.
+  static Future<void> _migrateToV13(Database db) async {
+    try {
+      print('[MigrationHelper] Starting migration to v13 - expense accounts');
+
+      // 1) Ensure expense_accounts table exists (for older installations).
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS expense_accounts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          category TEXT NOT NULL DEFAULT 'مصروفات',
+          currencyName TEXT NOT NULL DEFAULT '$defaultCurrencyName',
+          createdDate INTEGER NOT NULL
+        )
+      ''');
+
+      // 2) Add expenseAccountId column to expenses if it doesn't exist.
+      await _addColumnIfNotExists(
+        db,
+        'expenses',
+        'expenseAccountId',
+        'INTEGER',
+      );
+
+      // 3) For existing expenses without an expenseAccountId, create a
+      //    dedicated expense account so each old expense becomes a
+      //    "main" account holding that one expense.
+      final expenses = await db.query('expenses');
+      for (final exp in expenses) {
+        final int? expId = exp['id'] as int?;
+        if (expId == null) continue;
+
+        // If column existed before and already has a value, skip.
+        if (exp.containsKey('expenseAccountId') &&
+            exp['expenseAccountId'] != null) {
+          continue;
+        }
+
+        final String name = (exp['name'] as String?) ?? 'مصروف';
+        final String category = (exp['category'] as String?) ?? 'مصروفات';
+        final String currencyName = (exp['currency'] as String?) ?? defaultCurrencyName;
+
+        int createdDateMillis;
+        final createdRaw = exp['createdDate'];
+        if (createdRaw is int) {
+          createdDateMillis = createdRaw;
+        } else if (createdRaw is num) {
+          createdDateMillis = createdRaw.toInt();
+        } else {
+          createdDateMillis = DateTime.now().millisecondsSinceEpoch;
+        }
+
+        final int expenseAccountId = await db.insert('expense_accounts', {
+          'name': name,
+          'category': category,
+          'currencyName': currencyName,
+          'createdDate': createdDateMillis,
+        });
+
+        await db.update(
+          'expenses',
+          {'expenseAccountId': expenseAccountId},
+          where: 'id = ?',
+          whereArgs: [expId],
+        );
+      }
+
+      print('[MigrationHelper] Migration to v13 completed successfully');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV13: $e');
       rethrow;
     }
   }

@@ -390,6 +390,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         currency: _selectedCurrency!,
         createdDate: widget.expense?.createdDate ?? DateTime.now(),
         updatedDate: widget.expense != null ? DateTime.now() : null,
+        expenseAccountId: widget.expense?.expenseAccountId,
       );
 
       Navigator.of(context).pop({

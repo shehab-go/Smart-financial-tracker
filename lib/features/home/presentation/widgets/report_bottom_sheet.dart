@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class ReportBottomSheet extends StatelessWidget {
   final VoidCallback onCurrentCategory;
@@ -16,7 +17,11 @@ class ReportBottomSheet extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         ListTile(
-          leading: const Icon(Icons.receipt_long),
+          leading: SvgPicture.asset(
+            'assets/images/report_icons/pdf_report.svg',
+            width: 24,
+            height: 24,
+          ),
           title: const Text('تقرير الفئة الحالية'),
           onTap: () {
             Navigator.pop(context);
@@ -24,7 +29,11 @@ class ReportBottomSheet extends StatelessWidget {
           },
         ),
         ListTile(
-          leading: const Icon(Icons.receipt),
+          leading: SvgPicture.asset(
+            'assets/images/report_icons/pdf_report.svg',
+            width: 24,
+            height: 24,
+          ),
           title: const Text('تقرير جميع الفئات'),
           onTap: () {
             Navigator.pop(context);
