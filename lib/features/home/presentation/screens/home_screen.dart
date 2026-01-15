@@ -14,6 +14,7 @@ import 'package:debit_credit_app/features/home/application/home_controller.dart'
 import 'package:debit_credit_app/features/home/application/home_state.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/events/category_events.dart';
+import 'package:debit_credit_app/core/services/app_update_service.dart';
 import 'search_screen.dart';
 
 class StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
@@ -225,6 +226,11 @@ class HomeScreenState extends State<HomeScreen> {
     _categoryEventSubscription = CategoryEventBus().events.listen((event) {
       // Refresh data when categories change
       loadData();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        AppUpdateService.checkForUpdateAndPrompt(context);
+      }
     });
   }
 

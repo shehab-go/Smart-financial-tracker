@@ -733,8 +733,7 @@ class ReportService {
   }
 
   static Future<pw.Font> _loadArabicFont() async {
-    final data = await rootBundle
-        .load('assets/fonts/IBM_Plex_Sans_Arabic/IBMPlexSansArabic-Regular.ttf');
+    final data = await rootBundle.load('assets/fonts/NotoNaskhArabic-Regular.ttf');
     return pw.Font.ttf(data);
   }
 }

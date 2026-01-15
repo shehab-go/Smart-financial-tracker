@@ -24,6 +24,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'IBMPlexSansArabic',
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         brightness: Brightness.light,
@@ -41,6 +42,7 @@ class AppTheme {
         backgroundColor: Colors.white,
         foregroundColor: textPrimary,
         titleTextStyle: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: textPrimary,
@@ -68,6 +70,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(8),
           ),
           textStyle: const TextStyle(
+            fontFamily: 'IBMPlexSansArabic',
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -82,6 +85,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(6),
           ),
           textStyle: const TextStyle(
+            fontFamily: 'IBMPlexSansArabic',
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -158,61 +162,73 @@ class AppTheme {
       // Text Theme
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: textPrimary,
         ),
         headlineMedium: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 28,
           fontWeight: FontWeight.bold,
           color: textPrimary,
         ),
         headlineSmall: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 24,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
         titleLarge: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
         titleMedium: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: textPrimary,
         ),
         titleSmall: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: textSecondary,
         ),
         bodyLarge: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: textPrimary,
         ),
         bodyMedium: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: textPrimary,
         ),
         bodySmall: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: textSecondary,
         ),
         labelLarge: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: textPrimary,
         ),
         labelMedium: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: textSecondary,
         ),
         labelSmall: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 10,
           fontWeight: FontWeight.w400,
           color: textTertiary,
