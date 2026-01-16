@@ -1472,11 +1472,18 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToAddTransaction,
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 2,
+        // Minimal, consistent FAB: light background with primary-colored border and icon
+        backgroundColor: Colors.white,
+        foregroundColor: AppTheme.primaryColor,
+        elevation: 3,
+        shape: const CircleBorder(
+          side: BorderSide(
+            color: AppTheme.primaryColor,
+            width: 1.4,
+          ),
+        ),
         child: const Icon(
           Icons.add,
-          color: Colors.white,
           size: 24,
         ),
       ),

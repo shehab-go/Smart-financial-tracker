@@ -18,6 +18,7 @@ import 'package:debit_credit_app/features/home/presentation/screens/search_scree
 import 'package:debit_credit_app/features/home/presentation/widgets/report_bottom_sheet.dart';
 import 'package:debit_credit_app/features/expenses/application/reports/all_expense_accounts_report_generator.dart';
 import 'package:debit_credit_app/features/expenses/application/reports/expense_category_report_generator.dart';
+import 'package:debit_credit_app/features/categories/presentation/dialogs/category_dialog.dart';
 
 
 class ExpenseScreen extends StatefulWidget {
@@ -373,12 +374,19 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         },
         floatingActionButton: FloatingActionButton(
           onPressed: _showAddExpenseDialog,
-          backgroundColor: AppTheme.primaryColor,
-          elevation: 2,
+          // Minimal, but clearly visible: light background with primary-colored border
+          backgroundColor: Colors.white,
+          foregroundColor: AppTheme.primaryColor,
+          elevation: 3,
+          shape: CircleBorder(
+            side: BorderSide(
+              color: AppTheme.primaryColor.withOpacity(0.6),
+              width: 1.4,
+            ),
+          ),
           tooltip: 'إضافة مصروف جديد',
           child: const Icon(
             Icons.add,
-            color: Colors.white,
             size: 24,
           ),
         ),
@@ -423,7 +431,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                               style: const TextStyle(
                                 color: AppTheme.textPrimary,
                                 fontSize: 14,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -440,7 +447,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                         Expanded(
                           child: Row(
                             children: [
-                              // Category filter
+                              // Category filter with inline "+ add category" option
                               Expanded(
                                 child: DropdownButtonFormField<String>(
                                   value: _selectedCategoryFilter,
@@ -472,8 +479,58 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                                         ),
                                       ),
                                     ),
+                                    DropdownMenuItem<String>(
+                                      value: '__add_new_category__',
+                                      child: Row(
+                                        children: const [
+                                          Icon(
+                                            Icons.add,
+                                            size: 16,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'إضافة فئة',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: AppTheme.primaryColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ],
-                                  onChanged: (value) {
+                                  onChanged: (value) async {
+                                    if (value == '__add_new_category__') {
+                                      // Open category creation dialog
+                                      final newCategory = await showDialog<CategoryModel>(
+                                        context: context,
+                                        builder: (dialogContext) => const CategoryDialog(),
+                                      );
+
+                                      if (newCategory != null) {
+                                        try {
+                                          await DatabaseHelper().insertCategory(newCategory);
+                                          await _loadFiltersData();
+                                          if (!mounted) return;
+                                          setState(() {
+                                            _selectedCategoryFilter = newCategory.name;
+                                          });
+                                          _applyFilters();
+                                        } catch (e) {
+                                          if (!mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('فشل في إضافة الفئة: $e'),
+                                              backgroundColor: AppTheme.errorColor,
+                                            ),
+                                          );
+                                        }
+                                      }
+
+                                      return;
+                                    }
+
                                     setState(() {
                                       _selectedCategoryFilter = value;
                                     });
@@ -640,7 +697,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                                             Expanded(
                                               flex: 3,
                                               child: Text(
-                                                'اسم الحساب',
+                                                'مصروف',
                                                 style: TextStyle(
                                                   fontSize: 14,
                                                   color: AppTheme.textSecondary,
@@ -764,7 +821,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                     _currencyFormat.format(account.totalAmount),
                     style: const TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.w600,
                       color: AppTheme.errorColor,
                     ),
                   ),

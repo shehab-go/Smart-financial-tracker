@@ -230,10 +230,16 @@ class ReportService {
             style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
             textDirection: pw.TextDirection.rtl,
           ),
-          pw.Text(
-            'تم إنشاؤه بواسطة تطبيق إدارة الحسابات',
-            style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
-            textDirection: pw.TextDirection.rtl,
+          pw.UrlLink(
+            destination: 'https://play.google.com/store/apps/details?id=com.ramzi.debit_credit_app',
+            child: pw.Text(
+              'اضغط هنا لتحميل تطبيق حسابات يوميه',
+              style: const pw.TextStyle(
+                fontSize: 10,
+                color: PdfColors.blue,
+              ),
+              textDirection: pw.TextDirection.rtl,
+            ),
           ),
         ],
       ),
@@ -655,14 +661,13 @@ class ReportService {
   static Future<void> _savePdfFile(List<int> bytes, String title) async {
     Directory dir;
     if (Platform.isAndroid) {
-      var status = await Permission.manageExternalStorage.status;
-      if (!status.isGranted) {
-        status = await Permission.manageExternalStorage.request();
-      }
+      // Only use regular storage permission and app-specific external storage on Android.
+      var status = await Permission.storage.status;
       if (!status.isGranted) {
         status = await Permission.storage.request();
       }
-      dir = Directory('/storage/emulated/0/Download/FinanceApp/report');
+      final baseDir = await getExternalStorageDirectory() ?? await getApplicationDocumentsDirectory();
+      dir = Directory(p.join(baseDir.path, 'FinanceApp', 'report'));
     } else {
       final downloads = await getDownloadsDirectory();
       dir = Directory('${downloads?.path ?? (await getTemporaryDirectory()).path}/FinanceApp/report');

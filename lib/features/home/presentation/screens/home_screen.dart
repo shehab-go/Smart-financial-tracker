@@ -15,6 +15,8 @@ import 'package:debit_credit_app/features/home/application/home_state.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/events/category_events.dart';
 import 'package:debit_credit_app/core/services/app_update_service.dart';
+import 'package:debit_credit_app/core/db/database_helper.dart';
+import 'package:debit_credit_app/features/categories/presentation/dialogs/category_dialog.dart';
 import 'search_screen.dart';
 
 class StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
@@ -442,11 +444,18 @@ class HomeScreenState extends State<HomeScreen> {
       floatingActionButton: _state.categories.isNotEmpty
           ? FloatingActionButton(
               onPressed: () => _navigateToCreateAccount(_state.categories[_selectedCategoryIndex].name),
-              backgroundColor: AppTheme.primaryColor,
-              elevation: 2,
+              // Minimal, consistent FAB: light background with primary-colored border and icon
+              backgroundColor: Colors.white,
+              foregroundColor: AppTheme.primaryColor,
+              elevation: 3,
+              shape: CircleBorder(
+                side: BorderSide(
+                  color: AppTheme.primaryColor.withOpacity(0.6),
+                  width: 1.4,
+                ),
+              ),
               child: const Icon(
                 Icons.add,
-                color: Colors.white,
                 size: 24,
               ),
             )
@@ -499,18 +508,83 @@ class HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          // 1. Category
+          // 1. Category with inline "+ add category" option
           Expanded(
             child: DropdownButtonFormField<String>(
               value: selectedCategory.name,
               icon: const SizedBox.shrink(), // Hides the arrow
               decoration: minimalDecoration(),
               isExpanded: true,
-              items: categories.map((c) => DropdownMenuItem(
-                value: c.name,
-                child: Text(c.name, style: itemTextStyle, overflow: TextOverflow.ellipsis),
-              )).toList(),
-              onChanged: (value) {
+              items: [
+                ...categories.map((c) => DropdownMenuItem<String>(
+                      value: c.name,
+                      child: Text(
+                        c.name,
+                        style: itemTextStyle,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )),
+                const DropdownMenuItem<String>(
+                  value: '__add_new_category__',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.add,
+                        size: 16,
+                        color: AppTheme.primaryColor,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'إضافة فئة',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              onChanged: (value) async {
+                if (value == '__add_new_category__') {
+                  final newCategory = await showDialog<CategoryModel>(
+                    context: context,
+                    builder: (dialogContext) => const CategoryDialog(),
+                  );
+
+                  if (newCategory != null) {
+                    try {
+                      await DatabaseHelper().insertCategory(newCategory);
+                      await loadDataPreservingCategory();
+                      if (!mounted) return;
+                      final updatedCategories = _state.categories;
+                      final newIndex = updatedCategories.indexWhere((c) => c.name == newCategory.name);
+                      if (newIndex != -1) {
+                        setState(() {
+                          _selectedCategoryIndex = newIndex;
+                        });
+                        if (_pageController.hasClients) {
+                          _pageController.animateToPage(
+                            newIndex,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('فشل في إضافة الفئة: $e'),
+                          backgroundColor: AppTheme.errorColor,
+                        ),
+                      );
+                    }
+                  }
+                  return;
+                }
+
                 if (value == null) return;
                 final index = categories.indexWhere((c) => c.name == value);
                 if (index == -1) return;

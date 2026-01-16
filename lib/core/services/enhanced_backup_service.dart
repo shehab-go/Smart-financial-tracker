@@ -90,10 +90,8 @@ class EnhancedBackupService {
 
   Future<bool> _ensureStoragePermission() async {
     if (!Platform.isAndroid) return true;
-    var status = await Permission.manageExternalStorage.status;
-    if (!status.isGranted) {
-      status = await Permission.manageExternalStorage.request();
-    }
+    // Only request the regular storage permission; do not use MANAGE_EXTERNAL_STORAGE.
+    var status = await Permission.storage.status;
     if (!status.isGranted) {
       status = await Permission.storage.request();
     }
@@ -104,10 +102,12 @@ class EnhancedBackupService {
     Directory baseDir;
     if (Platform.isAndroid) {
       await _ensureStoragePermission();
-      baseDir = Directory('/storage/emulated/0/Download');
+      // Use app-specific external storage directory on Android to avoid All Files access.
+      baseDir = await getExternalStorageDirectory() ?? await getApplicationDocumentsDirectory();
     } else {
       baseDir = (await getDownloadsDirectory()) ?? await getApplicationDocumentsDirectory();
     }
+
     final dir = Directory(p.join(baseDir.path, 'FinanceApp', 'Backups'));
     if (!await dir.exists()) {
       await dir.create(recursive: true);

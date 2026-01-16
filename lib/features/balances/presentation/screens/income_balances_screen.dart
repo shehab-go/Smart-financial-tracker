@@ -2507,12 +2507,18 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
         },
         floatingActionButton: FloatingActionButton(
           onPressed: () => _showEditResourceDialog(),
-          backgroundColor: AppTheme.primaryColor,
-          elevation: 2,
-          tooltip: 'إضافة مصدر دخل جديد',
+          backgroundColor: Colors.white,
+          foregroundColor: AppTheme.primaryColor,
+          elevation: 3,
+          shape: CircleBorder(
+            side: BorderSide(
+              color: AppTheme.primaryColor.withOpacity(0.6),
+              width: 1.4,
+            ),
+          ),
+          tooltip: 'إضافة / تعديل مصدر دخل',
           child: const Icon(
             Icons.add,
-            color: Colors.white,
             size: 24,
           ),
         ),

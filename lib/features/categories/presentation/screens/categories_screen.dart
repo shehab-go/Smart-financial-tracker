@@ -98,11 +98,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addCategory,
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
+        // Minimal, consistent FAB: light background with primary-colored border and icon
+        backgroundColor: Colors.white,
+        foregroundColor: AppTheme.primaryColor,
+        elevation: 3,
+        shape: CircleBorder(
+          side: BorderSide(
+            color: AppTheme.primaryColor.withOpacity(0.6),
+            width: 1.4,
+          ),
+        ),
         child: const Icon(
           Icons.add,
-          color: Colors.white,
           size: 24,
         ),
       ),

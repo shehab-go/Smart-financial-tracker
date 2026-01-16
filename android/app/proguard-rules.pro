@@ -30,6 +30,10 @@
 # Keep annotations and runtime attributes helpful for debugging
 -keepattributes *Annotation*,Signature
 
+# Ignore warnings about optional Google Play Core dynamic delivery classes.
+# These are only used when Play Store dynamic features/deferred components are enabled.
+-dontwarn com.google.android.play.core.**
+
 # If WebView/JS interfaces used, uncomment and specify interface class
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;

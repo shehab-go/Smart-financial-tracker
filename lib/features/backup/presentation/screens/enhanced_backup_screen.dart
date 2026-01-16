@@ -513,17 +513,6 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
                                     _buildInfoRow('المجموع الاختباري', metadata.checksum.substring(0, 8)),
                                     if (metadata.description != null)
                                       _buildInfoRow('الوصف', metadata.description!),
-                                    if (metadata.tableCounts.isNotEmpty) ...[
-                                      const SizedBox(height: 8),
-                                      const Text(
-                                        'إحصائيات الجداول:',
-                                        style: TextStyle(fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      ...metadata.tableCounts.entries.map(
-                                        (entry) => _buildInfoRow(entry.key, '${entry.value}'),
-                                      ),
-                                    ],
                                   ],
                                   const SizedBox(height: 16),
                                   Row(
@@ -588,32 +577,30 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
         floatingActionButton: FloatingActionButton.extended(
           heroTag: 'create_backup',
           onPressed: _isProcessing ? null : _createBackup,
-          backgroundColor: _isProcessing ? Colors.grey.shade300 : AppTheme.primaryColor,
-          elevation: 0,
-            label: Text(
-              'إنشاء نسخة',
-              style: TextStyle(
-                color: _isProcessing ? Colors.grey.shade600 : Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
+          backgroundColor: Colors.white,
+          foregroundColor: _isProcessing ? Colors.grey.shade500 : AppTheme.primaryColor,
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(
+              color: _isProcessing ? Colors.grey.shade400 : AppTheme.primaryColor,
+              width: 1.4,
             ),
-            icon: _isProcessing 
-                ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade600),
-                    ),
-                  )
-                : const Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 24,
-                  ),
           ),
+          icon: _isProcessing
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade600),
+                  ),
+                )
+              : const Icon(Icons.add),
+          label: const Text('إنشاء نسخة جديدة'),
         ),
-      );
+      )
+    );
 
     
   }

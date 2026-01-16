@@ -3,6 +3,7 @@ import 'package:debit_credit_app/features/home/presentation/screens/home_screen.
 import 'package:debit_credit_app/features/expenses/presentation/screens/expense_screen.dart';
 import 'package:debit_credit_app/features/balances/presentation/screens/income_balances_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -75,21 +76,69 @@ class _MainNavigationState extends State<MainNavigation> {
               fontWeight: FontWeight.normal,
             ),
             elevation: 0,
-            items: const [
+            items: [
               BottomNavigationBarItem(
-                icon: Icon( Icons.payments_outlined,),
-                activeIcon: Icon( Icons.payments_outlined,),
-                label: 'الديون',
+    icon: SvgPicture.asset(
+      'assets/images/money-borrow.svg',
+      width: 24,
+      height: 24,
+      colorFilter: const ColorFilter.mode(
+        AppTheme.textSecondary,
+        BlendMode.srcIn,
+      ),
+    ),
+    activeIcon: SvgPicture.asset(
+      'assets/images/money-borrow.svg',
+      width: 24,
+      height: 24,
+      colorFilter: const ColorFilter.mode(
+        AppTheme.primaryColor,
+        BlendMode.srcIn,
+      ),
+    ),
+    label: 'ديون',
+  ),
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/images/trend-down-expense.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppTheme.textSecondary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                activeIcon: SvgPicture.asset(
+                  'assets/images/trend-down-expense.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppTheme.primaryColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: 'مصروف',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.receipt_long_rounded),
-                activeIcon: Icon(Icons.receipt_long_rounded),
-                label: 'المصروفات',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.account_balance_wallet_rounded),
-                activeIcon: Icon(Icons.account_balance_wallet_rounded),
-                label: 'الأرصدة',
+                icon: SvgPicture.asset(
+                  'assets/images/trend-up-income.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppTheme.textSecondary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                activeIcon: SvgPicture.asset(
+                  'assets/images/trend-up-income.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppTheme.primaryColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: 'أرصدة',
               ),
             ],
           ),
