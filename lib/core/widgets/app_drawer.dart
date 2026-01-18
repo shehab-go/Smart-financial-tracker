@@ -81,7 +81,10 @@ class _AppDrawerState extends State<AppDrawer> {
           ),
         child: Container(
           color: const Color(0xFFF8FAFC),
-          child: CustomScrollView(
+          child: SafeArea(
+            top: false,
+            // Apply bottom inset so drawer content doesn't go under system navigation keys
+            child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Container(
@@ -343,6 +346,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
           ],
         ),
+          ),
           ),
         ),
       ),

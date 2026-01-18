@@ -1475,16 +1475,17 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
         // Minimal, consistent FAB: light background with primary-colored border and icon
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.primaryColor,
-        elevation: 3,
-        shape: const CircleBorder(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
           side: BorderSide(
-            color: AppTheme.primaryColor,
-            width: 1.4,
+            color: Colors.grey.shade200,
+            width: 1,
           ),
         ),
         child: const Icon(
           Icons.add,
-          size: 24,
+          size: 22,
         ),
       ),
     );  

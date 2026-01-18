@@ -258,16 +258,16 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                               color: AppTheme.primaryColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(
-                              Icons.payments_outlined,
-                              color: AppTheme.primaryColor,
-                              size: 18,
-                            ),
+                            // child: const Icon(
+                            //   Icons.payments_outlined,
+                            //   color: AppTheme.primaryColor,
+                            //   size: 18,
+                            // ),
                           ),
                           const SizedBox(width: 12),
                           const Expanded(
                             child: Text(
-                              'اختيار العملة',
+                              'العملة',
                               style: TextStyle(
                                 color: AppTheme.textPrimary,
                                 fontWeight: FontWeight.w600,
@@ -1092,11 +1092,11 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               color: AppTheme.textSecondary,
               fontSize: 14,
             ),
-            prefixIcon: const Icon(
-              Icons.payments_outlined,
-              color: AppTheme.textSecondary,
-              size: 18,
-            ),
+            // prefixIcon: const Icon(
+            //   Icons.payments_outlined,
+            //   color: AppTheme.textSecondary,
+            //   size: 18,
+            // ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(

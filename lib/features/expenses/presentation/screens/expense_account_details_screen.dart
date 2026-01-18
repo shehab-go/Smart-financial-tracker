@@ -202,14 +202,18 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
           // Minimal, consistent FAB: light background with primary-colored border and icon
           backgroundColor: Colors.white,
           foregroundColor: AppTheme.primaryColor,
-          elevation: 3,
-          shape: CircleBorder(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
             side: BorderSide(
-              color: AppTheme.primaryColor.withOpacity(0.6),
-              width: 1.4,
+              color: Colors.grey.shade200,
+              width: 1,
             ),
           ),
-          child: const Icon(Icons.add),
+          child: const Icon(
+            Icons.add,
+            size: 22,
+          ),
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())

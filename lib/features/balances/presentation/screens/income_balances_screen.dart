@@ -6,6 +6,7 @@ import 'package:debit_credit_app/core/models/income_balance.dart';
 import 'package:debit_credit_app/core/models/income_resource.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/widgets/app_drawer.dart';
+import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
 import 'package:world_countries/world_countries.dart';
 import 'package:debit_credit_app/features/balances/application/reports/all_income_balances_report_generator.dart';
 import 'package:debit_credit_app/features/balances/application/reports/all_income_resources_report_generator.dart';
@@ -1993,6 +1994,29 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
                     await _generateAllIncomeBalancesReport();
                   },
                 ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.person_outline,
+                    size: 16,
+                    color: AppTheme.primaryColor,
+                  ),
+                  title: const Text(
+                    'تعديل الملف الشخصي',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UserProfileScreen(),
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: 8),
               ],
             ),
@@ -2468,8 +2492,10 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
           title: const Text(
             'أرصدة الدخل',
             style: TextStyle(
-              fontSize: 14,
-            ),
+                  fontSize: 14,
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w400,
+                ),
           ),
           backgroundColor: Colors.white,
           elevation: 0,
@@ -2509,17 +2535,18 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
           onPressed: () => _showEditResourceDialog(),
           backgroundColor: Colors.white,
           foregroundColor: AppTheme.primaryColor,
-          elevation: 3,
-          shape: CircleBorder(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
             side: BorderSide(
-              color: AppTheme.primaryColor.withOpacity(0.6),
-              width: 1.4,
+              color: Colors.grey.shade200,
+              width: 1,
             ),
           ),
           tooltip: 'إضافة / تعديل مصدر دخل',
           child: const Icon(
             Icons.add,
-            size: 24,
+            size: 22,
           ),
         ),
         body: Column(

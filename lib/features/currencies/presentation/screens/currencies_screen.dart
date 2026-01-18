@@ -149,7 +149,9 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
           ),
         ],
       ),
-      body: Container(
+      body: SafeArea(
+        top: false,
+        child: Container(
         color: Colors.white,
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -396,6 +398,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
             ),
         ),
       ),
+    )
     );
   }
 

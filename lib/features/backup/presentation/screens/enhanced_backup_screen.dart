@@ -380,224 +380,230 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
             ),
           ],
         ),
-        body: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _backupsFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error, size: 64, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text('خطأ: ${snapshot.error}'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _refresh,
-                      child: const Text('إعادة المحاولة'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            final backups = snapshot.data ?? [];
-            if (backups.isEmpty) {
-              return const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.archive, size: 64, color: Colors.grey),
-                    SizedBox(height: 16),
-                    Text('لا توجد نسخ احتياطية بعد'),
-                    SizedBox(height: 8),
-                    Text(
-                      'اضغط على زر "+" لإنشاء أول نسخة احتياطية',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return Column(
-              children: [
-                if (_dirPath != null)
-                  Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: ListTile(
-                      leading: Icon(Icons.folder, color: AppTheme.primaryColor),
-                      title: const Text('مجلد النسخ الاحتياطية'),
-                      subtitle: const Text('Download/FinanceApp/Backups'),
-                      trailing: Icon(Icons.open_in_new, color: AppTheme.primaryColor),
-                      onTap: () => OpenFile.open(_dirPath!),
-                    ),
+        body: SafeArea(
+          top: false,
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: _backupsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error, size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text('خطأ: ${snapshot.error}'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _refresh,
+                        child: const Text('إعادة المحاولة'),
+                      ),
+                    ],
                   ),
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(8),
-                    itemCount: backups.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final backupInfo = backups[index];
-                      final file = backupInfo['file'] as File;
-                      final metadata = backupInfo['metadata'] as BackupMetadata?;
-                      final fileName = backupInfo['fileName'] as String;
-                      final lastModified = backupInfo['lastModified'] as DateTime;
-                      final sizeKB = backupInfo['sizeKB'] as String;
+                );
+              }
 
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: ExpansionTile(
-                          leading: Icon(
-                            Icons.archive,
-                            color: metadata != null 
-                                ? _getBackupTypeColor(metadata.backupType)
-                                : Colors.grey,
+              final backups = snapshot.data ?? [];
+              if (backups.isEmpty) {
+                return const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.archive, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text('لا توجد نسخ احتياطية بعد'),
+                      SizedBox(height: 8),
+                      Text(
+                        'اضغط على زر "+" لإنشاء أول نسخة احتياطية',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  if (_dirPath != null)
+                    Container(
+                      margin: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ListTile(
+                        leading: Icon(Icons.folder, color: AppTheme.primaryColor),
+                        title: const Text('مجلد النسخ الاحتياطية'),
+                        subtitle: const Text('Download/FinanceApp/Backups'),
+                        trailing: Icon(Icons.open_in_new, color: AppTheme.primaryColor),
+                        onTap: () => OpenFile.open(_dirPath!),
+                      ),
+                    ),
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(8),
+                      itemCount: backups.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final backupInfo = backups[index];
+                        final file = backupInfo['file'] as File;
+                        final metadata = backupInfo['metadata'] as BackupMetadata?;
+                        final fileName = backupInfo['fileName'] as String;
+                        final lastModified = backupInfo['lastModified'] as DateTime;
+                        final sizeKB = backupInfo['sizeKB'] as String;
+
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          title: Text(
-                            fileName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('${_formatDate(lastModified)} • $sizeKB KB'),
-                              if (metadata != null) ...[
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: _getBackupTypeColor(metadata.backupType).withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        _getBackupTypeLabel(metadata.backupType),
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: _getBackupTypeColor(metadata.backupType),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'إصدار ${metadata.databaseVersion}',
-                                      style: const TextStyle(fontSize: 10, color: Colors.grey),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ],
-                          ),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (metadata != null) ...[
-                                    _buildInfoRow('عدد السجلات', '${metadata.recordCount}'),
-                                    _buildInfoRow('المجموع الاختباري', metadata.checksum.substring(0, 8)),
-                                    if (metadata.description != null)
-                                      _buildInfoRow('الوصف', metadata.description!),
-                                  ],
-                                  const SizedBox(height: 16),
+                          child: ExpansionTile(
+                            leading: Icon(
+                              Icons.archive,
+                              color: metadata != null 
+                                  ? _getBackupTypeColor(metadata.backupType)
+                                  : Colors.grey,
+                            ),
+                            title: Text(
+                              fileName,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('${_formatDate(lastModified)} • $sizeKB KB'),
+                                if (metadata != null) ...[
+                                  const SizedBox(height: 4),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                     children: [
-                                      Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                                          child: ElevatedButton.icon(
-                                            onPressed: _isProcessing ? null : () => _restoreBackup(file, backupInfo),
-                                            icon: const Icon(Icons.restore, size: 16),
-                                            label: const Text('استعادة', style: TextStyle(fontSize: 12)),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.orange,
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                            ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: _getBackupTypeColor(metadata.backupType).withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          _getBackupTypeLabel(metadata.backupType),
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: _getBackupTypeColor(metadata.backupType),
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                       ),
-                                      Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                                          child: ElevatedButton.icon(
-                                            onPressed: () => EnhancedBackupService.instance.shareBackup(file),
-                                            icon: const Icon(Icons.share, size: 16),
-                                            label: const Text('مشاركة', style: TextStyle(fontSize: 12)),
-                                            style: ElevatedButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                                          child: ElevatedButton.icon(
-                                            onPressed: () => _deleteBackup(file, fileName),
-                                            icon: const Icon(Icons.delete, size: 16),
-                                            label: const Text('حذف', style: TextStyle(fontSize: 12)),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.red,
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                            ),
-                                          ),
-                                        ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'إصدار ${metadata.databaseVersion}',
+                                        style: const TextStyle(fontSize: 10, color: Colors.grey),
                                       ),
                                     ],
                                   ),
                                 ],
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
-                      );
-                    },
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (metadata != null) ...[
+                                      _buildInfoRow('عدد السجلات', '${metadata.recordCount}'),
+                                      _buildInfoRow('المجموع الاختباري', metadata.checksum.substring(0, 8)),
+                                      if (metadata.description != null)
+                                        _buildInfoRow('الوصف', metadata.description!),
+                                    ],
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                                            child: ElevatedButton.icon(
+                                              onPressed: _isProcessing ? null : () => _restoreBackup(file, backupInfo),
+                                              icon: const Icon(Icons.restore, size: 16),
+                                              label: const Text('استعادة', style: TextStyle(fontSize: 12)),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.orange,
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                                            child: ElevatedButton.icon(
+                                              onPressed: () => EnhancedBackupService.instance.shareBackup(file),
+                                              icon: const Icon(Icons.share, size: 16),
+                                              label: const Text('مشاركة', style: TextStyle(fontSize: 12)),
+                                              style: ElevatedButton.styleFrom(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                                            child: ElevatedButton.icon(
+                                              onPressed: () => _deleteBackup(file, fileName),
+                                              icon: const Icon(Icons.delete, size: 16),
+                                              label: const Text('حذف', style: TextStyle(fontSize: 12)),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.red,
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          heroTag: 'create_backup',
-          onPressed: _isProcessing ? null : _createBackup,
-          backgroundColor: Colors.white,
-          foregroundColor: _isProcessing ? Colors.grey.shade500 : AppTheme.primaryColor,
-          elevation: 3,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-            side: BorderSide(
-              color: _isProcessing ? Colors.grey.shade400 : AppTheme.primaryColor,
-              width: 1.4,
-            ),
+                ],
+              );
+            },
           ),
-          icon: _isProcessing
-              ? SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade600),
-                  ),
-                )
-              : const Icon(Icons.add),
-          label: const Text('إنشاء نسخة جديدة'),
+        ),
+        floatingActionButton: SafeArea(
+          top: false,
+          child: FloatingActionButton.extended(
+            heroTag: 'create_backup',
+            onPressed: _isProcessing ? null : _createBackup,
+            backgroundColor: Colors.white,
+            foregroundColor: _isProcessing ? Colors.grey.shade500 : AppTheme.primaryColor,
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+              side: BorderSide(
+                color: _isProcessing ? Colors.grey.shade400 : AppTheme.primaryColor,
+                width: 1.4,
+              ),
+            ),
+            icon: _isProcessing
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade600),
+                    ),
+                  )
+                : const Icon(Icons.add),
+            label: const Text('إنشاء نسخة جديدة'),
+          ),
         ),
       )
     );

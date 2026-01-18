@@ -16,6 +16,7 @@ import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/widgets/app_drawer.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/search_screen.dart';
 import 'package:debit_credit_app/features/home/presentation/widgets/report_bottom_sheet.dart';
+import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
 import 'package:debit_credit_app/features/expenses/application/reports/all_expense_accounts_report_generator.dart';
 import 'package:debit_credit_app/features/expenses/application/reports/expense_category_report_generator.dart';
 import 'package:debit_credit_app/features/categories/presentation/dialogs/category_dialog.dart';
@@ -143,9 +144,18 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   void _showReportOptions() {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       builder: (context) => ReportBottomSheet(
         onCurrentCategory: _generateExpenseReportForCurrentCategory,
         onAllCategories: _generateExpenseReportForAllAccounts,
+        onEditProfile: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const UserProfileScreen(),
+            ),
+          );
+        },
       ),
     );
   }
@@ -322,10 +332,12 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text(
-            'المصروفات',
-            style: TextStyle(
-              fontSize: 14,
-            ),
+            'مصروف',
+           style: TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w400,
+                ),
           ),
           backgroundColor: Colors.white,
           elevation: 0,
@@ -377,17 +389,18 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           // Minimal, but clearly visible: light background with primary-colored border
           backgroundColor: Colors.white,
           foregroundColor: AppTheme.primaryColor,
-          elevation: 3,
-          shape: CircleBorder(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
             side: BorderSide(
-              color: AppTheme.primaryColor.withOpacity(0.6),
-              width: 1.4,
+              color: Colors.grey.shade200,
+              width: 1,
             ),
           ),
           tooltip: 'إضافة مصروف جديد',
           child: const Icon(
             Icons.add,
-            size: 24,
+            size: 22,
           ),
         ),
         body: _state.isLoading

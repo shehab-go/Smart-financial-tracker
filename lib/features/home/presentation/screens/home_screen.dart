@@ -8,6 +8,7 @@ import 'package:debit_credit_app/core/widgets/app_drawer.dart';
 import 'package:debit_credit_app/features/accounts/presentation/screens/account_transactions_screen.dart';
 import 'package:debit_credit_app/features/accounts/presentation/dialogs/add_transaction_dialog.dart';
 import 'package:debit_credit_app/features/home/presentation/widgets/report_bottom_sheet.dart';
+import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:debit_credit_app/features/home/application/home_report_coordinator.dart';
 import 'package:debit_credit_app/features/home/application/home_controller.dart';
@@ -81,9 +82,18 @@ class HomeScreenState extends State<HomeScreen> {
   void _showReportOptions() {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       builder: (context) => ReportBottomSheet(
         onCurrentCategory: _generateReportForCurrentCategory,
         onAllCategories: _generateReportForAll,
+        onEditProfile: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const UserProfileScreen(),
+            ),
+          );
+        },
       ),
     );
   }
@@ -377,9 +387,11 @@ class HomeScreenState extends State<HomeScreen> {
             )
           : AppBar(
               title: const Text(
-                'الديون',
+                'ديون',
                 style: TextStyle(
                   fontSize: 14,
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
               backgroundColor: Colors.white,
@@ -447,16 +459,17 @@ class HomeScreenState extends State<HomeScreen> {
               // Minimal, consistent FAB: light background with primary-colored border and icon
               backgroundColor: Colors.white,
               foregroundColor: AppTheme.primaryColor,
-              elevation: 3,
-              shape: CircleBorder(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
                 side: BorderSide(
-                  color: AppTheme.primaryColor.withOpacity(0.6),
-                  width: 1.4,
+                  color: Colors.grey.shade200,
+                  width: 1,
                 ),
               ),
               child: const Icon(
                 Icons.add,
-                size: 24,
+                size: 22,
               ),
             )
           : null,
@@ -487,12 +500,12 @@ class HomeScreenState extends State<HomeScreen> {
       );
 
   // Helper for text style to keep it professional and tiny
-  const itemTextStyle = TextStyle(fontSize: 14,color: AppTheme.textSecondary, fontWeight: FontWeight.w500);
+  const itemTextStyle = TextStyle(fontSize: 14,color: AppTheme.textSecondary,fontWeight: FontWeight.w400);
 
   return Directionality(
     textDirection: TextDirection.rtl,
     child: Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
       padding: const EdgeInsets.all(4), // Reduced padding
       decoration: BoxDecoration(
         color: Colors.white,
@@ -535,11 +548,10 @@ class HomeScreenState extends State<HomeScreen> {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        'إضافة فئة',
+                        'فئة جديدة',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],

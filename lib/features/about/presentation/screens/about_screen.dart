@@ -40,7 +40,9 @@ class AboutScreen extends StatelessWidget {
             },
           ),
         ),
-        body: SingleChildScrollView(
+        body: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,7 +95,7 @@ class AboutScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'الإصدار 1.0.0',
+                        'الإصدار 1.3.0',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppTheme.textSecondary,
@@ -349,6 +351,7 @@ class AboutScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
