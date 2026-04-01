@@ -43,6 +43,8 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   final DatabaseHelper _db = DatabaseHelper();
   List<IncomeBalanceModel> _incomeBalances = [];
   List<_ExpenseBalanceAllocationInput> _allocationInputs = [];
+  bool _linkToIncomeBalance = false;
+  bool _hasExistingAllocations = false;
 
   bool get _isEditing => widget.expense != null;
 
@@ -256,11 +258,13 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     try {
       final balances = await _db.getIncomeBalances();
       List<_ExpenseBalanceAllocationInput> allocationInputs = [];
+      bool hasExisting = false;
 
       if (widget.expense != null && widget.expense!.id != null) {
         final existingAllocations =
             await _db.getExpenseAllocations(widget.expense!.id!);
         if (existingAllocations.isNotEmpty) {
+          hasExisting = true;
           allocationInputs = existingAllocations
               .map(
                 (a) => _ExpenseBalanceAllocationInput(
@@ -274,6 +278,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
 
       if (allocationInputs.isEmpty) {
         IncomeBalanceModel? defaultBalance;
+
         if (balances.isNotEmpty) {
           try {
             defaultBalance = balances.firstWhere((b) => b.isDefault);
@@ -290,6 +295,8 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
       setState(() {
         _incomeBalances = balances;
         _allocationInputs = allocationInputs;
+        _hasExistingAllocations = hasExisting;
+        _linkToIncomeBalance = hasExisting;
       });
     } catch (e) {
       print('Error loading income balances for expenses: $e');
@@ -316,68 +323,73 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     try {
       final double totalAmount = double.parse(_amountController.text);
 
-      final List<_ExpenseBalanceAllocationInput> validInputs = _allocationInputs
-          .where((input) =>
-              input.balanceId != null &&
-              input.amountController.text.trim().isNotEmpty)
-          .toList();
       final List<ExpenseAllocationInput> allocations = [];
+      final bool shouldHandleAllocations =
+          _hasExistingAllocations || (!_isEditing && _linkToIncomeBalance);
 
-      if (validInputs.isEmpty) {
-        final defaultBalance = await _db.getDefaultIncomeBalance();
-        if (defaultBalance == null || defaultBalance.id == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('لا يوجد رصيد افتراضي متاح لتوزيع المبلغ'),
-              backgroundColor: AppTheme.errorColor,
-            ),
-          );
-          return;
-        }
-        allocations.add(
-          ExpenseAllocationInput(
-            balanceId: defaultBalance.id!,
-            amount: totalAmount,
-          ),
-        );
-      } else {
-        double totalAllocated = 0.0;
-        for (final input in validInputs) {
-          final balanceId = input.balanceId;
-          if (balanceId == null) {
+      if (shouldHandleAllocations) {
+        final List<_ExpenseBalanceAllocationInput> validInputs = _allocationInputs
+            .where((input) =>
+                input.balanceId != null &&
+                input.amountController.text.trim().isNotEmpty)
+            .toList();
+
+        if (validInputs.isEmpty) {
+          final defaultBalance = await _db.getDefaultIncomeBalance();
+          if (defaultBalance == null || defaultBalance.id == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('يرجى اختيار رصيد لكل سطر توزيع'),
+                content: Text('لا يوجد رصيد افتراضي متاح لتوزيع المبلغ'),
                 backgroundColor: AppTheme.errorColor,
               ),
             );
             return;
           }
-          final text = input.amountController.text.trim();
-          final value = double.tryParse(text);
-          if (value == null || value <= 0) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('قيمة المبلغ في توزيع الأرصدة غير صحيحة'),
-                backgroundColor: AppTheme.errorColor,
-              ),
-            );
-            return;
-          }
-          totalAllocated += value;
           allocations.add(
-            ExpenseAllocationInput(balanceId: balanceId, amount: value),
-          );
-        }
-
-        if ((totalAllocated - totalAmount).abs() > 0.01) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('مجموع مبالغ الأرصدة يجب أن يساوي المبلغ الكلي'),
-              backgroundColor: AppTheme.errorColor,
+            ExpenseAllocationInput(
+              balanceId: defaultBalance.id!,
+              amount: totalAmount,
             ),
           );
-          return;
+        } else {
+          double totalAllocated = 0.0;
+          for (final input in validInputs) {
+            final balanceId = input.balanceId;
+            if (balanceId == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('يرجى اختيار رصيد لكل سطر توزيع'),
+                  backgroundColor: AppTheme.errorColor,
+                ),
+              );
+              return;
+            }
+            final text = input.amountController.text.trim();
+            final value = double.tryParse(text);
+            if (value == null || value <= 0) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('قيمة المبلغ في توزيع الأرصدة غير صحيحة'),
+                  backgroundColor: AppTheme.errorColor,
+                ),
+              );
+              return;
+            }
+            totalAllocated += value;
+            allocations.add(
+              ExpenseAllocationInput(balanceId: balanceId, amount: value),
+            );
+          }
+
+          if ((totalAllocated - totalAmount).abs() > 0.01) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('مجموع مبالغ الأرصدة يجب أن يساوي المبلغ الكلي'),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+            return;
+          }
         }
       }
 
@@ -392,6 +404,9 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         updatedDate: widget.expense != null ? DateTime.now() : null,
         expenseAccountId: widget.expense?.expenseAccountId,
       );
+
+      // Register this currency usage so it becomes default (if none) and favorite.
+      await _db.registerCurrencyUsage(_selectedCurrency!);
 
       Navigator.of(context).pop({
         'expense': expense,
@@ -595,15 +610,11 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        if (_incomeBalances.isNotEmpty) ...[
-                          _buildBalanceAllocationSection(),
-                          const SizedBox(height: 16),
-                        ],
                         // Detail field
                         TextFormField(
                           controller: _detailController,
                           decoration: InputDecoration(
-                            labelText: 'التفاصيل *',
+                            labelText: 'التفاصيل (اختياري)',
                             labelStyle: const TextStyle(fontSize: 14),
                             hintText: 'وصف تفصيلي للمصروف',
                             hintStyle: TextStyle(
@@ -622,9 +633,6 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                           style: const TextStyle(fontSize: 14),
                           maxLines: 3,
                           validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'يرجى إدخال تفاصيل المصروف';
-                            }
                             return null;
                           },
                         ),
@@ -667,6 +675,30 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                           },
                         ),
                         const SizedBox(height: 16),
+                        if (!_hasExistingAllocations) ...[
+                          CheckboxListTile(
+                            value: _linkToIncomeBalance,
+                            onChanged: (value) {
+                              setState(() {
+                                _linkToIncomeBalance = value ?? false;
+                              });
+                            },
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text(
+                              'ربط هذا المصروف برصيد الدخل',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                        if (_incomeBalances.isNotEmpty && (_hasExistingAllocations || _linkToIncomeBalance)) ...[
+                          _buildBalanceAllocationSection(),
+                          const SizedBox(height: 16),
+                        ],
                       ],
                     ),
                   ),

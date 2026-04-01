@@ -8,26 +8,32 @@ class HomeReportCoordinator {
   static Future<void> generateCategoryReport({
     required CategoryModel category,
     required List<AccountModel> accounts,
+    String currencyFilterName = 'all',
   }) async {
     await CategoryReportGenerator.generate(
       category: category,
       accounts: accounts,
+      currencyFilterName: currencyFilterName,
     );
   }
 
   static Future<void> generateAllAccountsReport({
     required List<AccountModel> allAccounts,
+    String currencyFilterName = 'all',
   }) async {
     await AllAccountsReportGenerator.generate(
       allAccounts: allAccounts,
+      currencyFilterName: currencyFilterName,
     );
   }
 
   static Future<void> generateSelectedAccountsReport({
     required List<AccountModel> selected,
+    String currencyFilterName = 'all',
   }) async {
     await SelectedAccountsReportGenerator.generate(
       selected: selected,
+      currencyFilterName: currencyFilterName,
     );
   }
 }

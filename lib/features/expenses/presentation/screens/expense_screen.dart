@@ -171,6 +171,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
     await AllExpenseAccountsReportGenerator.generate(
       accounts: _state.expenseAccounts,
+      currencyFilterName: _selectedCurrencyFilter ?? 'all',
     );
   }
 
@@ -199,6 +200,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     await ExpenseCategoryReportGenerator.generate(
       categoryName: categoryName,
       accounts: accountsForCategory,
+      currencyFilterName: _selectedCurrencyFilter ?? 'all',
     );
   }
 
@@ -384,25 +386,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           });
           widget.onDrawerChanged?.call(isOpened);
         },
-        floatingActionButton: FloatingActionButton(
-          onPressed: _showAddExpenseDialog,
-          // Minimal, but clearly visible: light background with primary-colored border
-          backgroundColor: Colors.white,
-          foregroundColor: AppTheme.primaryColor,
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(
-              color: Colors.grey.shade200,
-              width: 1,
-            ),
-          ),
-          tooltip: 'إضافة مصروف جديد',
-          child: const Icon(
-            Icons.add,
-            size: 22,
-          ),
-        ),
         body: _state.isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
@@ -665,7 +648,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'اضغط على + لإضافة مصروف جديد (سيتم إنشاء حساب تلقائياً)',
+                                  'اضغط على زر + في الأسفل لإضافة مصروف جديد (سيتم إنشاء حساب تلقائياً)',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey.shade500,
@@ -775,10 +758,86 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                                     },
                                   ),
                                 ),
+                                const Divider(
+                                  height: 1,
+                                  color: Colors.grey,
+                                ),
+                                SizedBox(
+                                  height: 48,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    child: Directionality(
+                                      textDirection: TextDirection.rtl,
+                                      child: Row(
+                                        children: [
+                                          TextButton.icon(
+                                            onPressed: _showAddExpenseDialog,
+                                            style: TextButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                              foregroundColor: AppTheme.primaryColor,
+                                              minimumSize: Size.zero,
+                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                            ),
+                                            icon: const Icon(
+                                              Icons.add,
+                                              size: 18,
+                                            ),
+                                            label: const Text(
+                                              'مصروف جديد',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                   ),
+                  if (_filteredAccounts.isEmpty)
+                    const Divider(
+                      height: 1,
+                      color: Colors.grey,
+                    ),
+                  if (_filteredAccounts.isEmpty)
+                    SizedBox(
+                      height: 48,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: Row(
+                            children: [
+                              TextButton.icon(
+                                onPressed: _showAddExpenseDialog,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                  foregroundColor: AppTheme.primaryColor,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                icon: const Icon(
+                                  Icons.add,
+                                  size: 18,
+                                ),
+                                label: const Text(
+                                  'مصروف جديد',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              const Spacer(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
       ),

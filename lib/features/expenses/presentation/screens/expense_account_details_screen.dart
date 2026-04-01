@@ -197,39 +197,24 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _openAddOrEditDialog(),
-          // Minimal, consistent FAB: light background with primary-colored border and icon
-          backgroundColor: Colors.white,
-          foregroundColor: AppTheme.primaryColor,
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(
-              color: Colors.grey.shade200,
-              width: 1,
-            ),
-          ),
-          child: const Icon(
-            Icons.add,
-            size: 22,
-          ),
-        ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _error != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        _error!,
-                        style: const TextStyle(color: AppTheme.errorColor),
-                        textAlign: TextAlign.center,
+        body: SafeArea(
+          top: false,
+          bottom: true,
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(color: AppTheme.errorColor),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                    ),
-                  )
-                : Column(
-                    children: [
+                    )
+                  : Column(
+                      children: [
                       // Summary card
                       Container(
                         margin: const EdgeInsets.all(12),
@@ -319,7 +304,7 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      'اضغط على + لإضافة مصروف جديد',
+                                      'اضغط على زر + في الأسفل لإضافة مصروف جديد',
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.grey.shade500,
@@ -427,12 +412,50 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
                                         },
                                       ),
                                     ),
+                                    const Divider(
+                                      height: 1,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(
+                                      height: 48,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: Directionality(
+                                          textDirection: TextDirection.rtl,
+                                          child: Row(
+                                            children: [
+                                              TextButton.icon(
+                                                onPressed: () => _openAddOrEditDialog(),
+                                                style: TextButton.styleFrom(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                                  foregroundColor: AppTheme.primaryColor,
+                                                  minimumSize: Size.zero,
+                                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.add,
+                                                  size: 18,
+                                                ),
+                                                label: const Text(
+                                                  'مصروف جديد',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
                       ),
                     ],
                   ),
+        ),
       ),
     );
   }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
 import 'package:debit_credit_app/features/about/presentation/screens/about_screen.dart';
 import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_backup_screen.dart';
+import 'package:debit_credit_app/features/backup/presentation/screens/google_drive_backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
 import 'package:debit_credit_app/core/widgets/main_navigation.dart';
 
@@ -24,6 +26,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final List<String> _currencies = ['ريال سعودي', 'دولار أمريكي', 'ريال يمني'];
 
   @override
+  void initState() {
+    super.initState();
+    _loadBackupSettings();
+  }
+
+  Future<void> _loadBackupSettings() async {
+    final enabled = await AutoBackupManager.instance.isEnabled();
+    if (!mounted) return;
+    setState(() {
+      _autoBackup = enabled;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -42,18 +58,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: Colors.grey.shade700, size: 20),
           onPressed: () {
-            Navigator.pushAndRemoveUntil(
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+              return;
+            }
+
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const MainNavigation()),
-              (route) => false,
             );
-            // Open drawer after navigation
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              final scaffoldState = Scaffold.of(context);
-              if (scaffoldState.hasEndDrawer) {
-                scaffoldState.openEndDrawer();
-              }
-            });
           },
         ),
       ),
@@ -182,7 +195,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       setState(() {
                         _autoBackup = value;
                       });
-                      // TODO: Implement auto backup
+                      AutoBackupManager.instance.setEnabled(value);
+                    },
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.cloud_rounded,
+                    title: 'Google Drive Backup',
+                    subtitle: 'ربط Google Drive وإدارة النسخ السحابية',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const GoogleDriveBackupScreen(),
+                        ),
+                      ).then((_) => _loadBackupSettings());
                     },
                   ),
                   _buildSettingsTile(

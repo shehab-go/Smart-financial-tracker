@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:flutter_native_contact_picker/flutter_native_contact_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:debit_credit_app/core/models/transaction.dart';
 import 'package:debit_credit_app/core/models/account.dart';
-import 'package:debit_credit_app/core/models/currency.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/features/accounts/presentation/widgets/transaction_tile.dart';
-import 'package:debit_credit_app/core/widgets/app_drawer.dart';
 import 'package:debit_credit_app/features/accounts/presentation/dialogs/add_transaction_dialog.dart';
 import 'package:debit_credit_app/core/services/report_service.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+import 'package:world_countries/world_countries.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:debit_credit_app/features/accounts/application/reports/account_report_generator.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:async';
 import 'package:pdf/pdf.dart';
@@ -41,8 +40,121 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
   late TextEditingController _addressController;
   late TextEditingController _workDetailsController;
   String? _selectedCurrency;
-  List<CurrencyModel> _currencies = [];
   final _formKey = GlobalKey<FormState>();
+
+  Future<void> _pickCurrency() async {
+    try {
+      String? localSelected;
+      FiatCurrency? chosen;
+
+      await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (dialogContext) {
+          return Dialog(
+            insetPadding: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 380, maxHeight: 600),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'اختيار العملة',
+                              style: TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            icon: const Icon(
+                              Icons.close,
+                              color: AppTheme.textSecondary,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: AppTheme.dividerColor),
+                    InkWell(
+                      onTap: () {
+                        localSelected = 'محلي';
+                        Navigator.of(dialogContext).pop();
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'محلي',
+                                style: TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              'م',
+                              style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 1, color: AppTheme.dividerColor),
+                    Flexible(
+                      child: CurrencyPicker(
+                        onSelect: (FiatCurrency currency) {
+                          chosen = currency;
+                          Navigator.of(dialogContext).pop();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+
+      if (!mounted) return;
+
+      if (localSelected != null) {
+        setState(() => _selectedCurrency = localSelected);
+        return;
+      }
+
+      if (chosen != null) {
+        final typedLocale = context.maybeLocale;
+        final displayName = (typedLocale != null)
+            ? (chosen!.maybeCommonNameFor(typedLocale) ?? chosen!.internationalName)
+            : chosen!.internationalName;
+
+        setState(() => _selectedCurrency = displayName);
+      }
+    } catch (_) {}
+  }
 
   @override
   void initState() {
@@ -51,39 +163,7 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
     _phoneController = TextEditingController(text: widget.account.phone ?? '');
     _addressController = TextEditingController(text: widget.account.address ?? '');
     _workDetailsController = TextEditingController(text: widget.account.workDetails ?? '');
-    _selectedCurrency = widget.account.currencyName;
-    _loadCurrencies();
-  }
-
-  Future<void> _loadCurrencies() async {
-    try {
-      final currencies = await DatabaseHelper().getCurrencies();
-      if (currencies.isEmpty) {
-        setState(() {
-          _currencies = CurrencyModel.getDefaultCurrencies();
-          // Only reset if the current currency is null or empty
-          if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
-            _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.name : null;
-          }
-        });
-      } else {
-        setState(() {
-          _currencies = currencies;
-          // Only reset if the current currency is null or empty
-          if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
-            _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.name : null;
-          }
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _currencies = CurrencyModel.getDefaultCurrencies();
-        // Only reset if the current currency is null or empty
-        if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
-          _selectedCurrency = _currencies.isNotEmpty ? _currencies.first.name : null;
-        }
-      });
-    }
+    _selectedCurrency = widget.account.currencyName.trim();
   }
 
   Future<void> _pickContact() async {
@@ -337,53 +417,62 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedCurrency,
-              decoration: InputDecoration(
-                labelText: 'العملة',
-                labelStyle: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 14,
-                ),
-                prefixIcon: const Icon(
-                  Icons.attach_money_outlined,
-                  color: AppTheme.primaryColor,
-                  size: 20,
-                ),
-                border: OutlineInputBorder(
+            FormField<String>(
+              initialValue: _selectedCurrency,
+              validator: (value) => (value == null || value.trim().isEmpty) ? 'يرجى اختيار العملة' : null,
+              builder: (field) {
+                return InkWell(
+                  onTap: () async {
+                    await _pickCurrency();
+                    field.didChange(_selectedCurrency);
+                  },
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppTheme.dividerColor),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppTheme.dividerColor),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
-                ),
-                filled: true,
-                fillColor: Colors.grey[50],
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              items: _currencies.map((currency) => DropdownMenuItem<String>(
-                value: currency.name,
-                child: Text(currency.name),
-              )).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedCurrency = value;
-                });
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'العملة',
+                      labelStyle: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.attach_money_outlined,
+                        color: AppTheme.primaryColor,
+                        size: 20,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppTheme.dividerColor),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppTheme.dividerColor),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      errorText: field.errorText,
+                      suffixIcon: const Icon(
+                        Icons.keyboard_arrow_down,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                    child: Text(
+                      (_selectedCurrency != null && _selectedCurrency!.trim().isNotEmpty)
+                          ? _selectedCurrency!.trim()
+                          : 'اختر العملة',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                );
               },
-              validator: (value) => (value == null || value.isEmpty) ? 'يرجى اختيار العملة' : null,
-              isExpanded: true,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.textPrimary,
-              ),
-              menuMaxHeight: 200,
-              dropdownColor: Colors.white,
-              alignment: AlignmentDirectional.centerStart,
             ),
                     ],
                   ),
@@ -488,6 +577,8 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   final ScrollController _scrollController = ScrollController();
   Timer? _highlightTimer;
   int? _currentHighlightId;
+  String _selectedCurrencyFilter = 'all';
+  List<String> _availableCurrencies = const <String>[];
 
   @override
   void initState() {
@@ -562,6 +653,32 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     setState(() => _selectedIds.clear());
   }
 
+  List<TransactionModel> get _filteredTransactions {
+    if (_selectedCurrencyFilter == 'all') return _transactions;
+    return _transactions
+        .where((t) => t.currencyName.trim() == _selectedCurrencyFilter.trim())
+        .toList();
+  }
+
+  void _recalculateTotals() {
+    double totalDebit = 0.0;
+    double totalCredit = 0.0;
+
+    for (final t in _filteredTransactions) {
+      if (t.type == 'debit') {
+        totalDebit += t.amount;
+      } else {
+        totalCredit += t.amount;
+      }
+    }
+
+    _totals = {
+      'debit': totalDebit,
+      'credit': totalCredit,
+      'net': totalCredit - totalDebit,
+    };
+  }
+
   Future<void> _deleteSelected() async {
     if (_selectedIds.isEmpty) return;
     final confirmed = await showDialog<bool>(
@@ -588,29 +705,45 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
 
   Future<void> _printSelected() async {
     if (_selectedIds.isEmpty) return;
-    final sel = _transactions.where((t) => _selectedIds.contains(t.id)).toList();
-    final rows = sel.map((t) => [
-          DateFormat('yyyy/MM/dd').format(t.date),
-          t.description ?? '-',
-          t.type == 'credit' ? t.amount.toStringAsFixed(0) : '-',
-          t.type == 'debit' ? t.amount.toStringAsFixed(0) : '-',
-        ]).toList();
+    final sel = _filteredTransactions.where((t) => _selectedIds.contains(t.id)).toList();
+    if (sel.isEmpty) return;
+
+    final bool includeCurrencyColumn = _selectedCurrencyFilter == 'all';
+    final rows = sel
+        .map((t) => [
+              DateFormat('yyyy/MM/dd').format(t.date),
+              t.description ?? '-',
+              t.type == 'credit' ? t.amount.toStringAsFixed(0) : '-',
+              t.type == 'debit' ? t.amount.toStringAsFixed(0) : '-',
+              if (includeCurrencyColumn) t.currencyName,
+            ])
+        .toList();
+
+    final headers = <String>['التاريخ', 'تفاصيل', 'له', 'عليه'];
+    if (includeCurrencyColumn) {
+      headers.add('العملة');
+    }
     await ReportService.generateAndOpenPdfWithTableData(
       title: 'معاملات مختارة - ${widget.account.name}',
       headerContent: [],
-      tableHeaders: ['التاريخ', 'تفاصيل', 'له', 'عليه'],
+      tableHeaders: headers,
       tableData: rows,
     );
   }
 
   void _shareSelected() {
     if (_selectedIds.isEmpty) return;
-    final selectedTx = _transactions.where((t) => _selectedIds.contains(t.id)).toList();
+    final selectedTx = _filteredTransactions.where((t) => _selectedIds.contains(t.id)).toList();
+    if (selectedTx.isEmpty) return;
     final header = 'حساب: ${widget.account.name}';
     final lines = selectedTx
         .map((t) {
           final label = t.type == 'debit' ? 'عليه' : 'له';
-          return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label ${t.amount.toStringAsFixed(0)} ${_currentAccount.currencyName}';
+          final amountPart = '${t.amount.toStringAsFixed(0)}';
+          if (_selectedCurrencyFilter == 'all') {
+            return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label $amountPart ${t.currencyName}';
+          }
+          return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label $amountPart';
         })
         .join('\n');
     Share.share('$header\n$lines', subject: 'معاملات مختارة - ${widget.account.name}');
@@ -620,14 +753,27 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   Map<String, double> _totals = {'debit': 0.0, 'credit': 0.0, 'net': 0.0};
   bool _isLoading = true;
 
+  int _lastPerfLogEpochMs = 0;
+
+  void _debugPerf(String label, Stopwatch sw, {int thresholdMs = 16}) {
+    if (!kDebugMode) return;
+    final ms = sw.elapsedMilliseconds;
+    if (ms < thresholdMs) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - _lastPerfLogEpochMs < 500) return;
+    _lastPerfLogEpochMs = now;
+    debugPrint('PERF $label: ${ms}ms');
+  }
+
   final Set<int> _selectedIds = {};
   bool get _selectionMode => _selectedIds.isNotEmpty;
 
   Future<void> _generateReportForAccount() async {
     await AccountReportGenerator.generate(
       account: widget.account,
-      transactions: _transactions,
+      transactions: _filteredTransactions,
       totals: _totals,
+      currencyFilterName: _selectedCurrencyFilter,
     );
   }
 
@@ -687,33 +833,49 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   }
 
   Future<void> _loadTransactions() async {
+    final swTotal = Stopwatch()..start();
     setState(() {
       _isLoading = true;
     });
 
     try {
+      final swDb = Stopwatch()..start();
       final transactions = await DatabaseHelper().getTransactionsByAccount(widget.account.id!);
+      _debugPerf('AccountTransactions._loadTransactions.db', swDb);
 
-      double totalDebit = 0.0;
-      double totalCredit = 0.0;
-
-      for (TransactionModel transaction in transactions) {
-        if (transaction.type == 'debit') {
-          totalDebit += transaction.amount;
-        } else {
-          totalCredit += transaction.amount;
+      final swCurrencies = Stopwatch()..start();
+      final Set<String> currencySet = <String>{};
+      for (final t in transactions) {
+        final name = t.currencyName.trim();
+        if (name.isNotEmpty) {
+          currencySet.add(name);
         }
+      }
+      final currencies = currencySet.toList()..sort();
+      if (currencies.isNotEmpty && currencies.first != 'محلي' && currencies.contains('محلي')) {
+        currencies
+          ..remove('محلي')
+          ..insert(0, 'محلي');
+      }
+      if (!currencies.contains('محلي')) {
+        currencies.insert(0, 'محلي');
+      }
+      _debugPerf('AccountTransactions._loadTransactions.buildCurrencies', swCurrencies);
+
+      String selected = _selectedCurrencyFilter;
+      if (selected != 'all' && !currencySet.contains(selected)) {
+        selected = 'all';
       }
 
       setState(() {
         _transactions = transactions;
-        _totals = {
-          'debit': totalDebit,
-          'credit': totalCredit,
-          'net': totalCredit - totalDebit,
-        };
+        _availableCurrencies = currencies;
+        _selectedCurrencyFilter = selected;
+        _recalculateTotals();
         _isLoading = false;
       });
+
+      _debugPerf('AccountTransactions._loadTransactions.total', swTotal);
       
       // Auto-scroll to highlighted transaction if exists
       if (widget.highlightTransactionId != null) {
@@ -794,7 +956,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                   const SizedBox(height: 16),
                   
                   // Transaction Details
-                  _buildDetailRow('المبلغ', '${NumberFormat('#,##0').format(transaction.amount)} ${_currentAccount.currencyName}'),
+                  _buildDetailRow('المبلغ', '${NumberFormat('#,##0').format(transaction.amount)} ${transaction.currencyName}'),
                   const SizedBox(height: 12),
                   _buildDetailRow('النوع', transaction.type == 'credit' ? 'له' : 'عليه'),
                   const SizedBox(height: 12),
@@ -1146,7 +1308,10 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   List<Widget> _buildTransactionList() {
     if (_transactions.isEmpty) return [];
     
-    return _transactions.map((transaction) => 
+    final data = _filteredTransactions;
+    if (data.isEmpty) return [];
+
+    return data.map((transaction) => 
       TransactionTile(
         transaction: transaction,
         selected: _selectedIds.contains(transaction.id),
@@ -1323,10 +1488,13 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
             ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Directionality(
-              textDirection: TextDirection.rtl,
-              child: Column(
-                children: [
+          : SafeArea(
+              top: false,
+              bottom: true,
+              child: Directionality(
+                textDirection: TextDirection.rtl,
+                child: Column(
+                  children: [
                 Directionality(
                   textDirection: TextDirection.rtl,
                   child: Container(
@@ -1349,6 +1517,39 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            children: [
+                              DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _selectedCurrencyFilter,
+                                  items: [
+                                    const DropdownMenuItem<String>(
+                                      value: 'all',
+                                      child: Text('الكل'),
+                                    ),
+                                    ..._availableCurrencies.map(
+                                      (c) => DropdownMenuItem<String>(
+                                        value: c,
+                                        child: Text(
+                                          c,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: (v) {
+                                    if (v == null) return;
+                                    setState(() {
+                                      _selectedCurrencyFilter = v;
+                                      _selectedIds.clear();
+                                      _recalculateTotals();
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
                           Text(
                             'له: ${NumberFormat('#,##0').format(_totals['credit'])}',
                             style: const TextStyle(
@@ -1380,114 +1581,100 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                   ),
                 ),
                 Expanded(
-                  child: _transactions.isEmpty
-                      ? Center(
-                          child: Container(
-                            margin: const EdgeInsets.all(32),
-                            padding: const EdgeInsets.all(32),
-                            decoration: BoxDecoration(
-                              gradient: AppTheme.cardGradient,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: AppTheme.cardShadow,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
+                  child: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            decoration: const BoxDecoration(),
+                            child: const Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor.withOpacity(0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.receipt_long,
-                                    size: 64,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                Text(
-                                  'لا توجد معاملات لهذا الحساب',
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: AppTheme.textPrimary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'استخدم الزر العائم لإضافة معاملة جديدة',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
+                                Expanded(flex: 4, child: Text('تفاصيل', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary))),
+                                Expanded(flex: 2, child: Center(child: Text('له', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)))),
+                                Expanded(flex: 2, child: Center(child: Text('عليه', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)))),
                               ],
                             ),
                           ),
-                        )
-                      : Container(
-                          margin: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: Column(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                  decoration: const BoxDecoration(),
-                                  child: const Row(
-                                    children: [
-                                      Expanded(flex: 3, child: Text('المبلغ', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary))),
-                                      Expanded(flex: 4, child: Center(child: Text('تفاصيل', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)))),
-                                      Expanded(flex: 3, child: Text('التاريخ', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary), textAlign: TextAlign.end)),
-                                    ],
-                                  ),
-                                ),
-                                const Divider(height: 1, color: Colors.grey),
-                                Expanded(
-                                  child: ListView(
+                          const Divider(height: 1, color: Colors.grey),
+                          Expanded(
+                            child: _filteredTransactions.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      _selectedCurrencyFilter == 'all'
+                                          ? 'لا توجد معاملات لهذا الحساب'
+                                          : 'لا توجد معاملات لهذه العملة',
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: AppTheme.textSecondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  )
+                                : ListView(
                                     controller: _scrollController,
                                     children: _buildTransactionList(),
                                   ),
+                          ),
+                          const Divider(
+                            height: 1,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(
+                            height: 48,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Directionality(
+                                textDirection: TextDirection.rtl,
+                                child: Row(
+                                  children: [
+                                    TextButton.icon(
+                                      onPressed: _navigateToAddTransaction,
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                        foregroundColor: AppTheme.primaryColor,
+                                        minimumSize: Size.zero,
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      icon: const Icon(
+                                        Icons.add,
+                                        size: 18,
+                                      ),
+                                      label: const Text(
+                                        'معاملة جديدة',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 ],
+                ),
               ),
             ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToAddTransaction,
-        // Minimal, consistent FAB: light background with primary-colored border and icon
-        backgroundColor: Colors.white,
-        foregroundColor: AppTheme.primaryColor,
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(
-            color: Colors.grey.shade200,
-            width: 1,
-          ),
-        ),
-        child: const Icon(
-          Icons.add,
-          size: 22,
-        ),
-      ),
     );  
   }
 }

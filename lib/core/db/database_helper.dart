@@ -22,6 +22,68 @@ class DatabaseHelper {
 
   static Database? _database;
 
+  static const String _metaKeyTxTypeNormalizedV1 = 'tx_type_normalized_v1';
+
+  String _normalizeTransactionType(String type) {
+    final t = type.trim().toLowerCase();
+    if (t == 'credit') return 'credit';
+    if (t == 'debit') return 'debit';
+    if (t == 'له') return 'credit';
+    if (t == 'عليه') return 'debit';
+    return t;
+  }
+
+  Future<void> _runPostOpenMaintenance(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS app_meta (
+        key TEXT PRIMARY KEY,
+        value TEXT
+      )
+    ''');
+
+    final List<Map<String, dynamic>> rows = await db.query(
+      'app_meta',
+      columns: ['value'],
+      where: 'key = ?',
+      whereArgs: [_metaKeyTxTypeNormalizedV1],
+      limit: 1,
+    );
+    final String? current = rows.isNotEmpty ? rows.first['value']?.toString() : null;
+    if (current == 'true') return;
+
+    await db.update(
+      'transactions',
+      {'type': 'credit'},
+      where: "TRIM(LOWER(type)) IN (?, ?)",
+      whereArgs: ['credit', 'له'],
+    );
+    await db.update(
+      'transactions',
+      {'type': 'debit'},
+      where: "TRIM(LOWER(type)) IN (?, ?)",
+      whereArgs: ['debit', 'عليه'],
+    );
+
+    await db.execute('DELETE FROM account_currency_stats');
+    await db.execute('''
+      INSERT INTO account_currency_stats (accountId, currencyName, transactionCount, totalDebit, totalCredit)
+      SELECT
+        t.accountId AS accountId,
+        t.currencyName AS currencyName,
+        COUNT(t.id) AS transactionCount,
+        SUM(CASE WHEN t.type = 'debit' THEN t.amount ELSE 0 END) AS totalDebit,
+        SUM(CASE WHEN t.type = 'credit' THEN t.amount ELSE 0 END) AS totalCredit
+      FROM transactions t
+      GROUP BY t.accountId, t.currencyName
+    ''');
+
+    await db.insert(
+      'app_meta',
+      {'key': _metaKeyTxTypeNormalizedV1, 'value': 'true'},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   Future<Database> get database async {
     // Ensure we don't return a closed database instance
     if (_database == null || !(_database!.isOpen)) {
@@ -34,9 +96,12 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 13,
+      version: 16,
       onCreate: _createDatabase,
       onUpgrade: MigrationHelper.migrate,
+      onOpen: (db) async {
+        await _runPostOpenMaintenance(db);
+      },
     );
   }
 
@@ -44,8 +109,8 @@ class DatabaseHelper {
   /// This is stored in app_meta under the key 'default_currency'.
   Future<String?> getDefaultCurrencyName() async {
     final raw = await getMetaValue('default_currency');
-    if (raw == null || raw.trim().isEmpty) return null;
-    return raw;
+    if (raw == null || raw.trim().isEmpty) return 'محلي';
+    return raw.trim();
   }
 
   /// Sets the global default currency display name used for new transactions,
@@ -123,11 +188,112 @@ class DatabaseHelper {
         amount REAL NOT NULL,
         type TEXT NOT NULL,
         category TEXT NOT NULL,
+        currencyName TEXT NOT NULL DEFAULT 'محلي',
         date INTEGER NOT NULL,
         description TEXT,
         imagePaths TEXT,
         FOREIGN KEY (accountId) REFERENCES accounts (id) ON DELETE CASCADE
       )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE account_currency_stats (
+        accountId INTEGER NOT NULL,
+        currencyName TEXT NOT NULL,
+        transactionCount INTEGER NOT NULL DEFAULT 0,
+        totalDebit REAL NOT NULL DEFAULT 0,
+        totalCredit REAL NOT NULL DEFAULT 0,
+        PRIMARY KEY (accountId, currencyName)
+      )
+    ''');
+
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_accounts_category ON accounts(category)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_accounts_currencyName ON accounts(currencyName)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_accountId ON transactions(accountId)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_currencyName ON transactions(currencyName)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_account_currency_stats_currencyName ON account_currency_stats(currencyName)');
+
+    await db.execute('''
+      CREATE TRIGGER IF NOT EXISTS trg_tx_ai_stats
+      AFTER INSERT ON transactions
+      BEGIN
+        INSERT OR IGNORE INTO account_currency_stats (
+          accountId,
+          currencyName,
+          transactionCount,
+          totalDebit,
+          totalCredit
+        ) VALUES (
+          NEW.accountId,
+          NEW.currencyName,
+          0,
+          0,
+          0
+        );
+
+        UPDATE account_currency_stats
+        SET
+          transactionCount = transactionCount + 1,
+          totalDebit = totalDebit + (CASE WHEN NEW.type = 'debit' THEN NEW.amount ELSE 0 END),
+          totalCredit = totalCredit + (CASE WHEN NEW.type = 'credit' THEN NEW.amount ELSE 0 END)
+        WHERE accountId = NEW.accountId AND currencyName = NEW.currencyName;
+      END;
+    ''');
+
+    await db.execute('''
+      CREATE TRIGGER IF NOT EXISTS trg_tx_ad_stats
+      AFTER DELETE ON transactions
+      BEGIN
+        UPDATE account_currency_stats
+        SET
+          transactionCount = transactionCount - 1,
+          totalDebit = totalDebit - (CASE WHEN OLD.type = 'debit' THEN OLD.amount ELSE 0 END),
+          totalCredit = totalCredit - (CASE WHEN OLD.type = 'credit' THEN OLD.amount ELSE 0 END)
+        WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName;
+
+        DELETE FROM account_currency_stats
+        WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName AND transactionCount <= 0;
+      END;
+    ''');
+
+    await db.execute('''
+      CREATE TRIGGER IF NOT EXISTS trg_tx_au_stats
+      AFTER UPDATE ON transactions
+      BEGIN
+        UPDATE account_currency_stats
+        SET
+          transactionCount = transactionCount - 1,
+          totalDebit = totalDebit - (CASE WHEN OLD.type = 'debit' THEN OLD.amount ELSE 0 END),
+          totalCredit = totalCredit - (CASE WHEN OLD.type = 'credit' THEN OLD.amount ELSE 0 END)
+        WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName;
+
+        DELETE FROM account_currency_stats
+        WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName AND transactionCount <= 0;
+
+        INSERT OR IGNORE INTO account_currency_stats (
+          accountId,
+          currencyName,
+          transactionCount,
+          totalDebit,
+          totalCredit
+        ) VALUES (
+          NEW.accountId,
+          NEW.currencyName,
+          0,
+          0,
+          0
+        );
+
+        UPDATE account_currency_stats
+        SET
+          transactionCount = transactionCount + 1,
+          totalDebit = totalDebit + (CASE WHEN NEW.type = 'debit' THEN NEW.amount ELSE 0 END),
+          totalCredit = totalCredit + (CASE WHEN NEW.type = 'credit' THEN NEW.amount ELSE 0 END)
+        WHERE accountId = NEW.accountId AND currencyName = NEW.currencyName;
+      END;
     ''');
 
     // Create user profile table
@@ -438,6 +604,28 @@ class DatabaseHelper {
     await setMetaValue('favorite_currencies', encoded);
   }
 
+  /// Register that a user actually used this currency in a transaction or expense.
+  ///
+  /// - If no global default currency is set yet, this currency becomes the default.
+  /// - The currency is also added to the favorites set so it appears in quick-pick lists.
+  Future<void> registerCurrencyUsage(String displayName) async {
+    final String name = displayName.trim();
+    if (name.isEmpty) return;
+
+    // 1) Ensure there is a sensible global default.
+    final String? currentDefault = await getDefaultCurrencyName();
+    if (currentDefault == null || currentDefault.trim().isEmpty) {
+      await setDefaultCurrencyName(name);
+    }
+
+    // 2) Ensure this currency is in the favorites list.
+    final Set<String> favorites = await getFavoriteCurrencies();
+    if (!favorites.contains(name)) {
+      favorites.add(name);
+      await setFavoriteCurrencies(favorites);
+    }
+  }
+
   // App meta operations (key-value storage for global flags)
   Future<String?> getMetaValue(String key) async {
     final db = await database;
@@ -627,6 +815,100 @@ class DatabaseHelper {
     return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
   }
 
+  Future<List<AccountModel>> getAccountsWithStatsUsingAccountCurrencyAllCategories() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT a.*,
+             COALESCE(s.transactionCount, 0) AS transactionCount,
+             COALESCE(s.totalDebit, 0) AS totalDebit,
+             COALESCE(s.totalCredit, 0) AS totalCredit
+      FROM accounts a
+      LEFT JOIN account_currency_stats s
+        ON s.accountId = a.id AND s.currencyName = a.currencyName
+      ORDER BY a.category ASC, a.createdDate DESC
+    ''');
+
+    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+  }
+
+  Future<List<AccountModel>> getAccountsWithStatsByCurrencyAllCategories(
+    String currencyName,
+  ) async {
+    final db = await database;
+    final String cur = currencyName.trim().isNotEmpty ? currencyName.trim() : 'محلي';
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT a.*,
+             COALESCE(s.transactionCount, 0) AS transactionCount,
+             COALESCE(s.totalDebit, 0) AS totalDebit,
+             COALESCE(s.totalCredit, 0) AS totalCredit
+      FROM accounts a
+      LEFT JOIN account_currency_stats s
+        ON s.accountId = a.id AND s.currencyName = ?
+      ORDER BY a.category ASC, a.createdDate DESC
+    ''', [cur]);
+
+    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+  }
+
+  Future<List<AccountModel>> getAccountsWithStatsByCategoryUsingAccountCurrency(
+    String category,
+  ) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT a.*,
+             COALESCE(s.transactionCount, 0) AS transactionCount,
+             COALESCE(s.totalDebit, 0) AS totalDebit,
+             COALESCE(s.totalCredit, 0) AS totalCredit
+      FROM accounts a
+      LEFT JOIN account_currency_stats s
+        ON s.accountId = a.id AND s.currencyName = a.currencyName
+      WHERE a.category = ?
+      ORDER BY a.createdDate DESC
+    ''', [category]);
+
+    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+  }
+
+  Future<List<AccountModel>> getAccountsWithStatsByCategoryAndCurrency(
+    String category,
+    String currencyName,
+  ) async {
+    final db = await database;
+    final String cur = currencyName.trim().isNotEmpty ? currencyName.trim() : 'محلي';
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT a.*,
+             COALESCE(s.transactionCount, 0) AS transactionCount,
+             COALESCE(s.totalDebit, 0) AS totalDebit,
+             COALESCE(s.totalCredit, 0) AS totalCredit
+      FROM accounts a
+      LEFT JOIN account_currency_stats s
+        ON s.accountId = a.id AND s.currencyName = ?
+      WHERE a.category = ?
+      ORDER BY a.createdDate DESC
+    ''', [cur, category]);
+
+    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+  }
+
+  Future<List<String>> getDistinctTransactionCurrencies() async {
+    final db = await database;
+    final List<Map<String, Object?>> rows = await db.rawQuery(
+      'SELECT DISTINCT currencyName AS currencyName FROM account_currency_stats ORDER BY currencyName ASC',
+    );
+
+    final List<String> result = [];
+    for (final row in rows) {
+      final Object? value = row['currencyName'];
+      if (value == null) continue;
+      final String name = value.toString().trim();
+      if (name.isEmpty) continue;
+      result.add(name);
+    }
+    if (result.isEmpty) return ['محلي'];
+    if (!result.contains('محلي')) result.insert(0, 'محلي');
+    return result;
+  }
+
   Future<Map<String, double>> getCategoryTotals(String category) async {
     final db = await database;
     final List<Map<String, Object?>> rows = await db.rawQuery('''
@@ -650,6 +932,40 @@ class DatabaseHelper {
       'credit': credit,
       'net': credit - debit,
     };
+  }
+
+  Future<Map<String, Map<String, double>>> getCategoryTotalsByCurrency(
+    String currencyName,
+  ) async {
+    final db = await database;
+    final String cur = currencyName.trim().isNotEmpty ? currencyName.trim() : 'محلي';
+
+    final List<Map<String, Object?>> rows = await db.rawQuery('''
+      SELECT
+        a.category AS category,
+        SUM(COALESCE(s.totalDebit, 0))  AS totalDebit,
+        SUM(COALESCE(s.totalCredit, 0)) AS totalCredit
+      FROM accounts a
+      LEFT JOIN account_currency_stats s
+        ON s.accountId = a.id AND s.currencyName = ?
+      GROUP BY a.category
+    ''', [cur]);
+
+    final Map<String, Map<String, double>> result = <String, Map<String, double>>{};
+    for (final row in rows) {
+      final Object? category = row['category'];
+      if (category == null) continue;
+      final String cat = category.toString();
+      final double debit = (row['totalDebit'] as num?)?.toDouble() ?? 0.0;
+      final double credit = (row['totalCredit'] as num?)?.toDouble() ?? 0.0;
+      result[cat] = <String, double>{
+        'debit': debit,
+        'credit': credit,
+        'net': credit - debit,
+      };
+    }
+
+    return result;
   }
 
   Future<int> insertAccount(AccountModel account) async {
@@ -744,14 +1060,20 @@ class DatabaseHelper {
 
   Future<int> insertTransaction(TransactionModel transaction) async {
     final db = await database;
-    return await db.insert('transactions', transaction.toMap());
+    final normalized = transaction.copyWith(
+      type: _normalizeTransactionType(transaction.type),
+    );
+    return await db.insert('transactions', normalized.toMap());
   }
 
   Future<int> updateTransaction(TransactionModel transaction) async {
     final db = await database;
+    final normalized = transaction.copyWith(
+      type: _normalizeTransactionType(transaction.type),
+    );
     return await db.update(
       'transactions',
-      transaction.toMap(),
+      normalized.toMap(),
       where: 'id = ?',
       whereArgs: [transaction.id],
     );

@@ -437,7 +437,7 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
                       child: ListTile(
                         leading: Icon(Icons.folder, color: AppTheme.primaryColor),
                         title: const Text('مجلد النسخ الاحتياطية'),
-                        subtitle: const Text('Download/FinanceApp/Backups'),
+                        subtitle: Text(_dirPath!),
                         trailing: Icon(Icons.open_in_new, color: AppTheme.primaryColor),
                         onTap: () => OpenFile.open(_dirPath!),
                       ),

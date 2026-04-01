@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:flutter_svg/flutter_svg.dart';
@@ -18,6 +19,7 @@ import 'package:debit_credit_app/core/events/category_events.dart';
 import 'package:debit_credit_app/core/services/app_update_service.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/features/categories/presentation/dialogs/category_dialog.dart';
+import 'package:world_countries/world_countries.dart';
 import 'search_screen.dart';
 
 class StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
@@ -63,6 +65,8 @@ class HomeScreenState extends State<HomeScreen> {
   final HomeController _controller = HomeController();
   HomeState _state = HomeState.initial();
   StreamSubscription<CategoryEvent>? _categoryEventSubscription;
+  bool _isRefreshing = false;
+  List<String> _availableCurrencies = const <String>[];
   
   // State for category navigation
   int _selectedCategoryIndex = 0;
@@ -78,6 +82,167 @@ class HomeScreenState extends State<HomeScreen> {
   // State for selection mode
   bool _isSelectionMode = false;
   Set<String> _selectedAccountIds = <String>{};
+  Iterable<FiatCurrency>? _allFiatCurrencies;
+  final Map<String, String> _currencySymbolCache = <String, String>{};
+
+  int _lastPerfLogEpochMs = 0;
+
+  void _debugPerf(String label, Stopwatch sw, {int thresholdMs = 16}) {
+    if (!kDebugMode) return;
+    final ms = sw.elapsedMilliseconds;
+    if (ms < thresholdMs) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - _lastPerfLogEpochMs < 500) return;
+    _lastPerfLogEpochMs = now;
+    debugPrint('PERF $label: ${ms}ms');
+  }
+
+  Iterable<FiatCurrency> _getAllFiatCurrencies() {
+    if (_allFiatCurrencies != null) {
+      return _allFiatCurrencies!;
+    }
+    // Use CurrencyPickerExtension.currencies to get the full list once.
+    final picker = CurrencyPicker(onSelect: (_) {});
+    _allFiatCurrencies = picker.currencies.toList(growable: false);
+    return _allFiatCurrencies!;
+  }
+
+  FiatCurrency? _findFiatByDisplayName(String displayName) {
+    final typedLocale = context.maybeLocale;
+    final all = _getAllFiatCurrencies();
+
+    for (final c in all) {
+      if (typedLocale != null) {
+        final common = c.maybeCommonNameFor(typedLocale);
+        if (common != null && common == displayName) {
+          return c;
+        }
+      }
+      if (c.internationalName == displayName) {
+        return c;
+      }
+    }
+    return null;
+  }
+
+  /// Returns the standard currency symbol for a given display name
+  /// using the world_countries FiatCurrency metadata.
+  /// Examples: $, ر.س, €, etc. Falls back to ISO code if no symbol.
+  String _getCurrencySymbol(String displayName) {
+    final name = displayName.trim();
+    final cached = _currencySymbolCache[name];
+    if (cached != null) return cached;
+
+    if (name.isEmpty || name == 'all') {
+      _currencySymbolCache[name] = '';
+      return '';
+    }
+    if (name == 'محلي') {
+      _currencySymbolCache[name] = 'م';
+      return 'م';
+    }
+
+    final fiat = _findFiatByDisplayName(name);
+    if (fiat == null) {
+      _currencySymbolCache[name] = 'م';
+      return 'م';
+    }
+
+    // Prefer custom Arabic/local symbols for known currencies.
+    switch (fiat.code) {
+      case 'SAR':
+        _currencySymbolCache[name] = 'ر.س';
+        return 'ر.س';
+      case 'AED':
+        _currencySymbolCache[name] = 'د.إ';
+        return 'د.إ';
+      case 'EGP':
+        _currencySymbolCache[name] = 'ج.م';
+        return 'ج.م';
+      default:
+        break;
+    }
+
+    // Try the primary symbol from world_countries first (what the picker shows).
+    if (fiat.symbol != null && fiat.symbol!.isNotEmpty) {
+      _currencySymbolCache[name] = fiat.symbol!;
+      return fiat.symbol!;
+    }
+
+    String? symbol;
+    if (fiat.disambiguateSymbol != null &&
+        fiat.disambiguateSymbol!.isNotEmpty) {
+      symbol = fiat.disambiguateSymbol;
+    } else if (fiat.alternateSymbols != null &&
+        fiat.alternateSymbols!.isNotEmpty) {
+      symbol = fiat.alternateSymbols!.first;
+    }
+
+    if (symbol != null && symbol.isNotEmpty) {
+      _currencySymbolCache[name] = symbol;
+      return symbol;
+    }
+    // Fallback to ISO currency code if no explicit symbol is available.
+    _currencySymbolCache[name] = fiat.code;
+    return fiat.code;
+  }
+
+  Future<void> _showCurrencyFilterMenu(
+    BuildContext anchorContext, {
+    required List<String> currencies,
+  }) async {
+    try {
+      final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+      final renderBox = anchorContext.findRenderObject() as RenderBox;
+
+      final rect = renderBox.localToGlobal(Offset.zero, ancestor: overlay) &
+          renderBox.size;
+
+      final selected = await showMenu<String>(
+        context: context,
+        position: RelativeRect.fromRect(
+          rect,
+          Offset.zero & overlay.size,
+        ),
+        items: [
+          const PopupMenuItem<String>(
+            value: 'all',
+            child: SizedBox(
+              width: 260,
+              child: Text(
+                'الكل',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          ...currencies.map(
+            (cur) => PopupMenuItem<String>(
+              value: cur,
+              child: SizedBox(
+                width: 260,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        cur,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(_getCurrencySymbol(cur)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+
+      if (selected == null || !mounted) return;
+      setState(() => _selectedCurrencyFilter = selected);
+      await loadDataPreservingCategory(background: true);
+    } catch (_) {}
+  }
 
   void _showReportOptions() {
     showModalBottomSheet(
@@ -112,6 +277,7 @@ class HomeScreenState extends State<HomeScreen> {
     await HomeReportCoordinator.generateCategoryReport(
       category: cat,
       accounts: accounts,
+      currencyFilterName: _selectedCurrencyFilter,
     );
   }
 
@@ -120,7 +286,10 @@ class HomeScreenState extends State<HomeScreen> {
         .expand((c) => _state.accountsByCategory[c.name] ?? [])
         .cast<AccountModel>()
         .toList();
-    await HomeReportCoordinator.generateAllAccountsReport(allAccounts: allAccounts);
+    await HomeReportCoordinator.generateAllAccountsReport(
+      allAccounts: allAccounts,
+      currencyFilterName: _selectedCurrencyFilter,
+    );
   }
 
   // Selection mode methods
@@ -225,6 +394,7 @@ class HomeScreenState extends State<HomeScreen> {
 
     await HomeReportCoordinator.generateSelectedAccountsReport(
       selected: selectedAccounts,
+      currencyFilterName: _selectedCurrencyFilter,
     );
   }
 
@@ -233,11 +403,17 @@ class HomeScreenState extends State<HomeScreen> {
     super.initState();
     _pageController = PageController();
     _categoryScrollController = ScrollController();
-    loadData();
+
+    _state = _controller.state;
+    if (_state.categories.isEmpty) {
+      loadData(showBlockingLoader: true);
+    } else {
+      loadDataPreservingCategory(background: true);
+    }
     // Listen for category events
     _categoryEventSubscription = CategoryEventBus().events.listen((event) {
       // Refresh data when categories change
-      loadData();
+      loadDataPreservingCategory(background: true);
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -246,32 +422,64 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
-
-
-  Future<void> loadData() async {
-    setState(() => _state = _state.copyWith(isLoading: true));
-    try {
-      final newState = await _controller.load();
-      setState(() => _state = newState);
-    } catch (e) {
-      setState(() => _state = _state.copyWith(isLoading: false));
+  Future<void> loadData({bool showBlockingLoader = false}) async {
+    final swTotal = Stopwatch()..start();
+    if (showBlockingLoader) {
+      setState(() => _state = _state.copyWith(isLoading: true));
+    } else {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('خطأ في تحميل البيانات: $e'), backgroundColor: Colors.red));
+        setState(() => _isRefreshing = true);
       }
+    }
+
+    try {
+      final swLoad = Stopwatch()..start();
+      final newState = await _controller.load(currencyFilter: _selectedCurrencyFilter);
+      _debugPerf('HomeScreen.loadData.controller.load', swLoad);
+      final swCurrencies = Stopwatch()..start();
+      final currencies = await DatabaseHelper().getDistinctTransactionCurrencies();
+      _debugPerf('HomeScreen.loadData.getDistinctTransactionCurrencies', swCurrencies);
+      if (!mounted) return;
+      setState(() {
+        _state = newState;
+        _availableCurrencies = currencies;
+        _isRefreshing = false;
+      });
+      _debugPerf('HomeScreen.loadData.total', swTotal);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _state = _state.copyWith(isLoading: false);
+        _isRefreshing = false;
+      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('خطأ في تحميل البيانات: $e'), backgroundColor: Colors.red));
     }
   }
 
-  Future<void> loadDataPreservingCategory() async {
+  Future<void> loadDataPreservingCategory({bool background = false}) async {
+    final swTotal = Stopwatch()..start();
     // Save current category name to preserve selection
     String? currentCategoryName;
     if (_state.categories.isNotEmpty && _selectedCategoryIndex < _state.categories.length) {
       currentCategoryName = _state.categories[_selectedCategoryIndex].name;
     }
-    
-    setState(() => _state = _state.copyWith(isLoading: true));
+
+    if (background) {
+      if (mounted) {
+        setState(() => _isRefreshing = true);
+      }
+    } else {
+      setState(() => _state = _state.copyWith(isLoading: true));
+    }
     try {
-      final newState = await _controller.load();
+      final swLoad = Stopwatch()..start();
+      final newState = await _controller.load(currencyFilter: _selectedCurrencyFilter);
+      _debugPerf('HomeScreen.loadDataPreservingCategory.controller.load', swLoad);
+      final swCurrencies = Stopwatch()..start();
+      final currencies = await DatabaseHelper().getDistinctTransactionCurrencies();
+      _debugPerf('HomeScreen.loadDataPreservingCategory.getDistinctTransactionCurrencies', swCurrencies);
+      if (!mounted) return;
       
       // Find the new index for the preserved category before updating state
       int newSelectedIndex = 0;
@@ -285,7 +493,10 @@ class HomeScreenState extends State<HomeScreen> {
       setState(() {
         _state = newState;
         _selectedCategoryIndex = newSelectedIndex;
+        _availableCurrencies = currencies;
+        _isRefreshing = false;
       });
+      _debugPerf('HomeScreen.loadDataPreservingCategory.total', swTotal);
       
       // Ensure PageController and CategoryScrollController are synchronized with the selected index
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -309,11 +520,13 @@ class HomeScreenState extends State<HomeScreen> {
         }
       });
     } catch (e) {
-      setState(() => _state = _state.copyWith(isLoading: false));
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('خطأ في تحميل البيانات: $e'), backgroundColor: Colors.red));
-      }
+      if (!mounted) return;
+      setState(() {
+        _state = _state.copyWith(isLoading: false);
+        _isRefreshing = false;
+      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('خطأ في تحميل البيانات: $e'), backgroundColor: Colors.red));
     }
   }
 
@@ -331,12 +544,12 @@ class HomeScreenState extends State<HomeScreen> {
           builder: (context) => AddTransactionDialog(accountId: null, category: category),
         ) ??
         false;
-    if (result == true) await loadDataPreservingCategory();
+    if (result == true) await loadDataPreservingCategory(background: true);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_state.isLoading) {
+    if (_state.isLoading && _state.categories.isEmpty) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -398,6 +611,12 @@ class HomeScreenState extends State<HomeScreen> {
               elevation: 0,
               automaticallyImplyLeading: false,
               leading: null, // Explicitly remove any leading widget
+              bottom: PreferredSize(
+                preferredSize: Size.fromHeight(_isRefreshing ? 2 : 0),
+                child: _isRefreshing
+                    ? const LinearProgressIndicator(minHeight: 2)
+                    : const SizedBox.shrink(),
+              ),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.search, color: AppTheme.primaryColor),
@@ -453,26 +672,6 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-      floatingActionButton: _state.categories.isNotEmpty
-          ? FloatingActionButton(
-              onPressed: () => _navigateToCreateAccount(_state.categories[_selectedCategoryIndex].name),
-              // Minimal, consistent FAB: light background with primary-colored border and icon
-              backgroundColor: Colors.white,
-              foregroundColor: AppTheme.primaryColor,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(
-                  color: Colors.grey.shade200,
-                  width: 1,
-                ),
-              ),
-              child: const Icon(
-                Icons.add,
-                size: 22,
-              ),
-            )
-          : null,
     );
   }
  
@@ -484,13 +683,7 @@ class HomeScreenState extends State<HomeScreen> {
   if (safeIndex >= categories.length) safeIndex = 0;
   final selectedCategory = categories[safeIndex];
 
-  final Set<String> currencySet = {};
-  _state.accountsByCategory.forEach((_, accounts) {
-    for (final account in accounts) {
-      currencySet.add(account.currencyName);
-    }
-  });
-  final List<String> currencies = currencySet.toList()..sort();
+  final List<String> currencies = _availableCurrencies;
 
   // Helper to build a consistent minimal decoration
   InputDecoration minimalDecoration() => InputDecoration(
@@ -568,7 +761,7 @@ class HomeScreenState extends State<HomeScreen> {
                   if (newCategory != null) {
                     try {
                       await DatabaseHelper().insertCategory(newCategory);
-                      await loadDataPreservingCategory();
+                      await loadDataPreservingCategory(background: true);
                       if (!mounted) return;
                       final updatedCategories = _state.categories;
                       final newIndex = updatedCategories.indexWhere((c) => c.name == newCategory.name);
@@ -611,19 +804,28 @@ class HomeScreenState extends State<HomeScreen> {
 
           // 2. Currency
           Expanded(
-            child: DropdownButtonFormField<String>(
-              value: _selectedCurrencyFilter,
-              icon: const SizedBox.shrink(),
-              decoration: minimalDecoration(),
-              isExpanded: true,
-              items: [
-                const DropdownMenuItem(value: 'all', child: Text('العملة', style: itemTextStyle)),
-                ...currencies.map((cur) => DropdownMenuItem(
-                  value: cur,
-                  child: Text(cur, style: itemTextStyle, overflow: TextOverflow.ellipsis),
-                )),
-              ],
-              onChanged: (value) => setState(() => _selectedCurrencyFilter = value ?? 'all'),
+            child: Builder(
+              builder: (anchorContext) {
+                final String label = _selectedCurrencyFilter == 'all'
+                    ? 'الكل'
+                    : '${_selectedCurrencyFilter}  ${_getCurrencySymbol(_selectedCurrencyFilter)}';
+
+                return InkWell(
+                  onTap: () => _showCurrencyFilterMenu(
+                    anchorContext,
+                    currencies: currencies,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  child: InputDecorator(
+                    decoration: minimalDecoration(),
+                    child: Text(
+                      label,
+                      style: itemTextStyle,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(width: 4),
@@ -776,13 +978,7 @@ class HomeScreenState extends State<HomeScreen> {
   }
 List<AccountModel> _filterAccounts(List<AccountModel> accounts) {
   return accounts.where((account) {
-    // 1) Currency filter
-    if (_selectedCurrencyFilter != 'all' &&
-        account.currencyName != _selectedCurrencyFilter) {
-      return false;
-    }
-
-    // 2) Type filter (credit / debit / all)
+    // 1) Type filter (credit / debit / all)
     // net > 0 => له (credit), net < 0 => عليه (debit)
     final double net = account.totalCredit - account.totalDebit;
     if (_selectedTypeFilter == 'credit' && net <= 0) {
@@ -792,7 +988,7 @@ List<AccountModel> _filterAccounts(List<AccountModel> accounts) {
       return false;
     }
 
-    // 3) Date filter based on account.createdDate
+    // 2) Date filter based on account.createdDate
     if (_selectedDateFilter != 'all') {
       final DateTime now = DateTime.now();
       final DateTime d = account.createdDate;
@@ -819,7 +1015,28 @@ List<AccountModel> _filterAccounts(List<AccountModel> accounts) {
   CategoryModel category,
   List<AccountModel> accounts,
 ) {
+  final swFilter = Stopwatch()..start();
   final filteredAccounts = _filterAccounts(accounts);
+  _debugPerf('HomeScreen._filterAccounts(${category.name})', swFilter);
+
+  final List<AccountModel> accountsForFooter = filteredAccounts;
+
+  double netTotal = 0.0;
+  for (final account in accountsForFooter) {
+    netTotal += (account.totalCredit - account.totalDebit);
+  }
+  final String netLabel;
+  if (netTotal > 0) {
+    netLabel = 'لهم';
+  } else if (netTotal < 0) {
+    netLabel = 'عليهم';
+  } else {
+    netLabel = 'متوازن';
+  }
+
+  final swTiles = Stopwatch()..start();
+  final tiles = filteredAccounts.map((account) => _buildAccountTile(account)).toList();
+  _debugPerf('HomeScreen.buildAccountTiles(${category.name})', swTiles, thresholdMs: 24);
 
   return Container(
     margin: const EdgeInsets.only(left: 8, right: 8, top: 2, bottom: 8),
@@ -874,24 +1091,10 @@ List<AccountModel> _filterAccounts(List<AccountModel> accounts) {
                     ),
                     // Debit Header
                     const Expanded(
-                      flex: 2,
+                      flex: 3,
                       child: Center(
                         child: Text(
                           'عليه',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Currency Header
-                    const Expanded(
-                      flex: 2,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'العملة',
                           style: TextStyle(
                             fontSize: 14,
                             color: AppTheme.textSecondary,
@@ -931,12 +1134,71 @@ List<AccountModel> _filterAccounts(List<AccountModel> accounts) {
               : ListView(
                   padding: EdgeInsets.zero,
                   children: [
-                    ...filteredAccounts
-                        .map((account) => _buildAccountTile(account))
-                        .toList(),
-                    const SizedBox(height: 16),
+                    ...tiles,
                   ],
                 ),
+        ),
+        const Divider(
+          height: 1,
+          color: Colors.grey,
+        ),
+        SizedBox(
+          height: 48,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Row(
+                children: [
+                  TextButton.icon(
+                    onPressed: () => _navigateToCreateAccount(category.name),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      foregroundColor: AppTheme.primaryColor,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    icon: const Icon(
+                      Icons.add,
+                      size: 18,
+                    ),
+                    label: const Text(
+                      'حساب جديد',
+                      style: TextStyle(
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        netLabel,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _selectedCurrencyFilter == 'all'
+                            ? NumberFormat('#,##0').format(netTotal.abs())
+                            : '${NumberFormat('#,##0').format(netTotal.abs())} ${_getCurrencySymbol(_selectedCurrencyFilter)}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          // fontWeight: FontWeight.w500,
+                          color: netTotal >= 0
+                              ? AppTheme.creditColor
+                              : AppTheme.debitColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     ),
@@ -1031,20 +1293,6 @@ List<AccountModel> _filterAccounts(List<AccountModel> accounts) {
                             ),
                           ),
                         ),
-                        // Currency Header
-                        const Expanded(
-                          flex: 1,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'العملة',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -1089,11 +1337,12 @@ List<AccountModel> _filterAccounts(List<AccountModel> accounts) {
         if (_isSelectionMode) {
           _toggleAccountSelection(account.id.toString());
         } else {
-          Navigator.of(context).push(
+          Navigator.push(
+            context,
             MaterialPageRoute(
               builder: (context) => AccountTransactionsScreen(account: account),
             ),
-          ).then((_) => loadDataPreservingCategory());
+          ).then((_) => loadDataPreservingCategory(background: true));
         }
       },
       onLongPress: () {
@@ -1163,22 +1412,6 @@ List<AccountModel> _filterAccounts(List<AccountModel> accounts) {
                        color: AppTheme.debitColor,
                        fontSize: 14,
                      ),
-                   ),
-                 ),
-               ),
-               // Currency Column (moved to end)
-               Expanded(
-                 flex: 1,
-                 child: Center(
-                   child: Text(
-                     account.currencyName,
-                     style: const TextStyle(
-                       color: AppTheme.textSecondary,
-                       fontSize: 14,
-                     ),
-                     maxLines: 1,
-                     overflow: TextOverflow.ellipsis,
-                     textAlign: TextAlign.center,
                    ),
                  ),
                ),

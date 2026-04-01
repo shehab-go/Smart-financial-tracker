@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -7,9 +10,35 @@ import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:world_countries/world_countries.dart';
+import 'package:workmanager/workmanager.dart';
+
+import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
+
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  DartPluginRegistrant.ensureInitialized();
+  Workmanager().executeTask((task, inputData) async {
+    try {
+      if (task == AutoBackupManager.workmanagerTaskName) {
+        await AutoBackupManager.instance.runBackupNow(
+          backupType: 'auto',
+          interactive: false,
+          promptIfNecessary: false,
+        );
+      }
+      return Future.value(true);
+    } catch (_) {
+      return Future.value(false);
+    }
+  });
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isAndroid) {
+    Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  }
   
   // Initialize date formatting for Arabic locale
   await initializeDateFormatting('ar', null);

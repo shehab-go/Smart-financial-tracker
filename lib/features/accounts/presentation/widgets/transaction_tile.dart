@@ -24,8 +24,10 @@ class TransactionTile extends StatelessWidget {
     final bool isCredit = transaction.type == 'credit';
     final String formattedDate = DateFormat('dd/MM').format(transaction.date);
     final String formattedAmount = NumberFormat('#,##0').format(transaction.amount);
-    final Color amountColor = isCredit ? AppTheme.creditColor : AppTheme.debitColor;
-    final IconData typeIcon = isCredit ? Icons.arrow_downward : Icons.arrow_upward;
+
+    final String detailsText = (transaction.description != null && transaction.description!.trim().isNotEmpty)
+        ? '$formattedDate - ${transaction.description!.trim()}'
+        : formattedDate;
 
     return InkWell(
       onTap: onTap,
@@ -33,9 +35,9 @@ class TransactionTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: selected 
-              ? AppTheme.primaryColor.withOpacity(0.1) 
-              : highlighted 
+          color: selected
+              ? AppTheme.primaryColor.withOpacity(0.1)
+              : highlighted
                   ? AppTheme.primaryColor.withOpacity(0.05)
                   : Colors.white,
           border: const Border(
@@ -44,7 +46,7 @@ class TransactionTile extends StatelessWidget {
               width: 0.5,
             ),
           ),
-          boxShadow: highlighted 
+          boxShadow: highlighted
               ? [
                   BoxShadow(
                     color: AppTheme.primaryColor.withOpacity(0.2),
@@ -58,44 +60,43 @@ class TransactionTile extends StatelessWidget {
           textDirection: TextDirection.rtl,
           child: Row(
             children: [
-              // Amount column
-              Expanded(
-                flex: 3,
-                child: Text(
-                  formattedAmount,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: amountColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              // Details column
               Expanded(
                 flex: 4,
-                child: Center(
-                  child: Text(
-                    transaction.description ?? 'بدون وصف',
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-              // Date column
-              Expanded(
-                flex: 3,
                 child: Text(
-                  formattedDate,
-                  textAlign: TextAlign.end,
+                  detailsText,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                   style: const TextStyle(
                     color: AppTheme.textPrimary,
                     fontSize: 14,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text(
+                    isCredit ? formattedAmount : '0',
+                    style: const TextStyle(
+                      color: AppTheme.creditColor,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text(
+                    isCredit ? '0' : formattedAmount,
+                    style: const TextStyle(
+                      color: AppTheme.debitColor,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
               ),

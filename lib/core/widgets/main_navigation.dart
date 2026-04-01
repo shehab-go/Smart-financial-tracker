@@ -3,6 +3,7 @@ import 'package:debit_credit_app/features/home/presentation/screens/home_screen.
 import 'package:debit_credit_app/features/expenses/presentation/screens/expense_screen.dart';
 import 'package:debit_credit_app/features/balances/presentation/screens/income_balances_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -12,10 +13,32 @@ class MainNavigation extends StatefulWidget {
   State<MainNavigation> createState() => _MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObserver {
   int _currentIndex = 0;
   bool _isDrawerOpen = false;
   int _balancesTabVersion = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AutoBackupManager.instance.maybeRunAutoBackup(trigger: 'startup');
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      AutoBackupManager.instance.maybeRunAutoBackup(trigger: 'resume');
+    }
+  }
 
   void _onDrawerChanged(bool isOpen) {
     setState(() {

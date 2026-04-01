@@ -346,13 +346,15 @@ class ReportService {
     // Use a conservative limit so that first page (which also has header cards)
     // never overflows; larger datasets are handled by the explicit multi-page logic below.
     const int maxRowsPerPage = 13;
+
+    final normalizedTableData = _normalizeTableData(tableHeaders, tableData);
     
-    if (tableData.length <= maxRowsPerPage) {
+    if (normalizedTableData.length <= maxRowsPerPage) {
       // Single page approach
-      final table = tableData.isNotEmpty 
+      final table = normalizedTableData.isNotEmpty 
           ? pw.Table.fromTextArray(
               headers: tableHeaders,
-              data: tableData,
+              data: normalizedTableData,
               headerStyle: pw.TextStyle(
                 fontWeight: pw.FontWeight.bold,
                 fontSize: 12,
@@ -411,7 +413,7 @@ class ReportService {
       const int subsequentPageRows = 20;
       
       // First page
-      final firstPageData = tableData.take(firstPageRows).toList();
+      final firstPageData = normalizedTableData.take(firstPageRows).toList();
       final firstPageTable = firstPageData.isNotEmpty
           ? pw.Table.fromTextArray(
               headers: tableHeaders,
@@ -470,7 +472,7 @@ class ReportService {
       );
 
       // Subsequent pages
-      final remainingData = tableData.skip(firstPageRows).toList();
+      final remainingData = normalizedTableData.skip(firstPageRows).toList();
       final totalRemainingPages = (remainingData.length / subsequentPageRows).ceil();
       
       for (int pageIndex = 0; pageIndex < totalRemainingPages; pageIndex++) {
@@ -528,8 +530,35 @@ class ReportService {
       }
     }
 
-    final bytes = await pdf.save();
-    await _savePdfFile(bytes, title);
+    try {
+      final bytes = await pdf.save();
+      await _savePdfFile(bytes, title);
+    } catch (e, st) {
+      debugPrint('PDF generation failed for: $title');
+      debugPrint('Headers: ${tableHeaders.length}, Rows: ${normalizedTableData.length}');
+      if (normalizedTableData.isNotEmpty) {
+        final lengths = normalizedTableData.map((r) => r.length).toSet().toList()..sort();
+        debugPrint('Row lengths: $lengths');
+      }
+      debugPrint('Error: $e');
+      debugPrint('$st');
+      rethrow;
+    }
+  }
+
+  static List<List<String>> _normalizeTableData(
+    List<String> headers,
+    List<List<String>> data,
+  ) {
+    final int cols = headers.length;
+    if (cols <= 0) return data;
+    if (data.isEmpty) return data;
+
+    return data.map((row) {
+      if (row.length == cols) return row;
+      if (row.length > cols) return row.sublist(0, cols);
+      return <String>[...row, ...List<String>.filled(cols - row.length, '')];
+    }).toList();
   }
 
   static Future<void> _generatePaginatedPdf(

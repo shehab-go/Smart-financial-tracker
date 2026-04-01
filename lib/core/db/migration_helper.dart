@@ -13,7 +13,7 @@ import 'database_helper.dart';
 /// - Detailed logging is provided for debugging and monitoring
 class MigrationHelper {
   /// Current database schema version
-  static const int currentVersion = 13;
+  static const int currentVersion = 16;
   
   // Constants for default values and common strings
   static const String defaultCurrencyName = 'محلي';
@@ -93,6 +93,18 @@ class MigrationHelper {
       if (oldVersion < 13) {
         print('[MigrationHelper] Applying migration to version 13');
         await _migrateToV13(db);
+      }
+      if (oldVersion < 14) {
+        print('[MigrationHelper] Applying migration to version 14');
+        await _migrateToV14(db);
+      }
+      if (oldVersion < 15) {
+        print('[MigrationHelper] Applying migration to version 15');
+        await _migrateToV15(db);
+      }
+      if (oldVersion < 16) {
+        print('[MigrationHelper] Applying migration to version 16');
+        await _migrateToV16(db);
       }
       
       print('[MigrationHelper] Database migration completed successfully');
@@ -779,6 +791,170 @@ class MigrationHelper {
       print('[MigrationHelper] Migration to v13 completed successfully');
     } catch (e) {
       print('[MigrationHelper] ERROR in _migrateToV13: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 14: Add indexes to speed up Home screen aggregates
+  /// and common joins/filters as the DB grows.
+  static Future<void> _migrateToV14(Database db) async {
+    try {
+      await _createIndexIfNotExists(db, 'idx_accounts_category', 'accounts', 'category');
+      await _createIndexIfNotExists(db, 'idx_accounts_currencyName', 'accounts', 'currencyName');
+      await _createIndexIfNotExists(db, 'idx_transactions_accountId', 'transactions', 'accountId');
+      await _createIndexIfNotExists(db, 'idx_transactions_category', 'transactions', 'category');
+      await _createIndexIfNotExists(db, 'idx_transactions_type', 'transactions', 'type');
+      await _createIndexIfNotExists(db, 'idx_transactions_date', 'transactions', 'date');
+
+      print('[MigrationHelper] Migration to v14 completed successfully');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV14: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 15: Store currency per transaction.
+  ///
+  /// - Adds `transactions.currencyName`.
+  /// - Backfills existing rows from `accounts.currencyName` so old data keeps its original currency.
+  static Future<void> _migrateToV15(Database db) async {
+    try {
+      await _addColumnIfNotExists(
+        db,
+        'transactions',
+        'currencyName',
+        'TEXT NOT NULL DEFAULT "$defaultCurrencyName"',
+      );
+
+      // Backfill: old DBs used account currency; preserve that by copying it into each transaction.
+      await db.execute('''
+        UPDATE transactions
+        SET currencyName = COALESCE(
+          (SELECT a.currencyName FROM accounts a WHERE a.id = transactions.accountId),
+          '$defaultCurrencyName'
+        )
+      ''');
+
+      await _createIndexIfNotExists(db, 'idx_transactions_currencyName', 'transactions', 'currencyName');
+
+      print('[MigrationHelper] Migration to v15 completed successfully');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV15: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> _migrateToV16(Database db) async {
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS account_currency_stats (
+          accountId INTEGER NOT NULL,
+          currencyName TEXT NOT NULL,
+          transactionCount INTEGER NOT NULL DEFAULT 0,
+          totalDebit REAL NOT NULL DEFAULT 0,
+          totalCredit REAL NOT NULL DEFAULT 0,
+          PRIMARY KEY (accountId, currencyName)
+        )
+      ''');
+
+      await _createIndexIfNotExists(db, 'idx_account_currency_stats_currencyName', 'account_currency_stats', 'currencyName');
+
+      await db.execute('DELETE FROM account_currency_stats');
+      await db.execute('''
+        INSERT INTO account_currency_stats (accountId, currencyName, transactionCount, totalDebit, totalCredit)
+        SELECT
+          t.accountId AS accountId,
+          t.currencyName AS currencyName,
+          COUNT(t.id) AS transactionCount,
+          SUM(CASE WHEN t.type = 'debit' THEN t.amount ELSE 0 END) AS totalDebit,
+          SUM(CASE WHEN t.type = 'credit' THEN t.amount ELSE 0 END) AS totalCredit
+        FROM transactions t
+        GROUP BY t.accountId, t.currencyName
+      ''');
+
+      await db.execute('''
+        CREATE TRIGGER IF NOT EXISTS trg_tx_ai_stats
+        AFTER INSERT ON transactions
+        BEGIN
+          INSERT OR IGNORE INTO account_currency_stats (
+            accountId,
+            currencyName,
+            transactionCount,
+            totalDebit,
+            totalCredit
+          ) VALUES (
+            NEW.accountId,
+            NEW.currencyName,
+            0,
+            0,
+            0
+          );
+
+          UPDATE account_currency_stats
+          SET
+            transactionCount = transactionCount + 1,
+            totalDebit = totalDebit + (CASE WHEN NEW.type = 'debit' THEN NEW.amount ELSE 0 END),
+            totalCredit = totalCredit + (CASE WHEN NEW.type = 'credit' THEN NEW.amount ELSE 0 END)
+          WHERE accountId = NEW.accountId AND currencyName = NEW.currencyName;
+        END;
+      ''');
+
+      await db.execute('''
+        CREATE TRIGGER IF NOT EXISTS trg_tx_ad_stats
+        AFTER DELETE ON transactions
+        BEGIN
+          UPDATE account_currency_stats
+          SET
+            transactionCount = transactionCount - 1,
+            totalDebit = totalDebit - (CASE WHEN OLD.type = 'debit' THEN OLD.amount ELSE 0 END),
+            totalCredit = totalCredit - (CASE WHEN OLD.type = 'credit' THEN OLD.amount ELSE 0 END)
+          WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName;
+
+          DELETE FROM account_currency_stats
+          WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName AND transactionCount <= 0;
+        END;
+      ''');
+
+      await db.execute('''
+        CREATE TRIGGER IF NOT EXISTS trg_tx_au_stats
+        AFTER UPDATE ON transactions
+        BEGIN
+          UPDATE account_currency_stats
+          SET
+            transactionCount = transactionCount - 1,
+            totalDebit = totalDebit - (CASE WHEN OLD.type = 'debit' THEN OLD.amount ELSE 0 END),
+            totalCredit = totalCredit - (CASE WHEN OLD.type = 'credit' THEN OLD.amount ELSE 0 END)
+          WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName;
+
+          DELETE FROM account_currency_stats
+          WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName AND transactionCount <= 0;
+
+          INSERT OR IGNORE INTO account_currency_stats (
+            accountId,
+            currencyName,
+            transactionCount,
+            totalDebit,
+            totalCredit
+          ) VALUES (
+            NEW.accountId,
+            NEW.currencyName,
+            0,
+            0,
+            0
+          );
+
+          UPDATE account_currency_stats
+          SET
+            transactionCount = transactionCount + 1,
+            totalDebit = totalDebit + (CASE WHEN NEW.type = 'debit' THEN NEW.amount ELSE 0 END),
+            totalCredit = totalCredit + (CASE WHEN NEW.type = 'credit' THEN NEW.amount ELSE 0 END)
+          WHERE accountId = NEW.accountId AND currencyName = NEW.currencyName;
+        END;
+      ''');
+
+      print('[MigrationHelper] Migration to v16 completed successfully');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV16: $e');
       rethrow;
     }
   }

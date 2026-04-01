@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import 'package:debit_credit_app/core/models/currency.dart';
 import 'package:debit_credit_app/core/models/income_balance.dart';
 import 'package:debit_credit_app/core/models/income_resource.dart';
 import 'package:debit_credit_app/core/services/report_service.dart';
@@ -107,9 +108,10 @@ class AllIncomeBalancesReportGenerator {
     } else {
       totalByCurrency.forEach((currency, total) {
         final displayCurrency = _normalizeCurrencyName(currency);
+        final symbol = CurrencyModel.symbolFor(displayCurrency);
         currencySummaryLines.add(
           pw.Text(
-            '${NumberFormat('#,##0.00').format(total)} $displayCurrency',
+            '${NumberFormat('#,##0.00').format(total)} $symbol',
             style: const pw.TextStyle(
               fontSize: 14,
               color: PdfColors.white,
@@ -154,10 +156,11 @@ class AllIncomeBalancesReportGenerator {
           : (currentBalanceAmounts[id] ?? balance.initialAmount);
       final resource = resourceById[balance.resourceId];
       final displayCurrency = _normalizeCurrencyName(balance.currencyName);
+      final symbol = CurrencyModel.symbolFor(displayCurrency);
 
       return [
         NumberFormat('#,##0.00').format(currentAmount),
-        displayCurrency,
+        symbol,
         balance.name.isNotEmpty ? balance.name : 'غير محدد',
         resource?.name ?? 'مصدر غير معروف',
         balance.isDefault ? 'نعم' : 'لا',

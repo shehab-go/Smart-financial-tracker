@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:debit_credit_app/core/models/currency.dart';
 import 'package:debit_credit_app/core/models/expense.dart';
 import 'package:debit_credit_app/core/models/expense_account.dart';
 import 'package:debit_credit_app/core/services/report_service.dart';
@@ -57,7 +58,7 @@ class ExpenseAccountReportGenerator {
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               pw.Text(
-                'العملة: ${account.currencyName}',
+                'العملة: ${CurrencyModel.symbolFor(account.currencyName)}',
                 style: const pw.TextStyle(
                   fontSize: 12,
                   color: PdfColors.grey700,
@@ -132,7 +133,7 @@ class ExpenseAccountReportGenerator {
               e.name.isNotEmpty ? e.name : 'غير محدد',
               e.detail.isNotEmpty ? e.detail : '-',
               NumberFormat('#,##0').format(e.amount),
-              e.currency,
+              CurrencyModel.symbolFor(e.currency),
             ])
         .toList();
 

@@ -101,9 +101,11 @@ class EnhancedBackupService {
   Future<Directory> _getBackupDir() async {
     Directory baseDir;
     if (Platform.isAndroid) {
+      // Stay within the app-specific external storage so we don't need
+      // MANAGE_EXTERNAL_STORAGE or direct access to /storage/emulated/0/Download.
       await _ensureStoragePermission();
-      // Use app-specific external storage directory on Android to avoid All Files access.
-      baseDir = await getExternalStorageDirectory() ?? await getApplicationDocumentsDirectory();
+      final extDir = await getExternalStorageDirectory();
+      baseDir = extDir ?? await getApplicationDocumentsDirectory();
     } else {
       baseDir = (await getDownloadsDirectory()) ?? await getApplicationDocumentsDirectory();
     }
