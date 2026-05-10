@@ -164,21 +164,21 @@ class AutoBackupManager {
     if (_isRunning) return;
     _isRunning = true;
     try {
-      final enabled = await isEnabled();
+      final enabled = await isEnabled().timeout(const Duration(seconds: 10));
       if (!enabled) return;
 
-      final signedIn = await GoogleDriveBackupService.instance.isSignedIn();
+      final signedIn = await GoogleDriveBackupService.instance.isSignedIn().timeout(const Duration(seconds: 10));
       if (!signedIn) return;
 
-      final frequency = await getFrequency();
-      final last = await getLastBackupMs();
+      final frequency = await getFrequency().timeout(const Duration(seconds: 5));
+      final last = await getLastBackupMs().timeout(const Duration(seconds: 5));
       final now = DateTime.now();
 
       if (!_isDue(frequency: frequency, lastBackupMs: last, now: now, trigger: trigger)) {
         return;
       }
 
-      await runBackupNow(backupType: 'auto');
+      await runBackupNow(backupType: 'auto').timeout(const Duration(minutes: 2));
     } finally {
       _isRunning = false;
     }

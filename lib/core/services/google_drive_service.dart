@@ -51,7 +51,8 @@ class GoogleDriveService {
       return true;
     } catch (e) {
       debugPrint('Google Drive sign in error: $e');
-      return false;
+      // User-friendly Arabic error message can be shown in UI
+      throw Exception('فشل تسجيل الدخول: تحقق من اتصال الإنترنت وحساب Google');
     }
   }
 
@@ -131,7 +132,8 @@ class GoogleDriveService {
       return true;
     } catch (e) {
       debugPrint('Error uploading backup to Drive: $e');
-      return false;
+      // User-friendly Arabic error message
+      throw Exception('فشل رفع النسخة: تحقق من مساحة التخزين المتاحة والاتصال بالإنترنت');
     }
   }
 
@@ -176,7 +178,8 @@ class GoogleDriveService {
       return localFile;
     } catch (e) {
       debugPrint('Error downloading backup from Drive: $e');
-      return null;
+      // User-friendly Arabic error message
+      throw Exception('فشل تحميل النسخة: تحقق من اتصال الإنترنت وصلاحيات الوصول');
     }
   }
 
@@ -189,7 +192,8 @@ class GoogleDriveService {
       return true;
     } catch (e) {
       debugPrint('Error deleting Drive backup: $e');
-      return false;
+      // User-friendly Arabic error message
+      throw Exception('فشل حذف النسخة: تحقق من اتصال الإنترنت وصلاحيات الوصول');
     }
   }
 

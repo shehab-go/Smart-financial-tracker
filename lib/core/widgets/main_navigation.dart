@@ -23,7 +23,12 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      AutoBackupManager.instance.maybeRunAutoBackup(trigger: 'startup');
+      // Delay auto backup to avoid ANR on startup
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          AutoBackupManager.instance.maybeRunAutoBackup(trigger: 'startup');
+        }
+      });
     });
   }
 

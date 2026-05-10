@@ -204,7 +204,7 @@ class HomeScreenState extends State<HomeScreen> {
   Future<void> loadData() async {
     setState(() => _state = _state.copyWith(isLoading: true));
     try {
-      final newState = await _controller.load();
+      final newState = await _controller.load().timeout(const Duration(seconds: 10));
       setState(() => _state = newState);
     } catch (e) {
       setState(() => _state = _state.copyWith(isLoading: false));
@@ -224,7 +224,7 @@ class HomeScreenState extends State<HomeScreen> {
     
     setState(() => _state = _state.copyWith(isLoading: true));
     try {
-      final newState = await _controller.load();
+      final newState = await _controller.load().timeout(const Duration(seconds: 10));
       
       // Find the new index for the preserved category before updating state
       int newSelectedIndex = 0;

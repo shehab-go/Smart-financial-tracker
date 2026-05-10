@@ -29,7 +29,11 @@ class GoogleDriveBackupService {
   }
 
   Future<GoogleSignInAccount?> _interactiveAccount() async {
-    return await _googleSignIn.signIn();
+    try {
+      return await _googleSignIn.signIn();
+    } catch (e) {
+      throw Exception('فشل تسجيل الدخول: تحقق من اتصال الإنترنت وحساب Google');
+    }
   }
 
   Future<GoogleSignInAccount> _requireAccount({required bool interactive}) async {
