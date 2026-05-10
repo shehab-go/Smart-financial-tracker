@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
 import 'package:debit_credit_app/features/about/presentation/screens/about_screen.dart';
 import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_backup_screen.dart';
+import 'package:debit_credit_app/features/backup/presentation/screens/google_drive_backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
 import 'package:debit_credit_app/core/widgets/main_navigation.dart';
 
@@ -24,6 +26,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final List<String> _currencies = ['ريال سعودي', 'دولار أمريكي', 'ريال يمني'];
 
   @override
+  void initState() {
+    super.initState();
+    _loadBackupSettings();
+  }
+
+  Future<void> _loadBackupSettings() async {
+    final enabled = await AutoBackupManager.instance.isEnabled();
+    if (!mounted) return;
+    setState(() {
+      _autoBackup = enabled;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -42,277 +58,290 @@ class _SettingsScreenState extends State<SettingsScreen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: Colors.grey.shade700, size: 20),
           onPressed: () {
-            Navigator.pushAndRemoveUntil(
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+              return;
+            }
+
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const MainNavigation()),
-              (route) => false,
             );
-            // Open drawer after navigation
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              final scaffoldState = Scaffold.of(context);
-              if (scaffoldState.hasEndDrawer) {
-                scaffoldState.openEndDrawer();
-              }
-            });
           },
         ),
       ),
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-            // User Profile Section
-            _buildSectionCard(
-              title: 'الملف الشخصي',
-              icon: Icons.person_rounded,
+      body: SafeArea(
+        top: false,
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSettingsTile(
-                  icon: Icons.account_circle_rounded,
-                  title: 'إدارة الملف الشخصي',
-                  subtitle: 'تعديل المعلومات الشخصية والصورة',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const UserProfileScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // App Preferences Section
-            _buildSectionCard(
-              title: 'تفضيلات التطبيق',
-              icon: Icons.tune_rounded,
-              children: [
-                _buildSwitchTile(
-                  icon: Icons.dark_mode_rounded,
-                  title: 'الوضع المظلم',
-                  subtitle: 'تفعيل المظهر المظلم للتطبيق',
-                  value: _isDarkMode,
-                  onChanged: (value) {
-                    setState(() {
-                      _isDarkMode = value;
-                    });
-                    // TODO: Implement theme switching
-                  },
-                ),
-                _buildDropdownTile(
-                  icon: Icons.language_rounded,
-                  title: 'اللغة',
-                  subtitle: 'اختيار لغة التطبيق',
-                  value: _selectedLanguage,
-                  items: _languages,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedLanguage = value!;
-                    });
-                    // TODO: Implement language switching
-                  },
-                ),
-                _buildDropdownTile(
-                  icon: Icons.monetization_on_rounded,
-                  title: 'العملة الافتراضية',
-                  subtitle: 'العملة المستخدمة في التطبيق',
-                  value: _selectedCurrency,
-                  items: _currencies,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCurrency = value!;
-                    });
-                    // TODO: Implement currency switching
-                  },
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Notifications Section
-            _buildSectionCard(
-              title: 'الإشعارات',
-              icon: Icons.notifications_rounded,
-              children: [
-                _buildSwitchTile(
-                  icon: Icons.notifications_active_rounded,
-                  title: 'تفعيل الإشعارات',
-                  subtitle: 'استقبال إشعارات التطبيق',
-                  value: _notificationsEnabled,
-                  onChanged: (value) {
-                    setState(() {
-                      _notificationsEnabled = value;
-                    });
-                    // TODO: Implement notification settings
-                  },
-                ),
-                _buildSettingsTile(
-                  icon: Icons.schedule_rounded,
-                  title: 'تذكيرات الدفع',
-                  subtitle: 'إعداد تذكيرات المواعيد المالية',
-                  onTap: () {
-                    // TODO: Navigate to payment reminders settings
-                    _showComingSoonDialog();
-                  },
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Backup & Security Section
-            _buildSectionCard(
-              title: 'النسخ الاحتياطية والأمان',
-              icon: Icons.security_rounded,
-              children: [
-                _buildSwitchTile(
-                  icon: Icons.backup_rounded,
-                  title: 'النسخ الاحتياطي التلقائي',
-                  subtitle: 'إنشاء نسخة احتياطية تلقائياً',
-                  value: _autoBackup,
-                  onChanged: (value) {
-                    setState(() {
-                      _autoBackup = value;
-                    });
-                    // TODO: Implement auto backup
-                  },
-                ),
-                _buildSettingsTile(
-                  icon: Icons.backup_table_rounded,
-                  title: 'إدارة النسخ الاحتياطية',
-                  subtitle: 'إنشاء واستعادة النسخ الاحتياطية',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EnhancedBackupScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildSettingsTile(
-                  icon: Icons.lock_rounded,
-                  title: 'الحماية بكلمة مرور',
-                  subtitle: 'حماية التطبيق بكلمة مرور أو بصمة',
-                  onTap: () {
-                    // TODO: Navigate to security settings
-                    _showComingSoonDialog();
-                  },
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Data Management Section
-            _buildSectionCard(
-              title: 'إدارة البيانات',
-              icon: Icons.storage_rounded,
-              children: [
-                _buildSettingsTile(
-                  icon: Icons.cleaning_services_rounded,
-                  title: 'تنظيف البيانات',
-                  subtitle: 'حذف البيانات المؤقتة والملفات غير المستخدمة',
-                  onTap: () {
-                    _showCleanDataDialog();
-                  },
-                ),
-                _buildSettingsTile(
-                  icon: Icons.file_download_rounded,
-                  title: 'تصدير البيانات',
-                  subtitle: 'تصدير البيانات بصيغة Excel أو PDF',
-                  onTap: () {
-                    // TODO: Implement data export
-                    _showComingSoonDialog();
-                  },
-                ),
-                _buildSettingsTile(
-                  icon: Icons.delete_forever_rounded,
-                  title: 'حذف جميع البيانات',
-                  subtitle: 'حذف جميع البيانات نهائياً',
-                  textColor: AppTheme.errorColor,
-                  onTap: () {
-                    _showDeleteAllDataDialog();
-                  },
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Support & Info Section
-            _buildSectionCard(
-              title: 'الدعم والمعلومات',
-              icon: Icons.help_rounded,
-              children: [
-                _buildSettingsTile(
-                  icon: Icons.info_rounded,
-                  title: 'حول التطبيق',
-                  subtitle: 'معلومات التطبيق والإصدار',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AboutScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildSettingsTile(
-                  icon: Icons.privacy_tip_rounded,
-                  title: 'سياسة الخصوصية',
-                  subtitle: 'اطلع على سياسة الخصوصية',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PrivacyScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildSettingsTile(
-                  icon: Icons.star_rate_rounded,
-                  title: 'تقييم التطبيق',
-                  subtitle: 'قيم التطبيق في المتجر',
-                  onTap: () {
-                    // TODO: Implement app rating
-                    _showComingSoonDialog();
-                  },
-                ),
-                _buildSettingsTile(
-                  icon: Icons.bug_report_rounded,
-                  title: 'الإبلاغ عن مشكلة',
-                  subtitle: 'أرسل تقرير عن مشكلة في التطبيق',
-                  onTap: () {
-                    // TODO: Implement bug reporting
-                    _showComingSoonDialog();
-                  },
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 32),
-            
-            // App Version
-            Center(
-              child: Text(
-                'إصدار التطبيق 1.0.0',
-                style: TextStyle(
-                  color: AppTheme.textTertiary,
-                  fontSize: 14,
+              // User Profile Section
+              _buildSectionCard(
+                title: 'الملف الشخصي',
+                icon: Icons.person_rounded,
+                children: [
+                  _buildSettingsTile(
+                    icon: Icons.account_circle_rounded,
+                    title: 'إدارة الملف الشخصي',
+                    subtitle: 'تعديل المعلومات الشخصية والصورة',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const UserProfileScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // App Preferences Section
+              _buildSectionCard(
+                title: 'تفضيلات التطبيق',
+                icon: Icons.tune_rounded,
+                children: [
+                  _buildSwitchTile(
+                    icon: Icons.dark_mode_rounded,
+                    title: 'الوضع المظلم',
+                    subtitle: 'تفعيل المظهر المظلم للتطبيق',
+                    value: _isDarkMode,
+                    onChanged: (value) {
+                      setState(() {
+                        _isDarkMode = value;
+                      });
+                      // TODO: Implement theme switching
+                    },
+                  ),
+                  _buildDropdownTile(
+                    icon: Icons.language_rounded,
+                    title: 'اللغة',
+                    subtitle: 'اختيار لغة التطبيق',
+                    value: _selectedLanguage,
+                    items: _languages,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedLanguage = value!;
+                      });
+                      // TODO: Implement language switching
+                    },
+                  ),
+                  _buildDropdownTile(
+                    icon: Icons.monetization_on_rounded,
+                    title: 'العملة الافتراضية',
+                    subtitle: 'العملة المستخدمة في التطبيق',
+                    value: _selectedCurrency,
+                    items: _currencies,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCurrency = value!;
+                      });
+                      // TODO: Implement currency switching
+                    },
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Notifications Section
+              _buildSectionCard(
+                title: 'الإشعارات',
+                icon: Icons.notifications_rounded,
+                children: [
+                  _buildSwitchTile(
+                    icon: Icons.notifications_active_rounded,
+                    title: 'تفعيل الإشعارات',
+                    subtitle: 'استقبال إشعارات التطبيق',
+                    value: _notificationsEnabled,
+                    onChanged: (value) {
+                      setState(() {
+                        _notificationsEnabled = value;
+                      });
+                      // TODO: Implement notification settings
+                    },
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.schedule_rounded,
+                    title: 'تذكيرات الدفع',
+                    subtitle: 'إعداد تذكيرات المواعيد المالية',
+                    onTap: () {
+                      // TODO: Navigate to payment reminders settings
+                      _showComingSoonDialog();
+                    },
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Backup & Security Section
+              _buildSectionCard(
+                title: 'النسخ الاحتياطية والأمان',
+                icon: Icons.security_rounded,
+                children: [
+                  _buildSwitchTile(
+                    icon: Icons.backup_rounded,
+                    title: 'النسخ الاحتياطي التلقائي',
+                    subtitle: 'إنشاء نسخة احتياطية تلقائياً',
+                    value: _autoBackup,
+                    onChanged: (value) {
+                      setState(() {
+                        _autoBackup = value;
+                      });
+                      AutoBackupManager.instance.setEnabled(value);
+                    },
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.cloud_rounded,
+                    title: 'Google Drive Backup',
+                    subtitle: 'ربط Google Drive وإدارة النسخ السحابية',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const GoogleDriveBackupScreen(),
+                        ),
+                      ).then((_) => _loadBackupSettings());
+                    },
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.backup_table_rounded,
+                    title: 'إدارة النسخ الاحتياطية',
+                    subtitle: 'إنشاء واستعادة النسخ الاحتياطية',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EnhancedBackupScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.lock_rounded,
+                    title: 'الحماية بكلمة مرور',
+                    subtitle: 'حماية التطبيق بكلمة مرور أو بصمة',
+                    onTap: () {
+                      // TODO: Navigate to security settings
+                      _showComingSoonDialog();
+                    },
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Data Management Section
+              _buildSectionCard(
+                title: 'إدارة البيانات',
+                icon: Icons.storage_rounded,
+                children: [
+                  _buildSettingsTile(
+                    icon: Icons.cleaning_services_rounded,
+                    title: 'تنظيف البيانات',
+                    subtitle: 'حذف البيانات المؤقتة والملفات غير المستخدمة',
+                    onTap: () {
+                      _showCleanDataDialog();
+                    },
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.file_download_rounded,
+                    title: 'تصدير البيانات',
+                    subtitle: 'تصدير البيانات بصيغة Excel أو PDF',
+                    onTap: () {
+                      // TODO: Implement data export
+                      _showComingSoonDialog();
+                    },
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.delete_forever_rounded,
+                    title: 'حذف جميع البيانات',
+                    subtitle: 'حذف جميع البيانات نهائياً',
+                    textColor: AppTheme.errorColor,
+                    onTap: () {
+                      _showDeleteAllDataDialog();
+                    },
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Support & Info Section
+              _buildSectionCard(
+                title: 'الدعم والمعلومات',
+                icon: Icons.help_rounded,
+                children: [
+                  _buildSettingsTile(
+                    icon: Icons.info_rounded,
+                    title: 'حول التطبيق',
+                    subtitle: 'معلومات التطبيق والإصدار',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AboutScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.privacy_tip_rounded,
+                    title: 'سياسة الخصوصية',
+                    subtitle: 'اطلع على سياسة الخصوصية',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PrivacyScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.star_rate_rounded,
+                    title: 'تقييم التطبيق',
+                    subtitle: 'قيم التطبيق في المتجر',
+                    onTap: () {
+                      // TODO: Implement app rating
+                      _showComingSoonDialog();
+                    },
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.bug_report_rounded,
+                    title: 'الإبلاغ عن مشكلة',
+                    subtitle: 'أرسل تقرير عن مشكلة في التطبيق',
+                    onTap: () {
+                      // TODO: Implement bug reporting
+                      _showComingSoonDialog();
+                    },
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // App Version
+              Center(
+                child: Text(
+                  'إصدار التطبيق 1.0.0',
+                  style: TextStyle(
+                    color: AppTheme.textTertiary,
+                    fontSize: 14,
+                  ),
                 ),
               ),
+              
+              const SizedBox(height: 16),
+              ],
             ),
-            
-            const SizedBox(height: 16),
-            ],
           ),
         ),
       ),

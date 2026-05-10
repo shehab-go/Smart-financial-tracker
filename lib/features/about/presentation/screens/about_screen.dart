@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/main_navigation.dart';
 
@@ -39,7 +40,9 @@ class AboutScreen extends StatelessWidget {
             },
           ),
         ),
-        body: SingleChildScrollView(
+        body: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +95,7 @@ class AboutScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'الإصدار 1.0.0',
+                        'الإصدار 1.3.0',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppTheme.textSecondary,
@@ -202,6 +205,56 @@ class AboutScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/images/whatsapp.svg',
+                          // width: 18,
+                          // height: 18,
+                          colorFilter: const ColorFilter.mode(
+                            AppTheme.primaryColor,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'رسالة واتساب',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            // Directly open the public WhatsApp link (same behavior as tapping it outside the app)
+                            final Uri waWebUri = Uri.parse('https://wa.me/message/6D7NMPO3S7R2N1');
+                            await launchUrl(waWebUri, mode: LaunchMode.externalApplication);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          icon: SvgPicture.asset(
+                            'assets/images/whatsapp.svg',
+                            // width: 18,
+                            // height: 18,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                          label: const Text(
+                            'واتساب',
+                            style: TextStyle(color: Colors.white, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -298,6 +351,7 @@ class AboutScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

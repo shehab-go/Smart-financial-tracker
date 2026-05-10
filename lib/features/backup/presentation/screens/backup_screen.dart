@@ -130,6 +130,16 @@ class _BackupScreenState extends State<BackupScreen> {
         floatingActionButton: FloatingActionButton.extended(
           heroTag: 'new',
           onPressed: _createBackup,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.blue,
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: const BorderSide(
+              color: Colors.blue,
+              width: 1.4,
+            ),
+          ),
           label: const Text('إنشاء نسخة'),
           icon: const Icon(Icons.add),
         ),

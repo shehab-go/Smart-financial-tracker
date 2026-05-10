@@ -24,7 +24,6 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      fontFamily: 'ArbFONTSIBMPlexArabicText',
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         brightness: Brightness.light,
@@ -50,7 +49,7 @@ class AppTheme {
       ),
       
       // Card Theme
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         elevation: 2,
         shadowColor: Colors.black.withOpacity(0.1),
         shape: RoundedRectangleBorder(
@@ -129,7 +128,7 @@ class AppTheme {
       ),
       
       // Tab Bar Theme
-      tabBarTheme: const TabBarThemeData(
+      tabBarTheme: const TabBarTheme(
         labelColor: primaryColor,
         unselectedLabelColor: textSecondary,
         indicatorColor: primaryColor,

@@ -7,6 +7,7 @@ import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_s
 import 'package:debit_credit_app/features/categories/presentation/screens/categories_screen.dart';
 import 'package:debit_credit_app/features/currencies/presentation/screens/currencies_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_backup_screen.dart';
+import 'package:debit_credit_app/features/backup/presentation/screens/google_drive_backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
 import 'package:debit_credit_app/features/settings/presentation/screens/settings_screen.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
@@ -81,7 +82,10 @@ class _AppDrawerState extends State<AppDrawer> {
           ),
         child: Container(
           color: const Color(0xFFF8FAFC),
-          child: CustomScrollView(
+          child: SafeArea(
+            top: false,
+            // Apply bottom inset so drawer content doesn't go under system navigation keys
+            child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Container(
@@ -269,6 +273,19 @@ class _AppDrawerState extends State<AppDrawer> {
                 ),
                 _buildDrawerItem(
                   context,
+                  icon: Icons.cloud_rounded,
+                  title: 'Google Drive Backup',
+                  subtitle: 'نسخ واستعادة من Google Drive',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const GoogleDriveBackupScreen()),
+                    );
+                  },
+                ),
+                _buildDrawerItem(
+                  context,
                   icon: Icons.category_rounded,
                   title: 'إدارة الفئات',
                   subtitle: 'إضافة وتعديل فئات الحسابات',
@@ -316,6 +333,18 @@ class _AppDrawerState extends State<AppDrawer> {
                 ),
                 _buildDrawerItem(
                   context,
+                  icon: Icons.settings_rounded,
+                  title: 'الإعدادات',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                    );
+                  },
+                ),
+                _buildDrawerItem(
+                  context,
                   icon: Icons.info_rounded,
                   title: 'حول التطبيق',
                   onTap: () {
@@ -343,6 +372,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
           ],
         ),
+          ),
           ),
         ),
       ),

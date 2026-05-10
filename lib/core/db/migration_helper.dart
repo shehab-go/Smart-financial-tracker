@@ -13,7 +13,7 @@ import 'database_helper.dart';
 /// - Detailed logging is provided for debugging and monitoring
 class MigrationHelper {
   /// Current database schema version
-  static const int currentVersion = 10;
+  static const int currentVersion = 16;
   
   // Constants for default values and common strings
   static const String defaultCurrencyName = 'محلي';
@@ -81,6 +81,30 @@ class MigrationHelper {
       if (oldVersion < 10) {
         print('[MigrationHelper] Applying migration to version 10');
         await _migrateToV10(db);
+      }
+      if (oldVersion < 11) {
+        print('[MigrationHelper] Applying migration to version 11');
+        await _migrateToV11(db);
+      }
+      if (oldVersion < 12) {
+        print('[MigrationHelper] Applying migration to version 12');
+        await _migrateToV12(db);
+      }
+      if (oldVersion < 13) {
+        print('[MigrationHelper] Applying migration to version 13');
+        await _migrateToV13(db);
+      }
+      if (oldVersion < 14) {
+        print('[MigrationHelper] Applying migration to version 14');
+        await _migrateToV14(db);
+      }
+      if (oldVersion < 15) {
+        print('[MigrationHelper] Applying migration to version 15');
+        await _migrateToV15(db);
+      }
+      if (oldVersion < 16) {
+        print('[MigrationHelper] Applying migration to version 16');
+        await _migrateToV16(db);
       }
       
       print('[MigrationHelper] Database migration completed successfully');
@@ -533,6 +557,404 @@ class MigrationHelper {
       print('[MigrationHelper] Successfully completed migration to v10 - currencyName column fixed');
     } catch (e) {
       print('[MigrationHelper] ERROR in _migrateToV10: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 11: Add income resources, balances, and allocation tables
+  static Future<void> _migrateToV11(Database db) async {
+    try {
+      // Create income resources table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS income_resources (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          createdDate INTEGER NOT NULL
+        )
+      ''');
+
+      // Create income balances table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS income_balances (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          resourceId INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          currencyName TEXT NOT NULL DEFAULT 'محلي',
+          initialAmount REAL NOT NULL DEFAULT 0,
+          isDefault INTEGER NOT NULL DEFAULT 0,
+          createdDate INTEGER NOT NULL,
+          FOREIGN KEY (resourceId) REFERENCES income_resources (id) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create allocation tables
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS transaction_balance_allocations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          transactionId INTEGER NOT NULL,
+          balanceId INTEGER NOT NULL,
+          allocatedAmount REAL NOT NULL,
+          FOREIGN KEY (transactionId) REFERENCES transactions (id) ON DELETE CASCADE,
+          FOREIGN KEY (balanceId) REFERENCES income_balances (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS expense_balance_allocations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          expenseId INTEGER NOT NULL,
+          balanceId INTEGER NOT NULL,
+          allocatedAmount REAL NOT NULL,
+          FOREIGN KEY (expenseId) REFERENCES expenses (id) ON DELETE CASCADE,
+          FOREIGN KEY (balanceId) REFERENCES income_balances (id) ON DELETE CASCADE
+        )
+      ''');
+
+      final int now = DateTime.now().millisecondsSinceEpoch;
+
+      // Ensure there is at least one income resource
+      int resourceId;
+      final existingResources = await db.query(
+        'income_resources',
+        limit: 1,
+      );
+      if (existingResources.isEmpty) {
+        resourceId = await db.insert('income_resources', {
+          'name': 'المصدر الرئيسي',
+          'description': 'المصدر الافتراضي للرصيد',
+          'createdDate': now,
+        });
+      } else {
+        resourceId = existingResources.first['id'] as int;
+      }
+
+      // Ensure there is a default income balance
+      int defaultBalanceId;
+      final existingDefaultBalance = await db.query(
+        'income_balances',
+        where: 'isDefault = ?',
+        whereArgs: [1],
+        limit: 1,
+      );
+      if (existingDefaultBalance.isEmpty) {
+        defaultBalanceId = await db.insert('income_balances', {
+          'resourceId': resourceId,
+          'name': 'الرصيد الأساسي',
+          'currencyName': defaultCurrencyName,
+          'initialAmount': 0.0,
+          'isDefault': 1,
+          'createdDate': now,
+        });
+      } else {
+        defaultBalanceId = existingDefaultBalance.first['id'] as int;
+      }
+
+      // Backfill allocations for existing transactions
+      final transactions = await db.query('transactions');
+      for (final tx in transactions) {
+        final int? txId = tx['id'] as int?;
+        if (txId == null) continue;
+
+        final existingAllocations = await db.query(
+          'transaction_balance_allocations',
+          where: 'transactionId = ?',
+          whereArgs: [txId],
+          limit: 1,
+        );
+
+        if (existingAllocations.isEmpty) {
+          final double amount = (tx['amount'] as num?)?.toDouble() ?? 0.0;
+          await db.insert('transaction_balance_allocations', {
+            'transactionId': txId,
+            'balanceId': defaultBalanceId,
+            'allocatedAmount': amount,
+          });
+        }
+      }
+
+      // Backfill allocations for existing expenses
+      final expenses = await db.query('expenses');
+      for (final exp in expenses) {
+        final int? expId = exp['id'] as int?;
+        if (expId == null) continue;
+
+        final existingAllocations = await db.query(
+          'expense_balance_allocations',
+          where: 'expenseId = ?',
+          whereArgs: [expId],
+          limit: 1,
+        );
+
+        if (existingAllocations.isEmpty) {
+          final double amount = (exp['amount'] as num?)?.toDouble() ?? 0.0;
+          await db.insert('expense_balance_allocations', {
+            'expenseId': expId,
+            'balanceId': defaultBalanceId,
+            'allocatedAmount': amount,
+          });
+        }
+      }
+
+      print('[MigrationHelper] Successfully completed migration to v11 - income resources, balances, and allocations added');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV11: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 12: Create app_meta table for global app flags
+  static Future<void> _migrateToV12(Database db) async {
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS app_meta (
+          key TEXT PRIMARY KEY,
+          value TEXT
+        )
+      ''');
+
+      print('[MigrationHelper] Successfully created app_meta table (v12)');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV12: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 13: Introduce expense_accounts and link existing
+  /// expenses so each becomes its own main expense account.
+  static Future<void> _migrateToV13(Database db) async {
+    try {
+      print('[MigrationHelper] Starting migration to v13 - expense accounts');
+
+      // 1) Ensure expense_accounts table exists (for older installations).
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS expense_accounts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          category TEXT NOT NULL DEFAULT 'مصروفات',
+          currencyName TEXT NOT NULL DEFAULT '$defaultCurrencyName',
+          createdDate INTEGER NOT NULL
+        )
+      ''');
+
+      // 2) Add expenseAccountId column to expenses if it doesn't exist.
+      await _addColumnIfNotExists(
+        db,
+        'expenses',
+        'expenseAccountId',
+        'INTEGER',
+      );
+
+      // 3) For existing expenses without an expenseAccountId, create a
+      //    dedicated expense account so each old expense becomes a
+      //    "main" account holding that one expense.
+      final expenses = await db.query('expenses');
+      for (final exp in expenses) {
+        final int? expId = exp['id'] as int?;
+        if (expId == null) continue;
+
+        // If column existed before and already has a value, skip.
+        if (exp.containsKey('expenseAccountId') &&
+            exp['expenseAccountId'] != null) {
+          continue;
+        }
+
+        final String name = (exp['name'] as String?) ?? 'مصروف';
+        final String category = (exp['category'] as String?) ?? 'مصروفات';
+        final String currencyName = (exp['currency'] as String?) ?? defaultCurrencyName;
+
+        int createdDateMillis;
+        final createdRaw = exp['createdDate'];
+        if (createdRaw is int) {
+          createdDateMillis = createdRaw;
+        } else if (createdRaw is num) {
+          createdDateMillis = createdRaw.toInt();
+        } else {
+          createdDateMillis = DateTime.now().millisecondsSinceEpoch;
+        }
+
+        final int expenseAccountId = await db.insert('expense_accounts', {
+          'name': name,
+          'category': category,
+          'currencyName': currencyName,
+          'createdDate': createdDateMillis,
+        });
+
+        await db.update(
+          'expenses',
+          {'expenseAccountId': expenseAccountId},
+          where: 'id = ?',
+          whereArgs: [expId],
+        );
+      }
+
+      print('[MigrationHelper] Migration to v13 completed successfully');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV13: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 14: Add indexes to speed up Home screen aggregates
+  /// and common joins/filters as the DB grows.
+  static Future<void> _migrateToV14(Database db) async {
+    try {
+      await _createIndexIfNotExists(db, 'idx_accounts_category', 'accounts', 'category');
+      await _createIndexIfNotExists(db, 'idx_accounts_currencyName', 'accounts', 'currencyName');
+      await _createIndexIfNotExists(db, 'idx_transactions_accountId', 'transactions', 'accountId');
+      await _createIndexIfNotExists(db, 'idx_transactions_category', 'transactions', 'category');
+      await _createIndexIfNotExists(db, 'idx_transactions_type', 'transactions', 'type');
+      await _createIndexIfNotExists(db, 'idx_transactions_date', 'transactions', 'date');
+
+      print('[MigrationHelper] Migration to v14 completed successfully');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV14: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 15: Store currency per transaction.
+  ///
+  /// - Adds `transactions.currencyName`.
+  /// - Backfills existing rows from `accounts.currencyName` so old data keeps its original currency.
+  static Future<void> _migrateToV15(Database db) async {
+    try {
+      await _addColumnIfNotExists(
+        db,
+        'transactions',
+        'currencyName',
+        'TEXT NOT NULL DEFAULT "$defaultCurrencyName"',
+      );
+
+      // Backfill: old DBs used account currency; preserve that by copying it into each transaction.
+      await db.execute('''
+        UPDATE transactions
+        SET currencyName = COALESCE(
+          (SELECT a.currencyName FROM accounts a WHERE a.id = transactions.accountId),
+          '$defaultCurrencyName'
+        )
+      ''');
+
+      await _createIndexIfNotExists(db, 'idx_transactions_currencyName', 'transactions', 'currencyName');
+
+      print('[MigrationHelper] Migration to v15 completed successfully');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV15: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> _migrateToV16(Database db) async {
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS account_currency_stats (
+          accountId INTEGER NOT NULL,
+          currencyName TEXT NOT NULL,
+          transactionCount INTEGER NOT NULL DEFAULT 0,
+          totalDebit REAL NOT NULL DEFAULT 0,
+          totalCredit REAL NOT NULL DEFAULT 0,
+          PRIMARY KEY (accountId, currencyName)
+        )
+      ''');
+
+      await _createIndexIfNotExists(db, 'idx_account_currency_stats_currencyName', 'account_currency_stats', 'currencyName');
+
+      await db.execute('DELETE FROM account_currency_stats');
+      await db.execute('''
+        INSERT INTO account_currency_stats (accountId, currencyName, transactionCount, totalDebit, totalCredit)
+        SELECT
+          t.accountId AS accountId,
+          t.currencyName AS currencyName,
+          COUNT(t.id) AS transactionCount,
+          SUM(CASE WHEN t.type = 'debit' THEN t.amount ELSE 0 END) AS totalDebit,
+          SUM(CASE WHEN t.type = 'credit' THEN t.amount ELSE 0 END) AS totalCredit
+        FROM transactions t
+        GROUP BY t.accountId, t.currencyName
+      ''');
+
+      await db.execute('''
+        CREATE TRIGGER IF NOT EXISTS trg_tx_ai_stats
+        AFTER INSERT ON transactions
+        BEGIN
+          INSERT OR IGNORE INTO account_currency_stats (
+            accountId,
+            currencyName,
+            transactionCount,
+            totalDebit,
+            totalCredit
+          ) VALUES (
+            NEW.accountId,
+            NEW.currencyName,
+            0,
+            0,
+            0
+          );
+
+          UPDATE account_currency_stats
+          SET
+            transactionCount = transactionCount + 1,
+            totalDebit = totalDebit + (CASE WHEN NEW.type = 'debit' THEN NEW.amount ELSE 0 END),
+            totalCredit = totalCredit + (CASE WHEN NEW.type = 'credit' THEN NEW.amount ELSE 0 END)
+          WHERE accountId = NEW.accountId AND currencyName = NEW.currencyName;
+        END;
+      ''');
+
+      await db.execute('''
+        CREATE TRIGGER IF NOT EXISTS trg_tx_ad_stats
+        AFTER DELETE ON transactions
+        BEGIN
+          UPDATE account_currency_stats
+          SET
+            transactionCount = transactionCount - 1,
+            totalDebit = totalDebit - (CASE WHEN OLD.type = 'debit' THEN OLD.amount ELSE 0 END),
+            totalCredit = totalCredit - (CASE WHEN OLD.type = 'credit' THEN OLD.amount ELSE 0 END)
+          WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName;
+
+          DELETE FROM account_currency_stats
+          WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName AND transactionCount <= 0;
+        END;
+      ''');
+
+      await db.execute('''
+        CREATE TRIGGER IF NOT EXISTS trg_tx_au_stats
+        AFTER UPDATE ON transactions
+        BEGIN
+          UPDATE account_currency_stats
+          SET
+            transactionCount = transactionCount - 1,
+            totalDebit = totalDebit - (CASE WHEN OLD.type = 'debit' THEN OLD.amount ELSE 0 END),
+            totalCredit = totalCredit - (CASE WHEN OLD.type = 'credit' THEN OLD.amount ELSE 0 END)
+          WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName;
+
+          DELETE FROM account_currency_stats
+          WHERE accountId = OLD.accountId AND currencyName = OLD.currencyName AND transactionCount <= 0;
+
+          INSERT OR IGNORE INTO account_currency_stats (
+            accountId,
+            currencyName,
+            transactionCount,
+            totalDebit,
+            totalCredit
+          ) VALUES (
+            NEW.accountId,
+            NEW.currencyName,
+            0,
+            0,
+            0
+          );
+
+          UPDATE account_currency_stats
+          SET
+            transactionCount = transactionCount + 1,
+            totalDebit = totalDebit + (CASE WHEN NEW.type = 'debit' THEN NEW.amount ELSE 0 END),
+            totalCredit = totalCredit + (CASE WHEN NEW.type = 'credit' THEN NEW.amount ELSE 0 END)
+          WHERE accountId = NEW.accountId AND currencyName = NEW.currencyName;
+        END;
+      ''');
+
+      print('[MigrationHelper] Migration to v16 completed successfully');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV16: $e');
       rethrow;
     }
   }

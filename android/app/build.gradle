@@ -35,11 +35,8 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     packagingOptions {
@@ -78,11 +75,13 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.release
-            // Disable minification to avoid unnecessary Play Core dependency.
-            minifyEnabled false
-            shrinkResources false
+            // Enable code shrinking/obfuscation and resource shrinking for release
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Include native debug symbols in the AAB for better crash analysis
             ndk {
+                // Options: 'NONE', 'SYMBOL_TABLE', 'FULL'. SYMBOL_TABLE balances detail and size.
                 debugSymbolLevel 'SYMBOL_TABLE'
             }
         }
@@ -92,12 +91,12 @@ android {
 dependencies {
     configurations.all {
         resolutionStrategy {
-            force 'org.jetbrains.kotlin:kotlin-stdlib:2.1.0'
-            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.0'
-            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0'
+            force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.10'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.10'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10'
         }
     }
-    implementation 'androidx.activity:activity-ktx:1.9.3'
+    implementation 'androidx.activity:activity-ktx:1.8.2'
     implementation 'androidx.core:core-ktx:1.12.0'
 }
 

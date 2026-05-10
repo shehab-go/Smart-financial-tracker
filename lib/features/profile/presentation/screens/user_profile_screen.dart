@@ -170,12 +170,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
         appBar: AppBar(
-          title: Text(
+          title: const Text(
             'تعديل الملف الشخصي',
-            style: Theme.of(context).textTheme.titleSmall,
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-          backgroundColor: AppTheme.backgroundColor,
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryColor),
@@ -230,7 +233,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
           ],
         ),
-        body: _isLoading
+        body: SafeArea(
+          top: false,
+          child: _isLoading
             ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -255,20 +260,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     children: [
                       // Profile Photo Section
                       Container(
-                        margin: const EdgeInsets.only(bottom: 20),
-                        padding: const EdgeInsets.all(20),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
+                            color: Colors.grey.shade200,
+                            width: 1,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
+                              color: Colors.grey.withOpacity(0.08),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
                             ),
                           ],
                         ),
@@ -285,10 +290,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         color: _logoPath != null ? null : Colors.grey.shade100,
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          width: 1,
-                        ),
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                          width: 1,
+                                        ),
                                       ),
                                       child: _logoPath != null
                                           ? ClipOval(
@@ -335,7 +340,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               Text(
                                 'الصورة الشخصية أو الشعار',
                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
+                                  color: AppTheme.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -348,6 +353,37 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               ),
                             ],
                           ),
+                        ),
+                      ),
+
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.02),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.grey.shade200,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              size: 18,
+                              color: AppTheme.primaryColor,
+                            ),
+                            const SizedBox(width: 8),
+                            const Expanded(
+                              child: Text(
+                                'فقط الاسم مطلوب، وبقية البيانات اختيارية ويمكنك إضافتها لاحقاً.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
 
@@ -373,7 +409,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               Expanded(
                                 child: _buildTextField(
                                   controller: _phoneController,
-                                  label: 'رقم الهاتف',
+                                  label: 'رقم الهاتف (اختياري)',
                                   icon: Icons.phone_outlined,
                                   keyboardType: TextInputType.phone,
                                 ),
@@ -400,7 +436,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           const SizedBox(height: 16),
                           _buildTextField(
                             controller: _addressController,
-                            label: 'العنوان',
+                            label: 'العنوان (اختياري)',
                             icon: Icons.location_on_outlined,
                             maxLines: 2,
                           ),
@@ -409,18 +445,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
                       // Business Information Section
                       _buildSection(
-                        title: 'معلومات العمل',
+                        title: 'معلومات العمل (اختيارية)',
                         icon: Icons.business_rounded,
                         children: [
                           _buildTextField(
                             controller: _businessNameController,
-                            label: 'اسم الشركة/المؤسسة',
+                            label: 'اسم الشركة/المؤسسة (اختياري)',
                             icon: Icons.business_outlined,
                           ),
                           const SizedBox(height: 16),
                           _buildTextField(
                             controller: _tradingActivityController,
-                            label: 'النشاط التجاري',
+                            label: 'النشاط التجاري (اختياري)',
                             hint: 'مثال: تجارة عامة، خدمات، صناعة، إلخ',
                             icon: Icons.work_outline_rounded,
                             maxLines: 2,
@@ -480,6 +516,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ),
               ),
       ),
+      ),
     );
   }
 
@@ -489,16 +526,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     required List<Widget> children,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
@@ -508,41 +548,29 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppTheme.primaryColor,
-                        AppTheme.primaryColor.withOpacity(0.7),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withOpacity(0.3),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
+                  color: AppTheme.primaryColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Icon(
                   icon,
-                  color: Colors.white,
-                  size: 20,
+                  color: AppTheme.primaryColor,
+                  size: 18,
                 ),
               ),
               const SizedBox(width: 12),
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.black87,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           ...children,
         ],
       ),
@@ -563,46 +591,48 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+        labelStyle: const TextStyle(
+          fontSize: 13,
           color: AppTheme.textSecondary,
         ),
-        hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+        hintStyle: TextStyle(
+          fontSize: 12,
           color: AppTheme.textSecondary.withOpacity(0.6),
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-            color: Colors.grey.shade300,
+            color: Colors.grey.shade200,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-            color: Colors.grey.shade300,
+            color: Colors.grey.shade200,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Colors.grey.shade600,
-            width: 2,
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(
+            color: AppTheme.primaryColor,
+            width: 1.5,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(
             color: Colors.red,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(
             color: Colors.red,
-            width: 2,
+            width: 1.5,
           ),
         ),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: Colors.white,
         prefixIcon: Icon(
           icon,
           color: AppTheme.primaryColor,

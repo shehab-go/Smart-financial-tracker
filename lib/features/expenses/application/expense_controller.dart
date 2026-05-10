@@ -1,6 +1,7 @@
 import 'package:debit_credit_app/features/expenses/application/expense_state.dart';
 import 'package:debit_credit_app/features/expenses/domain/expense_repository.dart';
 import 'package:debit_credit_app/core/models/expense.dart';
+import 'package:debit_credit_app/core/models/expense_account.dart';
 
 class ExpenseController {
   final ExpenseRepository _repo;
@@ -15,11 +16,13 @@ class ExpenseController {
       _state = _state.copyWith(isLoading: true, error: null);
 
       final expenses = await _repo.fetchExpenses();
+      final accounts = await _repo.fetchExpenseAccountsWithStats();
       final totalExpenses = await _repo.getTotalExpenses();
 
       _state = _state.copyWith(
         isLoading: false,
         expenses: expenses,
+        expenseAccounts: accounts,
         totalExpenses: totalExpenses,
       );
 
@@ -33,20 +36,52 @@ class ExpenseController {
     }
   }
 
-  Future<bool> addExpense(ExpenseModel expense) async {
+  Future<bool> addExpense(
+    ExpenseModel expense, {
+    List<ExpenseAllocationInput> allocations = const [],
+  }) async {
     try {
-      await _repo.addExpense(expense);
+      ExpenseModel finalExpense = expense;
+
+      // If this is a brand new expense without an associated expense account,
+      // automatically create a matching expense account (similar to migration
+      // behavior where each expense had its own main account).
+      if (expense.id == null && expense.expenseAccountId == null) {
+        final ExpenseAccountModel account = ExpenseAccountModel(
+          name: expense.name,
+          category: expense.category,
+          currencyName: expense.currency,
+          createdDate: expense.createdDate,
+        );
+
+        final int accountId = await _repo.addExpenseAccount(account);
+        finalExpense = expense.copyWith(expenseAccountId: accountId);
+      }
+
+      if (allocations.isEmpty) {
+        await _repo.addExpense(finalExpense);
+      } else {
+        await _repo.addExpenseWithAllocations(finalExpense, allocations);
+      }
       await load(); // Refresh the list
       return true;
+
     } catch (e) {
       _state = _state.copyWith(error: 'Failed to add expense: $e');
       return false;
     }
   }
 
-  Future<bool> updateExpense(ExpenseModel expense) async {
+  Future<bool> updateExpense(
+    ExpenseModel expense, {
+    List<ExpenseAllocationInput> allocations = const [],
+  }) async {
     try {
-      await _repo.updateExpense(expense);
+      if (allocations.isEmpty) {
+        await _repo.updateExpense(expense);
+      } else {
+        await _repo.updateExpenseWithAllocations(expense, allocations);
+      }
       await load(); // Refresh the list
       return true;
     } catch (e) {

@@ -14,8 +14,45 @@ class HomeRepository {
     return _db.getAccountsWithStatsByCategory(category);
   }
 
+  Future<List<AccountModel>> fetchAccountsWithStatsByCategoryAndCurrency(
+    String category,
+    String currencyName,
+  ) {
+    return _db.getAccountsWithStatsByCategoryAndCurrency(category, currencyName);
+  }
+
+  Future<List<AccountModel>> fetchAccountsWithStatsByCategoryUsingAccountCurrency(
+    String category,
+  ) {
+    return _db.getAccountsWithStatsByCategoryUsingAccountCurrency(category);
+  }
+
+  Future<List<AccountModel>> fetchAccountsWithStatsUsingAccountCurrencyAllCategories() {
+    return _db.getAccountsWithStatsUsingAccountCurrencyAllCategories();
+  }
+
+  Future<List<AccountModel>> fetchAccountsWithStatsByCurrencyAllCategories(
+    String currencyName,
+  ) {
+    return _db.getAccountsWithStatsByCurrencyAllCategories(currencyName);
+  }
+
+  Future<List<String>> fetchDistinctTransactionCurrencies() {
+    return _db.getDistinctTransactionCurrencies();
+  }
+
+  Future<String?> fetchDefaultCurrencyName() {
+    return _db.getDefaultCurrencyName();
+  }
+
   Future<Map<String, double>> fetchCategoryTotals(String category) {
     return _db.getCategoryTotals(category);
+  }
+
+  Future<Map<String, Map<String, double>>> fetchCategoryTotalsByCurrency(
+    String currencyName,
+  ) {
+    return _db.getCategoryTotalsByCurrency(currencyName);
   }
 
   Future<void> deleteAccounts(Iterable<int> ids) async {
