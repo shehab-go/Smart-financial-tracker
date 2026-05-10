@@ -1,0 +1,34 @@
+{
+  "project_info": {
+    "project_number": "495820",
+    "project_id": "finance-app-backup-495820",
+    "storage_bucket": "finance-app-backup-495820.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:495820:android:0000000000000000",
+        "android_client_info": {
+          "package_name": "com.ramzi.debit_credit_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "68995492033-t1bvdbu3pemugp1nnbdcji88verq8rbs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDummyKeyForTesting1234567890"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
