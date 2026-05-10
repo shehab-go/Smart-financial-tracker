@@ -8,6 +8,7 @@ import 'package:open_file/open_file.dart';
 import 'package:debit_credit_app/core/services/enhanced_backup_service.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'drive_backup_screen.dart';
 
 class EnhancedBackupScreen extends StatefulWidget {
   const EnhancedBackupScreen({super.key});
@@ -327,6 +328,14 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
           ),
           title: const Text('إدارة النسخ الاحتياطية المتقدمة'),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.cloud),
+              tooltip: 'Google Drive',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DriveBackupScreen()),
+              ),
+            ),
             IconButton(
               icon: const Icon(Icons.cleaning_services),
               tooltip: 'تنظيف النسخ القديمة',
