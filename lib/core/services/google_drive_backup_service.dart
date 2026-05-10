@@ -16,34 +16,20 @@ class GoogleDriveBackupService {
 
   static const List<String> _scopes = <String>[drive.DriveApi.driveAppdataScope];
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-  bool _initialized = false;
-
-  Future<void> _ensureInitialized() async {
-    if (_initialized) return;
-    if (Platform.isAndroid && _serverClientId.trim().isEmpty) {
-      throw StateError('serverClientId must be provided on Android. Build with --dart-define=GOOGLE_SERVER_CLIENT_ID=YOUR_WEB_CLIENT_ID');
-    }
-    await _googleSignIn.initialize(
-      serverClientId: _serverClientId.trim().isEmpty ? null : _serverClientId.trim(),
-    );
-    _initialized = true;
-  }
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: _scopes,
+  );
 
   Future<GoogleSignInAccount?> _silentAccount() async {
     try {
-      await _ensureInitialized();
-      final future = _googleSignIn.attemptLightweightAuthentication();
-      if (future == null) return null;
-      return await future;
+      return await _googleSignIn.signInSilently();
     } catch (_) {
       return null;
     }
   }
 
-  Future<GoogleSignInAccount> _interactiveAccount() async {
-    await _ensureInitialized();
-    return await _googleSignIn.authenticate(scopeHint: _scopes);
+  Future<GoogleSignInAccount?> _interactiveAccount() async {
+    return await _googleSignIn.signIn();
   }
 
   Future<GoogleSignInAccount> _requireAccount({required bool interactive}) async {
@@ -52,7 +38,11 @@ class GoogleDriveBackupService {
     if (!interactive) {
       throw StateError('Not signed in');
     }
-    return await _interactiveAccount();
+    final account = await _interactiveAccount();
+    if (account == null) {
+      throw StateError('User cancelled sign-in');
+    }
+    return account;
   }
 
   Future<GoogleSignInAccount?> signIn() async {
@@ -60,7 +50,6 @@ class GoogleDriveBackupService {
   }
 
   Future<void> signOut() async {
-    await _ensureInitialized();
     await _googleSignIn.signOut();
   }
 
@@ -76,13 +65,7 @@ class GoogleDriveBackupService {
 
   Future<drive.DriveApi> _driveApi({required bool interactive, bool promptIfNecessary = false}) async {
     final account = await _requireAccount(interactive: interactive);
-    final headers = await account.authorizationClient.authorizationHeaders(
-      _scopes,
-      promptIfNecessary: promptIfNecessary,
-    );
-    if (headers == null) {
-      throw StateError('Drive authorization missing. User must re-authenticate.');
-    }
+    final headers = await account.authHeaders;
     return drive.DriveApi(_GoogleAuthClient(headers));
   }
 

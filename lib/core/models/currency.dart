@@ -61,8 +61,7 @@ class CurrencyModel {
     if (_allFiatCurrencies != null) {
       return _allFiatCurrencies!;
     }
-    final picker = CurrencyPicker(onSelect: (_) {});
-    _allFiatCurrencies = picker.currencies.toList(growable: false);
+    _allFiatCurrencies = FiatCurrency.list.toList(growable: false);
     return _allFiatCurrencies!;
   }
 
@@ -74,7 +73,7 @@ class CurrencyModel {
     final all = _getAllFiatCurrencies();
 
     for (final c in all) {
-      final common = c.maybeCommonNameFor(typedLocale);
+      final common = c.translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name;
       if (common != null && common == name) {
         return c;
       }

@@ -1621,8 +1621,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
                                       String displayName;
                                       if (typedLocale != null) {
                                         displayName = chosen!
-                                                .maybeCommonNameFor(
-                                                    typedLocale) ??
+                                                .translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name ??
                                             chosen!.internationalName;
                                       } else {
                                         displayName =

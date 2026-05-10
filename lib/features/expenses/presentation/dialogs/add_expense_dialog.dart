@@ -220,7 +220,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         String displayName;
         if (typedLocale != null) {
           displayName =
-              chosen!.maybeCommonNameFor(typedLocale) ?? chosen!.internationalName;
+              chosen!.translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name ?? chosen!.internationalName;
         } else {
           displayName = chosen!.internationalName;
         }

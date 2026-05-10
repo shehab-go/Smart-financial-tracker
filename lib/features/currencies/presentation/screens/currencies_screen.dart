@@ -42,7 +42,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
 
     for (final c in all) {
       if (typedLocale != null) {
-        final common = c.maybeCommonNameFor(typedLocale);
+        final common = c.translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name;
         if (common != null && common == displayName) {
           return c;
         }
@@ -528,7 +528,7 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
           String displayName;
           if (typedLocale != null) {
             displayName =
-                chosen!.maybeCommonNameFor(typedLocale) ?? chosen!.internationalName;
+                chosen!.translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name ?? chosen!.internationalName;
           } else {
             displayName = chosen!.internationalName;
           }

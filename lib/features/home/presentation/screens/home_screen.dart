@@ -76,6 +76,7 @@ class HomeScreenState extends State<HomeScreen> {
       builder: (context) => ReportBottomSheet(
         onCurrentCategory: _generateReportForCurrentCategory,
         onAllCategories: _generateReportForAll,
+        onEditProfile: () {},
       ),
     );
   }

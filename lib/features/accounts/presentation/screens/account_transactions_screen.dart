@@ -148,7 +148,7 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
       if (chosen != null) {
         final typedLocale = context.maybeLocale;
         final displayName = (typedLocale != null)
-            ? (chosen!.maybeCommonNameFor(typedLocale) ?? chosen!.internationalName)
+            ? (chosen!.translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name ?? chosen!.internationalName)
             : chosen!.internationalName;
 
         setState(() => _selectedCurrency = displayName);
