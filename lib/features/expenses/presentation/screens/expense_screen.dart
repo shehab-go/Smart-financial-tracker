@@ -363,6 +363,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                 'assets/images/report_icons/pdf_report.svg',
                 width: 24,
                 height: 24,
+                colorFilter: const ColorFilter.mode(
+                  AppTheme.primaryColor,
+                  BlendMode.srcIn,
+                ),
               ),
               onPressed: _showReportOptions,
             ),

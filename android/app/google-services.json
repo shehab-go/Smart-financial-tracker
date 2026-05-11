@@ -15,12 +15,16 @@
       "oauth_client": [
         {
           "client_id": "68995492033-t1bvdbu3pemugp1nnbdcji88verq8rbs.apps.googleusercontent.com",
-          "client_type": 3
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ramzi.debit_credit_app",
+            "certificate_hash": "4A4D10A0033860741F5378C95947049491D8F965"
+          }
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDummyKeyForTesting1234567890"
+          "current_key": "AIzaSyFinanceAppBackupKey2024"
         }
       ],
       "services": {

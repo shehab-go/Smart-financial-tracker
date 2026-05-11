@@ -12,9 +12,8 @@ void main() async {
   // Initialize date formatting for Arabic locale
   await initializeDateFormatting('ar', null);
   
-  // Let AndroidX EdgeToEdge handle system bars; only control overlay visibility.
-  // Do not set status/navigation bar colors directly to avoid deprecated APIs on Android 15.
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  // AndroidX EdgeToEdge already handles system bars in MainActivity.
+  // No need to set SystemChrome modes here.
   
   // Set preferred orientations
   SystemChrome.setPreferredOrientations([

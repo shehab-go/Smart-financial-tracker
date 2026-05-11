@@ -26,6 +26,10 @@ class ReportBottomSheet extends StatelessWidget {
               'assets/images/report_icons/pdf_report.svg',
               width: 24,
               height: 24,
+              colorFilter: const ColorFilter.mode(
+                AppTheme.primaryColor,
+                BlendMode.srcIn,
+              ),
             ),
             title: const Text('تقرير الفئة الحالية'),
             onTap: () {
@@ -38,6 +42,10 @@ class ReportBottomSheet extends StatelessWidget {
               'assets/images/report_icons/pdf_report.svg',
               width: 24,
               height: 24,
+              colorFilter: const ColorFilter.mode(
+                AppTheme.primaryColor,
+                BlendMode.srcIn,
+              ),
             ),
             title: const Text('تقرير جميع الفئات'),
             onTap: () {
