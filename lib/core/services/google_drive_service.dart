@@ -18,8 +18,15 @@ class GoogleDriveService {
   static const String _backupFolderName = 'FinanceApp_Backups';
   String? _backupFolderId;
 
+  static String? get _desktopClientId {
+    if (kIsWeb) return null;
+    if (Platform.isAndroid || Platform.isIOS) return null;
+    return '68995492033-t9754odssr17isc9u0o403lgighu1o9k.apps.googleusercontent.com';
+  }
+
   GoogleSignIn get _signIn {
     _googleSignIn ??= GoogleSignIn(
+      clientId: _desktopClientId,
       scopes: [
         drive.DriveApi.driveFileScope,
         drive.DriveApi.driveAppdataScope,
@@ -52,7 +59,7 @@ class GoogleDriveService {
     } catch (e) {
       debugPrint('Google Drive sign in error: $e');
       // User-friendly Arabic error message can be shown in UI
-      throw Exception('فشل تسجيل الدخول: تحقق من اتصال الإنترنت وحساب Google');
+      throw Exception('فشل تسجيل الدخول: $e\nتحقق من اتصال الإنترنت وحساب Google');
     }
   }
 
