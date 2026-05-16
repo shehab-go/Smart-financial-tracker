@@ -90,6 +90,9 @@ android {
                 debugSymbolLevel 'SYMBOL_TABLE'
             }
         }
+        debug {
+            signingConfig = signingConfigs.release
+        }
     }
 }
 

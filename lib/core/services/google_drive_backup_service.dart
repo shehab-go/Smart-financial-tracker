@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
@@ -16,7 +17,14 @@ class GoogleDriveBackupService {
 
   static const List<String> _scopes = <String>[drive.DriveApi.driveAppdataScope];
 
+  static String? get _desktopClientId {
+    if (kIsWeb) return null;
+    if (Platform.isAndroid || Platform.isIOS) return null;
+    return '68995492033-t9754odssr17isc9u0o403lgighu1o9k.apps.googleusercontent.com';
+  }
+
   final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: _desktopClientId,
     scopes: _scopes,
   );
 
@@ -32,7 +40,7 @@ class GoogleDriveBackupService {
     try {
       return await _googleSignIn.signIn();
     } catch (e) {
-      throw Exception('فشل تسجيل الدخول: تحقق من اتصال الإنترنت وحساب Google');
+      throw Exception('فشل تسجيل الدخول: $e\nتحقق من اتصال الإنترنت وحساب Google');
     }
   }
 
