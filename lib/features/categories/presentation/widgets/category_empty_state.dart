@@ -8,35 +8,50 @@ class CategoryEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        margin: const EdgeInsets.all(32),
-        padding: const EdgeInsets.all(24),
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTheme.dividerColor.withOpacity(0.5),
+            width: 1,
+          ),
+          boxShadow: AppTheme.cardShadow,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.category_rounded,
-              size: 64,
-              color: Colors.grey.shade400,
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.06),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.category_rounded,
+                size: 64,
+                color: AppTheme.primaryColor,
+              ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'لا توجد فئات',
+            const SizedBox(height: 24),
+            const Text(
+              'لا توجد فئات حالياً',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
                 color: AppTheme.textPrimary,
+                fontFamily: 'ArbFONTSIBMPlexArabicText',
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              'اضغط على زر + لإضافة فئة جديدة',
+            const Text(
+              'اضغط على زر الإضافة بالأسفل لإنشاء فئة جديدة وإدارة حساباتك المالية.',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 color: AppTheme.textSecondary,
+                fontFamily: 'ArbFONTSIBMPlexArabicText',
+                height: 1.5,
               ),
               textAlign: TextAlign.center,
             ),

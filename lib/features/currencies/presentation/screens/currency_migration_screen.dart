@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:world_countries/world_countries.dart';
@@ -27,6 +28,7 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
 
   Future<void> _pickCurrency(String legacyName) async {
     try {
+      HapticFeedback.lightImpact();
       FiatCurrency? chosen;
 
       await showDialog(
@@ -36,7 +38,7 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
           return Dialog(
             insetPadding: const EdgeInsets.all(16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Directionality(
               textDirection: TextDirection.rtl,
@@ -45,14 +47,8 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
                     const BoxConstraints(maxWidth: 380, maxHeight: 520),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: AppTheme.cardShadow,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -61,13 +57,13 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
-                        vertical: 16,
+                        vertical: 18,
                       ),
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
                         ),
                       ),
                       child: Row(
@@ -76,11 +72,11 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color:
-                                  AppTheme.primaryColor.withOpacity(0.1),
+                                  AppTheme.primaryColor.withOpacity(0.08),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
-                              Icons.payments_outlined,
+                              Icons.payments_rounded,
                               color: AppTheme.primaryColor,
                               size: 18,
                             ),
@@ -91,31 +87,34 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
                               'اختيار العملة',
                               style: TextStyle(
                                 color: AppTheme.textPrimary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
                               ),
                             ),
                           ),
                           IconButton(
-                            onPressed: () =>
-                                Navigator.of(dialogContext).pop(),
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(dialogContext).pop();
+                            },
                             icon: const Icon(
-                              Icons.close,
+                              Icons.close_rounded,
                               color: AppTheme.textSecondary,
-                              size: 18,
+                              size: 20,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const Divider(
+                    Divider(
                       height: 1,
-                      color: AppTheme.dividerColor,
+                      color: AppTheme.dividerColor.withOpacity(0.5),
                     ),
                     // Content
                     Flexible(
                       child: CurrencyPicker(
                         onSelect: (FiatCurrency currency) {
+                          HapticFeedback.lightImpact();
                           chosen = currency;
                           Navigator.of(dialogContext).pop();
                         },
@@ -130,8 +129,6 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
       );
 
       if (chosen != null && mounted) {
-        // Prefer Arabic localized common name when available via TypedLocale,
-        // otherwise fall back to the international name.
         final typedLocale = context.maybeLocale;
         String displayName;
         if (typedLocale != null) {
@@ -148,6 +145,7 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
       }
     } catch (e) {
       if (mounted) {
+        HapticFeedback.vibrate();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('خطأ في اختيار العملة: $e'),
@@ -166,21 +164,15 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
 
     try {
       final db = DatabaseHelper();
-
-      // Apply the actual DB updates for legacy -> new currency names
       await db.applyCurrencyMappings(_selectedNewNames);
 
-      // 1) Mark all newly selected currencies as favorites
       try {
         final Set<String> existingFavorites = await db.getFavoriteCurrencies();
         final Set<String> newNames = _selectedNewNames.values.toSet();
         final Set<String> merged = {...existingFavorites, ...newNames};
         await db.setFavoriteCurrencies(merged);
-      } catch (_) {
-        // In case of any issue with favorites, don't block migration.
-      }
+      } catch (_) {}
 
-      // 2) If no default currency is set yet, use the first selected one
       try {
         if (_firstSelectedNewName != null) {
           final String? currentDefault = await db.getDefaultCurrencyName();
@@ -188,10 +180,10 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
             await db.setDefaultCurrencyName(_firstSelectedNewName!);
           }
         }
-      } catch (_) {
-        // Also non-critical; migration itself already succeeded.
-      }
+      } catch (_) {}
+      
       if (mounted) {
+        HapticFeedback.mediumImpact();
         widget.onCompleted();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -202,6 +194,7 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
       }
     } catch (e) {
       if (mounted) {
+        HapticFeedback.vibrate();
         setState(() {
           _isSaving = false;
         });
@@ -227,33 +220,31 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
               margin: const EdgeInsets.all(16),
               constraints: const BoxConstraints(
                 maxWidth: 380,
-                maxHeight: 560,
+                maxHeight: 580,
               ),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: AppTheme.cardShadow,
+                border: Border.all(
+                  color: AppTheme.dividerColor.withOpacity(0.5),
+                  width: 1,
+                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Header (matches dialog style)
+                  // Header
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
-                      vertical: 16,
+                      vertical: 18,
                     ),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
                       ),
                     ),
                     child: Row(
@@ -261,7 +252,7 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withOpacity(0.1),
+                            color: AppTheme.primaryColor.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
@@ -276,18 +267,18 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'تحديث العملات',
+                                'تحديث العملات القديمة',
                                 style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
                                   color: AppTheme.textPrimary,
                                 ),
                               ),
                               SizedBox(height: 4),
                               Text(
-                                'رجاءً قم باختيار عملة عالمية مناسبة لكل عملة مستخدمة سابقاً.',
+                                'الرجاء اختيار عملة عالمية مقابلة لكل عملة سابقة.',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 11,
                                   color: AppTheme.textSecondary,
                                 ),
                               ),
@@ -297,14 +288,13 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
                       ],
                     ),
                   ),
-                  const Divider(height: 1, color: AppTheme.dividerColor),
+                  Divider(height: 1, color: AppTheme.dividerColor.withOpacity(0.5)),
                   // Content
                   Flexible(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: () {
-                          // Sort legacy currencies alphabetically for display
                           final List<String> sortedLegacies =
                               List<String>.from(widget.legacyCurrencies)
                                 ..sort((a, b) => a.compareTo(b));
@@ -314,92 +304,122 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border:
-                                    Border.all(color: Colors.grey.shade300),
+                                color: AppTheme.backgroundColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppTheme.dividerColor.withOpacity(0.5),
+                                  width: 1,
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    'العملة القديمة: $legacy',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (selected == null)
-                                    TextButton.icon(
-                                      onPressed: () => _pickCurrency(legacy),
-                                      style: TextButton.styleFrom(
-                                        backgroundColor: Colors.white,
-                                        foregroundColor: AppTheme.primaryColor,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: const BoxDecoration(
+                                          color: AppTheme.primaryColor,
+                                          shape: BoxShape.circle,
                                         ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          side: BorderSide(
-                                            color: AppTheme.primaryColor
-                                                .withOpacity(0.4),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'العملة السابقة: $legacy',
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  if (selected == null)
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: TextButton.icon(
+                                        onPressed: () => _pickCurrency(legacy),
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          foregroundColor: AppTheme.primaryColor,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 10,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            side: BorderSide(
+                                              color: AppTheme.primaryColor
+                                                  .withOpacity(0.3),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      icon: const Icon(
-                                        Icons.search_rounded,
-                                        size: 18,
-                                      ),
-                                      label: const Text(
-                                        'اختر عملة جديدة من القائمة العالمية',
-                                        style: TextStyle(fontSize: 13),
+                                        icon: const Icon(
+                                          Icons.search_rounded,
+                                          size: 16,
+                                        ),
+                                        label: const Text(
+                                          'اختر عملة جديدة من القائمة العالمية',
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                        ),
                                       ),
                                     )
                                   else
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              const Text(
-                                                'العملة الجديدة:',
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  color:
-                                                      AppTheme.textSecondary,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                selected,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                  color:
-                                                      AppTheme.textPrimary,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: AppTheme.dividerColor.withOpacity(0.3),
                                         ),
-                                        const SizedBox(width: 8),
-                                        TextButton(
-                                          onPressed: () =>
-                                              _pickCurrency(legacy),
-                                          child: const Text(
-                                            'تغيير',
-                                            style: TextStyle(fontSize: 13),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.check_circle_rounded, color: AppTheme.successColor, size: 18),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'العملة العالمية الجديدة:',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color:
+                                                        AppTheme.textSecondary,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  selected,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.bold,
+                                                    color:
+                                                        AppTheme.textPrimary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 8),
+                                          TextButton(
+                                            onPressed: () =>
+                                                _pickCurrency(legacy),
+                                            child: const Text(
+                                              'تغيير',
+                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                 ],
                               ),
@@ -415,8 +435,8 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(12),
-                        bottomRight: Radius.circular(12),
+                        bottomLeft: Radius.circular(16),
+                        bottomRight: Radius.circular(16),
                       ),
                     ),
                     child: SizedBox(
@@ -427,9 +447,9 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
                           padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                              const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           elevation: 0,
                         ),
@@ -448,7 +468,7 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
                                 'حفظ ومتابعة',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                       ),

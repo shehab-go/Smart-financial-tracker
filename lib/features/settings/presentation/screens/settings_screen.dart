@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
 import 'package:debit_credit_app/features/about/presentation/screens/about_screen.dart';
 import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_screen.dart';
+import 'package:debit_credit_app/features/privacy/presentation/screens/security_settings_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_backup_screen.dart';
-import 'package:debit_credit_app/features/backup/presentation/screens/google_drive_backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
+import 'package:debit_credit_app/core/db/database_helper.dart';
+import 'package:debit_credit_app/features/home/application/reports/all_accounts_report_generator.dart';
 import 'package:debit_credit_app/core/widgets/main_navigation.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -21,6 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _autoBackup = false;
   String _selectedLanguage = 'العربية';
   String _selectedCurrency = 'ريال سعودي';
+  String _lastBackupText = 'جاري التحميل...';
   
   final List<String> _languages = ['العربية', 'English'];
   final List<String> _currencies = ['ريال سعودي', 'دولار أمريكي', 'ريال يمني'];
@@ -33,49 +37,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadBackupSettings() async {
     final enabled = await AutoBackupManager.instance.isEnabled();
+    final lastMs = await AutoBackupManager.instance.getLastBackupMs();
+    String lastText;
+    if (lastMs == null) {
+      lastText = 'لم يُحفظ سحابياً بعد ☁️';
+    } else {
+      final lastDate = DateTime.fromMillisecondsSinceEpoch(lastMs);
+      lastText = 'آخر حفظ: ${DateFormat('yyyy/MM/dd HH:mm').format(lastDate)} ☁️';
+    }
     if (!mounted) return;
     setState(() {
       _autoBackup = enabled;
+      _lastBackupText = lastText;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          'الإعدادات',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: Colors.black87,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: AppTheme.backgroundColor,
+        appBar: AppBar(
+          title: const Text(
+            'الإعدادات',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: AppTheme.textPrimary,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
+            ),
+          ),
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.textPrimary, size: 20),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+                return;
+              }
+  
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MainNavigation()),
+              );
+            },
           ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Colors.grey.shade700, size: 20),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-              return;
-            }
-
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const MainNavigation()),
-            );
-          },
-        ),
-      ),
-      body: SafeArea(
-        top: false,
-        child: Directionality(
-          textDirection: TextDirection.rtl,
+        body: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -201,12 +215,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildSettingsTile(
                     icon: Icons.cloud_rounded,
                     title: 'Google Drive Backup',
-                    subtitle: 'ربط Google Drive وإدارة النسخ السحابية',
+                    subtitle: 'إدارة النسخ السحابية | $_lastBackupText',
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const GoogleDriveBackupScreen(),
+                          builder: (context) => const EnhancedBackupScreen(initialTabIndex: 1),
                         ),
                       ).then((_) => _loadBackupSettings());
                     },
@@ -219,9 +233,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const EnhancedBackupScreen(),
+                          builder: (context) => const EnhancedBackupScreen(initialTabIndex: 0),
                         ),
-                      );
+                      ).then((_) => _loadBackupSettings());
                     },
                   ),
                   _buildSettingsTile(
@@ -229,8 +243,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'الحماية بكلمة مرور',
                     subtitle: 'حماية التطبيق بكلمة مرور أو بصمة',
                     onTap: () {
-                      // TODO: Navigate to security settings
-                      _showComingSoonDialog();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SecuritySettingsScreen(),
+                        ),
+                      );
                     },
                   ),
                 ],
@@ -254,10 +272,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildSettingsTile(
                     icon: Icons.file_download_rounded,
                     title: 'تصدير البيانات',
-                    subtitle: 'تصدير البيانات بصيغة Excel أو PDF',
-                    onTap: () {
-                      // TODO: Implement data export
-                      _showComingSoonDialog();
+                    subtitle: 'تصدير كشف حساب شامل بصيغة PDF 📄',
+                    onTap: () async {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                      try {
+                        final dbHelper = DatabaseHelper();
+                        final accounts = await dbHelper.getAccountsWithStatsUsingAccountCurrencyAllCategories();
+                        if (!context.mounted) return;
+                        Navigator.pop(context); // Close loading indicator
+                        if (accounts.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('لا توجد حسابات أو معاملات للتصدير حالياً'),
+                              backgroundColor: AppTheme.errorColor,
+                            ),
+                          );
+                          return;
+                        }
+                        await AllAccountsReportGenerator.generate(
+                          allAccounts: accounts,
+                          currencyFilterName: 'all',
+                        );
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('تم تصدير كشف الحساب الشامل بنجاح 📄'),
+                            backgroundColor: AppTheme.successColor,
+                          ),
+                        );
+                      } catch (e) {
+                        if (context.mounted) {
+                          Navigator.pop(context); // Close loading indicator
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('حدث خطأ أثناء التصدير: $e'),
+                              backgroundColor: AppTheme.errorColor,
+                            ),
+                          );
+                        }
+                      }
                     },
                   ),
                   _buildSettingsTile(
@@ -355,34 +414,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.dividerColor.withOpacity(0.5), width: 1),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.only(top: 16, right: 16, left: 16, bottom: 12),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: Colors.grey.shade600,
-                  size: 20,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
                   ),
                 ),
               ],
             ),
           ),
+          Divider(color: AppTheme.dividerColor.withOpacity(0.5), height: 1, thickness: 1),
+          const SizedBox(height: 4),
           ...children,
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -398,30 +470,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListTile(
       leading: Icon(
         icon,
-        color: textColor ?? Colors.grey.shade600,
-        size: 20,
+        color: textColor ?? AppTheme.primaryColor.withOpacity(0.8),
+        size: 22,
       ),
       title: Text(
         title,
         style: TextStyle(
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: textColor ?? AppTheme.textPrimary,
+          fontFamily: 'ArbFONTSIBMPlexArabicText',
         ),
       ),
       subtitle: Text(
         subtitle,
         style: const TextStyle(
           color: AppTheme.textSecondary,
-          fontSize: 13,
+          fontSize: 12,
+          fontFamily: 'ArbFONTSIBMPlexArabicText',
         ),
       ),
-      trailing: Icon(
-        Icons.arrow_forward_ios,
-        size: 14,
-        color: Colors.grey.shade400,
+      trailing: const Icon(
+        Icons.chevron_left_rounded, // Points to left in RTL for forward navigation
+        size: 20,
+        color: AppTheme.textTertiary,
       ),
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
     );
   }
 
@@ -435,29 +510,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListTile(
       leading: Icon(
         icon,
-        color: Colors.grey.shade600,
-        size: 20,
+        color: AppTheme.primaryColor.withOpacity(0.8),
+        size: 22,
       ),
       title: Text(
         title,
         style: const TextStyle(
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppTheme.textPrimary,
+          fontFamily: 'ArbFONTSIBMPlexArabicText',
         ),
       ),
       subtitle: Text(
         subtitle,
         style: const TextStyle(
           color: AppTheme.textSecondary,
-          fontSize: 13,
+          fontSize: 12,
+          fontFamily: 'ArbFONTSIBMPlexArabicText',
         ),
       ),
       trailing: Switch(
         value: value,
         onChanged: onChanged,
         activeColor: AppTheme.primaryColor,
+        activeTrackColor: AppTheme.primaryColor.withOpacity(0.2),
+        inactiveThumbColor: Colors.grey.shade400,
+        inactiveTrackColor: Colors.grey.shade200,
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
     );
   }
 
@@ -472,65 +553,102 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListTile(
       leading: Icon(
         icon,
-        color: Colors.grey.shade600,
-        size: 20,
+        color: AppTheme.primaryColor.withOpacity(0.8),
+        size: 22,
       ),
       title: Text(
         title,
         style: const TextStyle(
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppTheme.textPrimary,
+          fontFamily: 'ArbFONTSIBMPlexArabicText',
         ),
       ),
       subtitle: Text(
         subtitle,
         style: const TextStyle(
           color: AppTheme.textSecondary,
-          fontSize: 13,
+          fontSize: 12,
+          fontFamily: 'ArbFONTSIBMPlexArabicText',
         ),
       ),
-      trailing: Directionality(
-        textDirection: TextDirection.rtl,
-        child: DropdownButton<String>(
-          value: value,
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item),
-            );
-          }).toList(),
-          onChanged: onChanged,
-          underline: Container(),
-          style: const TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 14,
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            items: items.map((String item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(
+                  item,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            icon: const Icon(Icons.arrow_drop_down, color: AppTheme.primaryColor),
+            style: const TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 13,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
+            ),
           ),
         ),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
     );
   }
 
   void _showComingSoonDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        title: const Text('قريباً'),
-        content: const Text('هذه الميزة ستكون متاحة في التحديث القادم.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('حسناً'),
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-        ],
+          title: const Text(
+            'قريباً',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: AppTheme.textPrimary,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
+            ),
+          ),
+          content: const Text(
+            'هذه الميزة ستكون متاحة في التحديث القادم.',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('حسناً'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -538,42 +656,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showCleanDataDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        title: const Text('تنظيف البيانات'),
-        content: const Text('هل تريد حذف البيانات المؤقتة؟ هذا لن يؤثر على بياناتك الأساسية.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('إلغاء'),
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement data cleaning
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('تم تنظيف البيانات المؤقتة بنجاح'),
-                  backgroundColor: AppTheme.successColor,
+          title: const Text(
+            'تنظيف البيانات',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: AppTheme.textPrimary,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
+            ),
+          ),
+          content: const Text(
+            'هل تريد حذف البيانات المؤقتة؟ هذا لن يؤثر على بياناتك الأساسية.',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'إلغاء',
+                style: TextStyle(color: AppTheme.textSecondary),
               ),
             ),
-            child: const Text('تنظيف', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // TODO: Implement data cleaning
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('تم تنظيف البيانات المؤقتة بنجاح'),
+                    backgroundColor: AppTheme.successColor,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('تنظيف', style: TextStyle(color: Colors.white, fontSize: 13)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -581,47 +724,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showDeleteAllDataDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        title: const Text(
-          'تحذير!',
-          style: TextStyle(color: AppTheme.errorColor),
-        ),
-        content: const Text(
-          'هل أنت متأكد من حذف جميع البيانات؟ هذا الإجراء لا يمكن التراجع عنه.\n\nننصح بإنشاء نسخة احتياطية أولاً.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('إلغاء'),
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement delete all data
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('تم حذف جميع البيانات'),
-                  backgroundColor: AppTheme.errorColor,
+          title: const Text(
+            'تحذير!',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: AppTheme.errorColor,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
+            ),
+          ),
+          content: const Text(
+            'هل أنت متأكد من حذف جميع البيانات؟ هذا الإجراء لا يمكن التراجع عنه.\n\nننصح بإنشاء نسخة احتياطية أولاً.',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.errorColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'إلغاء',
+                style: TextStyle(color: AppTheme.textSecondary),
               ),
             ),
-            child: const Text('حذف نهائي', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // TODO: Implement delete all data
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('تم حذف جميع البيانات'),
+                    backgroundColor: AppTheme.errorColor,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.errorColor,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('حذف نهائي', style: TextStyle(color: Colors.white, fontSize: 13)),
+            ),
+          ],
+        ),
       ),
     );
   }

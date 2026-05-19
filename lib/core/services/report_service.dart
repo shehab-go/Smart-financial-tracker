@@ -337,7 +337,7 @@ class ReportService {
         pw.Container(
           padding: const pw.EdgeInsets.all(20),
           child: pw.Text(
-            '?? ???? ?????? ????? ?????',
+            'لا توجد معاملات لعرضها في هذا الجدول',
             style: const pw.TextStyle(fontSize: 14),
             textDirection: pw.TextDirection.rtl,
           ),

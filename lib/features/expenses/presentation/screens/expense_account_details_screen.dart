@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -62,6 +63,7 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
   }
 
   Future<void> _openAddOrEditDialog({ExpenseModel? expense}) async {
+    HapticFeedback.lightImpact();
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AddExpenseDialog(expense: expense),
@@ -75,7 +77,6 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
 
     bool success;
     if (expense != null) {
-      // Preserve existing account binding, or fall back to this account
       final updated = expenseResult.copyWith(
         expenseAccountId: expense.expenseAccountId ?? widget.account.id,
       );
@@ -88,20 +89,30 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
     if (!mounted) return;
 
     if (success) {
+      HapticFeedback.mediumImpact();
       await _loadExpenses();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(expense != null
-              ? 'تم تحديث المصروف بنجاح'
-              : 'تم إضافة المصروف بنجاح'),
+          content: Text(
+            expense != null ? 'تم تحديث المصروف بنجاح' : 'تم إضافة المصروف بنجاح',
+            style: const TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', color: Colors.white),
+          ),
           backgroundColor: AppTheme.successColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     } else {
+      HapticFeedback.vibrate();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_controller.state.error ?? 'فشل في حفظ المصروف'),
+          content: Text(
+            _controller.state.error ?? 'فشل في حفظ المصروف',
+            style: const TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', color: Colors.white),
+          ),
           backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -110,22 +121,118 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
   Future<void> _deleteExpense(ExpenseModel expense) async {
     if (expense.id == null) return;
 
+    HapticFeedback.heavyImpact();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: const Text('تأكيد الحذف'),
-          content: Text('هل تريد حذف المصروف "${expense.name}"؟'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('إلغاء'),
+          backgroundColor: AppTheme.cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.errorColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: AppTheme.errorColor,
+                  size: 36,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'تأكيد الحذف',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          content: Text(
+            'هل تريد حذف المصروف "${expense.name}"؟\nلا يمكن التراجع عن هذا الإجراء.',
+            style: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 14,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
-              child: const Text('حذف'),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TextButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.of(context).pop(false);
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'إلغاء',
+                          style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            fontFamily: 'ArbFONTSIBMPlexArabicText',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.errorColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TextButton(
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          Navigator.of(context).pop(true);
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'حذف',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            fontFamily: 'ArbFONTSIBMPlexArabicText',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -138,29 +245,47 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
     if (!mounted) return;
 
     if (success) {
+      HapticFeedback.mediumImpact();
       await _loadExpenses();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تم حذف المصروف بنجاح'),
+        SnackBar(
+          content: const Text(
+            'تم حذف المصروف بنجاح',
+            style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', color: Colors.white),
+          ),
           backgroundColor: AppTheme.successColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     } else {
+      HapticFeedback.vibrate();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_controller.state.error ?? 'فشل في حذف المصروف'),
+          content: Text(
+            _controller.state.error ?? 'فشل في حذف المصروف',
+            style: const TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', color: Colors.white),
+          ),
           backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
   }
 
   Future<void> _generateReportForAccount() async {
+    HapticFeedback.lightImpact();
     if (_expenses.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('لا توجد مصروفات لهذا الحساب لعرض التقرير'),
+        SnackBar(
+          content: const Text(
+            'لا توجد مصروفات لهذا الحساب لعرض التقرير',
+            style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
+          ),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
       return;
@@ -177,12 +302,18 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: AppTheme.backgroundColor,
         appBar: AppBar(
           title: Text(
             widget.account.name,
-            style: const TextStyle(fontSize: 14),
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
+            ),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
           elevation: 0,
           iconTheme: const IconThemeData(color: AppTheme.primaryColor),
           actions: [
@@ -191,10 +322,6 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
                 'assets/images/report_icons/pdf_report.svg',
                 width: 24,
                 height: 24,
-                colorFilter: const ColorFilter.mode(
-                  AppTheme.primaryColor,
-                  BlendMode.srcIn,
-                ),
               ),
               onPressed: _generateReportForAccount,
               tooltip: 'تقرير حساب المصروفات',
@@ -212,253 +339,262 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
                         padding: const EdgeInsets.all(16),
                         child: Text(
                           _error!,
-                          style: const TextStyle(color: AppTheme.errorColor),
+                          style: const TextStyle(color: AppTheme.errorColor, fontFamily: 'ArbFONTSIBMPlexArabicText'),
                           textAlign: TextAlign.center,
                         ),
                       ),
                     )
                   : Column(
                       children: [
-                      // Summary card
-                      Container(
-                        margin: const EdgeInsets.all(12),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                        // Bento Style Summary Card
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: AppTheme.cardShadow,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'إجمالي المصروفات',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textSecondary,
+                                        fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '${_amountFormat.format(_totalAmount)} ${widget.account.currencyName}',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.errorColor,
+                                        fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 36,
+                                color: AppTheme.dividerColor.withOpacity(0.4),
+                              ),
+                              const SizedBox(width: 20),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   const Text(
-                                    'إجمالي المصروفات',
+                                    'عدد العمليات',
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
                                       color: AppTheme.textSecondary,
+                                      fontFamily: 'ArbFONTSIBMPlexArabicText',
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 6),
                                   Text(
-                                    _amountFormat.format(_totalAmount),
+                                    '${_expenses.length} عملية',
                                     style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.errorColor,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.textPrimary,
+                                      fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: _expenses.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.primaryColor.withOpacity(0.05),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.receipt_long_rounded,
+                                          size: 60,
+                                          color: AppTheme.primaryColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'لا توجد مصروفات لهذا الحساب',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.textPrimary,
+                                          fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        'اضغط على زر "مصروف جديد" بالأسفل لبدء التسجيل',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppTheme.textSecondary,
+                                          fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                    boxShadow: AppTheme.cardShadow,
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Table Header
+                                      Container(
+                                        color: AppTheme.surfaceColor,
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                        child: Directionality(
+                                          textDirection: TextDirection.rtl,
+                                          child: Row(
+                                            children: const [
+                                              Expanded(
+                                                flex: 3,
+                                                child: Text(
+                                                  'اسم المصروف',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppTheme.textSecondary,
+                                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                flex: 2,
+                                                child: Center(
+                                                  child: Text(
+                                                    'المبلغ',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: AppTheme.textSecondary,
+                                                      fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                flex: 2,
+                                                child: Center(
+                                                  child: Text(
+                                                    'التفاصيل',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: AppTheme.textSecondary,
+                                                      fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                flex: 1,
+                                                child: Center(
+                                                  child: Text(
+                                                    'العملة',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: AppTheme.textSecondary,
+                                                      fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      // Expenses List
+                                      Expanded(
+                                        child: ListView.builder(
+                                          physics: const BouncingScrollPhysics(),
+                                          padding: EdgeInsets.zero,
+                                          itemCount: _expenses.length,
+                                          itemBuilder: (context, index) {
+                                            final expense = _expenses[index];
+                                            return _buildExpenseTile(expense);
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                        ),
+                        
+                        // Bottom Persistent Full-Width Action Button (Sleek design)
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: InkWell(
+                            onTap: () => _openAddOrEditDialog(),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.primaryColor.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(
+                                    Icons.add_circle_outline_rounded,
+                                    size: 20,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'مصروف جديد',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontFamily: 'ArbFONTSIBMPlexArabicText',
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                const Text(
-                                  'عدد العمليات',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${_expenses.length}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Expanded(
-                        child: _expenses.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.receipt_long_rounded,
-                                      size: 80,
-                                      color: Colors.grey.shade300,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'لا توجد مصروفات لهذا الحساب',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'اضغط على زر + في الأسفل لإضافة مصروف جديد',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey.shade500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Header row similar to HomeScreen account list
-                                    Padding(
-                                      padding: const EdgeInsets.all(8),
-                                      child: Column(
-                                        children: [
-                                          const SizedBox(height: 4),
-                                          Directionality(
-                                            textDirection: TextDirection.rtl,
-                                            child: Row(
-                                              children: const [
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: Text(
-                                                    'اسم المصروف',
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      color: AppTheme.textSecondary,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  flex: 2,
-                                                  child: Center(
-                                                    child: Text(
-                                                      'المبلغ',
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        color:
-                                                            AppTheme.textSecondary,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  flex: 2,
-                                                  child: Center(
-                                                    child: Text(
-                                                      'التفاصيل',
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        color:
-                                                            AppTheme.textSecondary,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  flex: 1,
-                                                  child: Center(
-                                                    child: Text(
-                                                      'العملة',
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        color:
-                                                            AppTheme.textSecondary,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Divider(
-                                      height: 1,
-                                      color: Colors.grey,
-                                    ),
-                                    // Expenses list - scrollable
-                                    Expanded(
-                                      child: ListView.builder(
-                                        padding: EdgeInsets.zero,
-                                        itemCount: _expenses.length,
-                                        itemBuilder: (context, index) {
-                                          final expense = _expenses[index];
-                                          return _buildExpenseTile(expense);
-                                        },
-                                      ),
-                                    ),
-                                    const Divider(
-                                      height: 1,
-                                      color: Colors.grey,
-                                    ),
-                                    SizedBox(
-                                      height: 48,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                                        child: Directionality(
-                                          textDirection: TextDirection.rtl,
-                                          child: Row(
-                                            children: [
-                                              TextButton.icon(
-                                                onPressed: () => _openAddOrEditDialog(),
-                                                style: TextButton.styleFrom(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                                  foregroundColor: AppTheme.primaryColor,
-                                                  minimumSize: Size.zero,
-                                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                ),
-                                                icon: const Icon(
-                                                  Icons.add,
-                                                  size: 18,
-                                                ),
-                                                label: const Text(
-                                                  'مصروف جديد',
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                              ),
-                                              const Spacer(),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
         ),
       ),
     );
@@ -469,11 +605,11 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
       onTap: () => _openAddOrEditDialog(expense: expense),
       onLongPress: () => _deleteExpense(expense),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: const BoxDecoration(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: Color(0xFFE0E0E0),
+              color: AppTheme.dividerColor.withOpacity(0.15),
               width: 0.5,
             ),
           ),
@@ -482,34 +618,34 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
           textDirection: TextDirection.rtl,
           child: Row(
             children: [
-              // Expense name
               Expanded(
                 flex: 3,
                 child: Text(
                   expense.name,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              // Amount
               Expanded(
                 flex: 2,
                 child: Center(
                   child: Text(
                     _amountFormat.format(expense.amount),
                     style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
                       color: AppTheme.errorColor,
+                      fontFamily: 'ArbFONTSIBMPlexArabicText',
                     ),
                   ),
                 ),
               ),
-              // Detail
               Expanded(
                 flex: 2,
                 child: Center(
@@ -518,6 +654,7 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
                     style: const TextStyle(
                       fontSize: 13,
                       color: AppTheme.textSecondary,
+                      fontFamily: 'ArbFONTSIBMPlexArabicText',
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -525,15 +662,16 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
                   ),
                 ),
               ),
-              // Currency
               Expanded(
                 flex: 1,
                 child: Center(
                   child: Text(
                     expense.currency,
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
                       color: AppTheme.textSecondary,
+                      fontFamily: 'ArbFONTSIBMPlexArabicText',
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

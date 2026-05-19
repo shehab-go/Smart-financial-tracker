@@ -85,6 +85,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   }
 
   Future<void> _pickCurrency() async {
+    HapticFeedback.lightImpact();
     try {
       final Set<String> favorites = await _db.getFavoriteCurrencies();
       FiatCurrency? chosen;
@@ -96,36 +97,27 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
           return Dialog(
             insetPadding: const EdgeInsets.all(16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(24),
             ),
             child: Directionality(
               textDirection: TextDirection.rtl,
               child: Container(
-                constraints:
-                    const BoxConstraints(maxWidth: 380, maxHeight: 520),
+                constraints: const BoxConstraints(maxWidth: 380, maxHeight: 520),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: AppTheme.cardShadow,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Header
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
+                          topLeft: Radius.circular(24),
+                          topRight: Radius.circular(24),
                         ),
                       ),
                       child: Row(
@@ -136,56 +128,66 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                               color: AppTheme.primaryColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            // child: const Icon(
-                            //   Icons.payments_outlined,
-                            //   color: AppTheme.primaryColor,
-                            //   size: 18,
-                            // ),
+                            child: const Icon(
+                              Icons.payments_rounded,
+                              color: AppTheme.primaryColor,
+                              size: 18,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           const Expanded(
                             child: Text(
-                              'العملة',
+                              'اختر العملة',
                               style: TextStyle(
                                 color: AppTheme.textPrimary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                fontFamily: 'ArbFONTSIBMPlexArabicText',
                               ),
                             ),
                           ),
                           IconButton(
-                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(dialogContext).pop();
+                            },
                             icon: const Icon(
-                              Icons.close,
+                              Icons.close_rounded,
                               color: AppTheme.textSecondary,
-                              size: 18,
+                              size: 20,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const Divider(height: 1, color: AppTheme.dividerColor),
-                    // Favorites strip (quick selection)
+                    Divider(height: 1, color: AppTheme.dividerColor.withOpacity(0.5)),
                     if (favorites.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       SizedBox(
                         height: 40,
                         child: ListView(
                           scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           children: favorites
                               .map(
                                 (name) => Padding(
-                                  padding:
-                                      const EdgeInsetsDirectional.only(start: 4, end: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
                                   child: ActionChip(
                                     label: Text(
                                       name,
-                                      style: const TextStyle(fontSize: 12),
+                                      style: const TextStyle(
+                                        fontSize: 12, 
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                      ),
+                                    ),
+                                    backgroundColor: AppTheme.primaryColor.withOpacity(0.08),
+                                    side: BorderSide.none,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                     onPressed: () {
+                                      HapticFeedback.lightImpact();
                                       Navigator.of(dialogContext).pop();
                                       setState(() {
                                         _selectedCurrency = name;
@@ -198,10 +200,10 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                         ),
                       ),
                     ],
-                    // Content
                     Flexible(
                       child: CurrencyPicker(
                         onSelect: (FiatCurrency currency) {
+                          HapticFeedback.lightImpact();
                           chosen = currency;
                           Navigator.of(dialogContext).pop();
                         },
@@ -231,10 +233,15 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
       }
     } catch (e) {
       if (mounted) {
+        HapticFeedback.vibrate();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('خطأ في اختيار العملة: $e'),
+            content: Text(
+              'خطأ في اختيار العملة: $e',
+              style: const TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
+            ),
             backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -250,7 +257,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         _categories = categories;
       });
     } catch (e) {
-      print('Error loading data: $e');
+      // Handle error silently
     }
   }
 
@@ -299,18 +306,27 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         _linkToIncomeBalance = hasExisting;
       });
     } catch (e) {
-      print('Error loading income balances for expenses: $e');
+      // Handle error silently
     }
   }
 
   void _saveExpense() async {
-    if (!_formKey.currentState!.validate()) return;
+    HapticFeedback.lightImpact();
+    if (!_formKey.currentState!.validate()) {
+      HapticFeedback.vibrate();
+      return;
+    }
 
     if (_selectedCurrency == null || _selectedCurrency!.isEmpty) {
+      HapticFeedback.vibrate();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('يرجى اختيار العملة'),
+          content: Text(
+            'يرجى اختيار العملة',
+            style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
+          ),
           backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -337,10 +353,15 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         if (validInputs.isEmpty) {
           final defaultBalance = await _db.getDefaultIncomeBalance();
           if (defaultBalance == null || defaultBalance.id == null) {
+            HapticFeedback.vibrate();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('لا يوجد رصيد افتراضي متاح لتوزيع المبلغ'),
+                content: Text(
+                  'لا يوجد رصيد افتراضي متاح لتوزيع المبلغ',
+                  style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                ),
                 backgroundColor: AppTheme.errorColor,
+                behavior: SnackBarBehavior.floating,
               ),
             );
             return;
@@ -356,10 +377,15 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
           for (final input in validInputs) {
             final balanceId = input.balanceId;
             if (balanceId == null) {
+              HapticFeedback.vibrate();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('يرجى اختيار رصيد لكل سطر توزيع'),
+                  content: Text(
+                    'يرجى اختيار رصيد لكل سطر توزيع',
+                    style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                  ),
                   backgroundColor: AppTheme.errorColor,
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
               return;
@@ -367,10 +393,15 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
             final text = input.amountController.text.trim();
             final value = double.tryParse(text);
             if (value == null || value <= 0) {
+              HapticFeedback.vibrate();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('قيمة المبلغ في توزيع الأرصدة غير صحيحة'),
+                  content: Text(
+                    'قيمة المبلغ في توزيع الأرصدة غير صحيحة',
+                    style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                  ),
                   backgroundColor: AppTheme.errorColor,
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
               return;
@@ -382,10 +413,15 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
           }
 
           if ((totalAllocated - totalAmount).abs() > 0.01) {
+            HapticFeedback.vibrate();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('مجموع مبالغ الأرصدة يجب أن يساوي المبلغ الكلي'),
+                content: Text(
+                  'مجموع مبالغ الأرصدة يجب أن يساوي المبلغ الكلي',
+                  style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                ),
                 backgroundColor: AppTheme.errorColor,
+                behavior: SnackBarBehavior.floating,
               ),
             );
             return;
@@ -405,7 +441,6 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         expenseAccountId: widget.expense?.expenseAccountId,
       );
 
-      // Register this currency usage so it becomes default (if none) and favorite.
       await _db.registerCurrencyUsage(_selectedCurrency!);
 
       Navigator.of(context).pop({
@@ -413,10 +448,15 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         'allocations': allocations,
       });
     } catch (e) {
+      HapticFeedback.vibrate();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('خطأ في حفظ البيانات: $e'),
+          content: Text(
+            'خطأ في حفظ البيانات: $e',
+            style: const TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
+          ),
           backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     } finally {
@@ -431,34 +471,27 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     return Dialog(
       insetPadding: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 380, maxHeight: 520),
+          constraints: const BoxConstraints(maxWidth: 380, maxHeight: 560),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: AppTheme.cardShadow,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    topRight: Radius.circular(12),
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
                   ),
                 ),
                 child: Row(
@@ -470,9 +503,9 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        _isEditing ? Icons.edit_outlined : Icons.add,
+                        _isEditing ? Icons.edit_note_rounded : Icons.add_circle_outline_rounded,
                         color: AppTheme.primaryColor,
-                        size: 18,
+                        size: 20,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -481,55 +514,71 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                         _isEditing ? 'تعديل مصروف' : 'إضافة مصروف جديد',
                         style: const TextStyle(
                           color: AppTheme.textPrimary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          fontFamily: 'ArbFONTSIBMPlexArabicText',
                         ),
                       ),
                     ),
                     IconButton(
                       onPressed: _isLoading
                           ? null
-                          : () => Navigator.of(context).pop(),
-                      icon: Icon(
-                        Icons.close,
+                          : () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(context).pop();
+                            },
+                      icon: const Icon(
+                        Icons.close_rounded,
                         color: AppTheme.textSecondary,
-                        size: 18,
+                        size: 20,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, color: AppTheme.dividerColor),
-              // Content
+              Divider(height: 1, color: AppTheme.dividerColor.withOpacity(0.5)),
               Flexible(
                 child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.all(20),
                   child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Name field
                         TextFormField(
                           controller: _nameController,
                           decoration: InputDecoration(
                             labelText: 'اسم المصروف *',
-                            labelStyle: const TextStyle(fontSize: 14),
+                            labelStyle: const TextStyle(
+                              fontSize: 13, 
+                              fontWeight: FontWeight.bold, 
+                              color: AppTheme.textSecondary,
+                              fontFamily: 'ArbFONTSIBMPlexArabicText',
+                            ),
                             hintText: 'مثال: فاتورة كهرباء',
                             hintStyle: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade500,
+                              fontSize: 13,
+                              color: Colors.grey.shade400,
+                              fontFamily: 'ArbFONTSIBMPlexArabicText',
                             ),
+                            filled: true,
+                            fillColor: AppTheme.surfaceColor,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  const BorderSide(color: AppTheme.primaryColor),
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
                             ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           ),
-                          style: const TextStyle(fontSize: 14),
+                          style: const TextStyle(fontSize: 14, fontFamily: 'ArbFONTSIBMPlexArabicText'),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'يرجى إدخال اسم المصروف';
@@ -538,7 +587,6 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        // Amount and currency row
                         Row(
                           children: [
                             Expanded(
@@ -549,42 +597,40 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                                   labelText: 'المبلغ *',
                                   labelStyle: const TextStyle(
                                     color: AppTheme.textSecondary,
-                                    fontSize: 14,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
                                   ),
                                   hintText: '0.00',
                                   hintStyle: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade500,
+                                    fontSize: 13,
+                                    color: Colors.grey.shade400,
+                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
                                   ),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(
                                       color: AppTheme.primaryColor,
                                       width: 1.5,
                                     ),
                                   ),
                                   filled: true,
-                                  fillColor: Colors.white,
+                                  fillColor: AppTheme.surfaceColor,
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                     vertical: 16,
                                   ),
                                 ),
-                                style: const TextStyle(fontSize: 14),
-                                keyboardType: const TextInputType.numberWithOptions(
-                                    decimal: true),
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                 inputFormatters: [
                                   FilteringTextInputFormatter.allow(
                                     RegExp(r'^\d*\.?\d*'),
@@ -610,50 +656,71 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        // Detail field
                         TextFormField(
                           controller: _detailController,
                           decoration: InputDecoration(
                             labelText: 'التفاصيل (اختياري)',
-                            labelStyle: const TextStyle(fontSize: 14),
+                            labelStyle: const TextStyle(
+                              fontSize: 13, 
+                              fontWeight: FontWeight.bold, 
+                              color: AppTheme.textSecondary,
+                              fontFamily: 'ArbFONTSIBMPlexArabicText',
+                            ),
                             hintText: 'وصف تفصيلي للمصروف',
                             hintStyle: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade500,
+                              fontSize: 13,
+                              color: Colors.grey.shade400,
+                              fontFamily: 'ArbFONTSIBMPlexArabicText',
                             ),
+                            filled: true,
+                            fillColor: AppTheme.surfaceColor,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  const BorderSide(color: AppTheme.primaryColor),
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
                             ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           ),
-                          style: const TextStyle(fontSize: 14),
+                          style: const TextStyle(fontSize: 14, fontFamily: 'ArbFONTSIBMPlexArabicText'),
                           maxLines: 3,
-                          validator: (value) {
-                            return null;
-                          },
                         ),
                         const SizedBox(height: 16),
-                        // Category dropdown
                         DropdownButtonFormField<String>(
                           value: _selectedCategory,
                           decoration: InputDecoration(
                             labelText: 'الفئة *',
-                            labelStyle: const TextStyle(fontSize: 14),
+                            labelStyle: const TextStyle(
+                              fontSize: 13, 
+                              fontWeight: FontWeight.bold, 
+                              color: AppTheme.textSecondary,
+                              fontFamily: 'ArbFONTSIBMPlexArabicText',
+                            ),
+                            filled: true,
+                            fillColor: AppTheme.surfaceColor,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  const BorderSide(color: AppTheme.primaryColor),
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
                             ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           ),
-                          style: const TextStyle(
-                              fontSize: 14, color: AppTheme.textPrimary),
+                          style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
                           items: _categories.map((category) {
                             return DropdownMenuItem<String>(
                               value: category.name,
@@ -676,20 +743,30 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                         ),
                         const SizedBox(height: 16),
                         if (!_hasExistingAllocations) ...[
-                          CheckboxListTile(
-                            value: _linkToIncomeBalance,
-                            onChanged: (value) {
-                              setState(() {
-                                _linkToIncomeBalance = value ?? false;
-                              });
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text(
-                              'ربط هذا المصروف برصيد الدخل',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.textPrimary,
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceColor,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: CheckboxListTile(
+                              value: _linkToIncomeBalance,
+                              onChanged: (value) {
+                                HapticFeedback.lightImpact();
+                                setState(() {
+                                  _linkToIncomeBalance = value ?? false;
+                                });
+                              },
+                              activeColor: AppTheme.primaryColor,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                              title: const Text(
+                                'ربط هذا المصروف برصيد الدخل',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                ),
                               ),
                             ),
                           ),
@@ -704,14 +781,14 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                   ),
                 ),
               ),
-              // Actions
+              Divider(height: 1, color: AppTheme.dividerColor.withOpacity(0.5)),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(12),
-                    bottomRight: Radius.circular(12),
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
                   ),
                 ),
                 child: Row(
@@ -720,21 +797,24 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                       child: TextButton(
                         onPressed: _isLoading
                             ? null
-                            : () => Navigator.of(context).pop(),
+                            : () {
+                                HapticFeedback.lightImpact();
+                                Navigator.of(context).pop();
+                              },
                         style: TextButton.styleFrom(
                           backgroundColor: Colors.grey.shade100,
                           foregroundColor: AppTheme.textSecondary,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: const Text(
                           'إلغاء',
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'ArbFONTSIBMPlexArabicText',
                           ),
                         ),
                       ),
@@ -746,10 +826,9 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           elevation: 0,
                         ),
@@ -759,15 +838,15 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                                 width: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               )
                             : const Text(
                                 'حفظ',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'ArbFONTSIBMPlexArabicText',
                                 ),
                               ),
                       ),
@@ -787,51 +866,55 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
       textDirection: TextDirection.rtl,
       child: InkWell(
         onTap: _pickCurrency,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         child: InputDecorator(
           decoration: InputDecoration(
             labelText: 'العملة *',
             labelStyle: const TextStyle(
               color: AppTheme.textSecondary,
-              fontSize: 14,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
             ),
-            // prefixIcon: const Icon(
-            //   Icons.payments_outlined,
-            //   color: AppTheme.textSecondary,
-            //   size: 18,
-            // ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: Colors.grey.shade300,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: Colors.grey.shade300,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
                 color: AppTheme.primaryColor,
                 width: 1.5,
               ),
             ),
             filled: true,
-            fillColor: Colors.white,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            fillColor: AppTheme.surfaceColor,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
-          child: Text(
-            _selectedCurrency ?? 'العملة',
-            style: TextStyle(
-              fontSize: 14,
-              color: _selectedCurrency == null
-                  ? AppTheme.textSecondary.withOpacity(0.7)
-                  : AppTheme.textPrimary,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  _selectedCurrency ?? 'العملة',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: _selectedCurrency == null
+                        ? AppTheme.textSecondary.withOpacity(0.7)
+                        : AppTheme.textPrimary,
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Icon(Icons.arrow_drop_down_rounded, color: AppTheme.textSecondary),
+            ],
           ),
         ),
       ),
@@ -842,25 +925,25 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 12),
         const Text(
           'ربط او تقسيم المبلغ بين الارصدة',
           style: TextStyle(
             color: AppTheme.textPrimary,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'ArbFONTSIBMPlexArabicText',
           ),
         ),
         const SizedBox(height: 8),
         Column(
           children: List.generate(_allocationInputs.length, (index) {
             final input = _allocationInputs[index];
-            final String? effectiveCurrency = (_selectedCurrency != null &&
-                    _selectedCurrency!.isNotEmpty)
+            final String? effectiveCurrency = (_selectedCurrency != null && _selectedCurrency!.isNotEmpty)
                 ? _selectedCurrency
                 : null;
 
-            final List<IncomeBalanceModel> balancesForDropdown =
-                _incomeBalances.where((balance) {
+            final List<IncomeBalanceModel> balancesForDropdown = _incomeBalances.where((balance) {
               if (input.balanceId != null && balance.id == input.balanceId) {
                 return true;
               }
@@ -869,8 +952,14 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
               }
               return balance.currencyName == effectiveCurrency;
             }).toList();
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+            
+            return Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceColor,
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -881,37 +970,39 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                         labelText: 'الرصيد',
                         labelStyle: const TextStyle(
                           color: AppTheme.textSecondary,
-                          fontSize: 14,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'ArbFONTSIBMPlexArabicText',
                         ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
                             color: AppTheme.primaryColor,
                             width: 1.5,
                           ),
                         ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        filled: true,
+                        fillColor: Colors.white,
                       ),
+                      style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                      dropdownColor: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
                       items: balancesForDropdown
                           .map(
                             (balance) => DropdownMenuItem<int>(
                               value: balance.id,
                               child: Text(
                                 balance.name,
-                                style: const TextStyle(fontSize: 13),
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'ArbFONTSIBMPlexArabicText'),
                               ),
                             ),
                           )
@@ -928,50 +1019,50 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                     flex: 2,
                     child: TextFormField(
                       controller: input.amountController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: 'المبلغ',
                         labelStyle: const TextStyle(
                           color: AppTheme.textSecondary,
-                          fontSize: 14,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'ArbFONTSIBMPlexArabicText',
                         ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
                             color: AppTheme.primaryColor,
                             width: 1.5,
                           ),
                         ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        filled: true,
+                        fillColor: Colors.white,
                       ),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'ArbFONTSIBMPlexArabicText'),
                     ),
                   ),
                   if (_allocationInputs.length > 1)
                     IconButton(
                       onPressed: () {
+                        HapticFeedback.lightImpact();
                         setState(() {
                           final removed = _allocationInputs.removeAt(index);
                           removed.dispose();
                         });
                       },
                       icon: const Icon(
-                        Icons.remove_circle_outline,
+                        Icons.remove_circle_outline_rounded,
                         color: AppTheme.errorColor,
-                        size: 20,
+                        size: 22,
                       ),
                     ),
                 ],
@@ -983,12 +1074,13 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
             onPressed: () {
+              HapticFeedback.lightImpact();
               setState(() {
                 _allocationInputs.add(_ExpenseBalanceAllocationInput());
               });
             },
             icon: const Icon(
-              Icons.add,
+              Icons.add_circle_outline_rounded,
               size: 18,
               color: AppTheme.primaryColor,
             ),
@@ -997,7 +1089,8 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
               style: TextStyle(
                 color: AppTheme.primaryColor,
                 fontSize: 13,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'ArbFONTSIBMPlexArabicText',
               ),
             ),
           ),

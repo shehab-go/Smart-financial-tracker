@@ -75,6 +75,11 @@ class GoogleDriveBackupService {
     return account?.email;
   }
 
+  Future<String?> currentPhotoUrl() async {
+    final account = await _silentAccount();
+    return account?.photoUrl;
+  }
+
   Future<drive.DriveApi> _driveApi({required bool interactive, bool promptIfNecessary = false}) async {
     final account = await _requireAccount(interactive: interactive);
     final headers = await account.authHeaders;
@@ -224,6 +229,11 @@ class GoogleDriveBackupService {
       fileId,
       $fields: 'id,name',
     );
+  }
+
+  Future<void> deleteBackup(String fileId) async {
+    final api = await _driveApi(interactive: true, promptIfNecessary: true);
+    await api.files.delete(fileId);
   }
 
   Future<drive.File?> getLatestBackup({bool interactive = false}) async {

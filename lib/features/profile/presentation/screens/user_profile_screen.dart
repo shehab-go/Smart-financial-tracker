@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_native_contact_picker/flutter_native_contact_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -62,7 +63,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ في تحميل البيانات: $e')),
+          SnackBar(content: Text('خطأ في تحميل البيانات: $e'), backgroundColor: AppTheme.errorColor),
         );
       }
     } finally {
@@ -74,6 +75,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> _pickContact() async {
     try {
+      HapticFeedback.lightImpact();
       final FlutterNativeContactPicker _picker = FlutterNativeContactPicker();
       final contact = await _picker.selectContact();
       setState(() {
@@ -90,6 +92,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> _pickImage() async {
     try {
+      HapticFeedback.lightImpact();
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
@@ -99,7 +102,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       );
       
       if (image != null) {
-        // Save image to app directory
         final appDir = await getApplicationDocumentsDirectory();
         final fileName = 'profile_logo_${DateTime.now().millisecondsSinceEpoch}.jpg';
         final savedImage = await File(image.path).copy(path.join(appDir.path, fileName));
@@ -111,15 +113,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ في اختيار الصورة: $e')),
+          SnackBar(content: Text('خطأ في اختيار الصورة: $e'), backgroundColor: AppTheme.errorColor),
         );
       }
     }
   }
 
   Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      HapticFeedback.vibrate();
+      return;
+    }
 
+    HapticFeedback.mediumImpact();
     setState(() {
       _isSaving = true;
     });
@@ -146,14 +152,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم حفظ البيانات بنجاح')),
+          const SnackBar(content: Text('تم حفظ البيانات بنجاح'), backgroundColor: AppTheme.successColor),
         );
-        Navigator.of(context).pop(true); // Return true to indicate successful save
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ في حفظ البيانات: $e')),
+          SnackBar(content: Text('خطأ في حفظ البيانات: $e'), backgroundColor: AppTheme.errorColor),
         );
       }
     } finally {
@@ -168,27 +174,29 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: AppTheme.backgroundColor,
         appBar: AppBar(
           title: const Text(
             'تعديل الملف الشخصي',
             style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w500,
+              fontSize: 16,
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryColor),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            color: AppTheme.primaryColor,
+            iconSize: 20,
             onPressed: () {
+              HapticFeedback.lightImpact();
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const MainNavigation()),
                 (route) => false,
               );
-              // Open drawer after navigation
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 final scaffoldState = Scaffold.of(context);
                 if (scaffoldState.hasEndDrawer) {
@@ -200,16 +208,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           actions: [
             if (!_isLoading)
               Container(
-                margin: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ElevatedButton.icon(
                   onPressed: _isSaving ? null : _saveProfile,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: AppTheme.primaryColor,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    elevation: 1,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: AppTheme.dividerColor.withOpacity(0.5),
+                        width: 1,
+                      ),
                     ),
                   ),
                   icon: _isSaving
@@ -225,9 +237,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           Icons.save_rounded,
                           size: 16,
                         ),
-                  label: Text(
-                    _isSaving ? 'جاري الحفظ...' : 'حفظ',
-                    style: Theme.of(context).textTheme.labelLarge,
+                  label: const Text(
+                    'حفظ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ),
@@ -236,17 +251,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         body: SafeArea(
           top: false,
           child: _isLoading
-            ? Center(
+            ? const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
                     Text(
                       'جاري تحميل البيانات...',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
+                      style: TextStyle(color: AppTheme.textSecondary),
                     ),
                   ],
                 ),
@@ -258,24 +271,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Profile Photo Section
                       Container(
                         margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: AppTheme.cardShadow,
                           border: Border.all(
-                            color: Colors.grey.shade200,
+                            color: AppTheme.dividerColor.withOpacity(0.5),
                             width: 1,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.08),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
                         ),
                         child: Center(
                           child: Column(
@@ -289,9 +295,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                       height: 120,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: _logoPath != null ? null : Colors.grey.shade100,
+                                        color: Colors.grey.shade50,
+                                        boxShadow: AppTheme.cardShadow,
                                         border: Border.all(
-                                          color: Colors.grey.shade300,
+                                          color: AppTheme.dividerColor.withOpacity(0.5),
                                           width: 1,
                                         ),
                                       ),
@@ -303,7 +310,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                                 height: 120,
                                                 fit: BoxFit.cover,
                                                 errorBuilder: (context, error, stackTrace) {
-                                                  return Icon(
+                                                  return const Icon(
                                                     Icons.person_rounded,
                                                     size: 60,
                                                     color: AppTheme.primaryColor,
@@ -311,43 +318,47 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                                 },
                                               ),
                                             )
-                                          : Icon(
+                                          : const Icon(
                                               Icons.add_a_photo_rounded,
-                                              size: 40,
-                                              color: Colors.grey.shade600,
+                                              size: 32,
+                                              color: AppTheme.primaryColor,
                                             ),
                                     ),
                                   ),
                                   Positioned(
-                                    bottom: 0,
-                                    right: 0,
+                                    bottom: 4,
+                                    right: 4,
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: AppTheme.primaryColor.withOpacity(0.08),
+                                        color: AppTheme.primaryColor,
                                         shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white, width: 2),
                                       ),
                                       child: const Icon(
                                         Icons.camera_alt_rounded,
-                                        color: AppTheme.primaryColor,
-                                        size: 16,
+                                        color: Colors.white,
+                                        size: 14,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'الصورة الشخصية أو الشعار',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              const SizedBox(height: 16),
+                              const Text(
+                                'الشعار أو الصورة الشخصية',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
                                   color: AppTheme.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'سيظهر في التقارير والمستندات الرسمية',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.grey.shade600,
+                                'سيظهر في ترويسة التقارير والمستندات الرسمية المطبوعة',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppTheme.textSecondary.withOpacity(0.8),
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -360,26 +371,28 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.02),
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppTheme.primaryColor.withOpacity(0.04),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.grey.shade200,
+                            color: AppTheme.primaryColor.withOpacity(0.15),
+                            width: 1,
                           ),
                         ),
                         child: Row(
                           children: [
                             const Icon(
-                              Icons.info_outline,
-                              size: 18,
+                              Icons.info_outline_rounded,
+                              size: 20,
                               color: AppTheme.primaryColor,
                             ),
-                            const SizedBox(width: 8),
-                            const Expanded(
+                            const SizedBox(width: 12),
+                            Expanded(
                               child: Text(
-                                'فقط الاسم مطلوب، وبقية البيانات اختيارية ويمكنك إضافتها لاحقاً.',
+                                'فقط حقل الاسم الكامل مطلوب، وبقية البيانات اختيارية لتخصيص تقاريرك.',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: AppTheme.textSecondary,
+                                  color: AppTheme.textSecondary.withOpacity(0.9),
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
@@ -387,7 +400,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
                       ),
 
-                      // Personal Information Section
                       _buildSection(
                         title: 'المعلومات الشخصية',
                         icon: Icons.person_rounded,
@@ -416,17 +428,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               ),
                               const SizedBox(width: 12),
                               Container(
-                                height: 56,
+                                height: 52,
                                 decoration: BoxDecoration(
                                   color: AppTheme.primaryColor.withOpacity(0.08),
                                   borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppTheme.primaryColor.withOpacity(0.1),
+                                  ),
                                 ),
                                 child: IconButton(
                                   onPressed: _pickContact,
                                   icon: const Icon(
                                     Icons.contact_phone_rounded,
                                     color: AppTheme.primaryColor,
-                                    size: 20,
+                                    size: 22,
                                   ),
                                   tooltip: 'اختيار من جهات الاتصال',
                                 ),
@@ -443,9 +458,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ],
                       ),
 
-                      // Business Information Section
                       _buildSection(
-                        title: 'معلومات العمل (اختيارية)',
+                        title: 'معلومات النشاط والعمل',
                         icon: Icons.business_rounded,
                         children: [
                           _buildTextField(
@@ -456,53 +470,47 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           const SizedBox(height: 16),
                           _buildTextField(
                             controller: _tradingActivityController,
-                            label: 'النشاط التجاري (اختياري)',
-                            hint: 'مثال: تجارة عامة، خدمات، صناعة، إلخ',
+                            label: 'نوع النشاط التجاري (اختياري)',
+                            hint: 'مثال: تجارة عامة، خدمات، مقاولات، إلخ',
                             icon: Icons.work_outline_rounded,
                             maxLines: 2,
                           ),
                         ],
                       ),
-                      // Information Message
+
                       Container(
-                        margin: const EdgeInsets.only(bottom: 20),
+                        margin: const EdgeInsets.only(bottom: 24),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: AppTheme.cardShadow,
                           border: Border.all(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
+                            color: AppTheme.dividerColor.withOpacity(0.5),
+                            width: 1,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
                         child: Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor.withOpacity(0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              child: Icon(
-                                Icons.info_outline_rounded,
-                                color: Colors.grey.shade600,
-                                size: 20,
+                                color: AppTheme.primaryColor.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.print_rounded,
+                                color: AppTheme.primaryColor,
+                                size: 22,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
+                            const SizedBox(width: 16),
+                            const Expanded(
                               child: Text(
-                                'ستظهر هذه المعلومات في التقارير المطبوعة والفواتير والمستندات الرسمية',
+                                'تظهر هذه البيانات بشكل احترافي في أعلى الفواتير والتقارير المالية بصيغة PDF.',
                                 style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 13,
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 12,
                                   height: 1.4,
                                 ),
                               ),
@@ -510,12 +518,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
               ),
-      ),
+        ),
       ),
     );
   }
@@ -527,20 +534,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppTheme.cardShadow,
         border: Border.all(
-          color: Colors.grey.shade200,
+          color: AppTheme.dividerColor.withOpacity(0.5),
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,7 +558,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 child: Icon(
                   icon,
                   color: AppTheme.primaryColor,
-                  size: 18,
+                  size: 20,
                 ),
               ),
               const SizedBox(width: 12),
@@ -564,13 +566,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 title,
                 style: const TextStyle(
                   fontSize: 14,
-                  color: AppTheme.textSecondary,
-                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           ...children,
         ],
       ),
@@ -600,34 +602,34 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           color: AppTheme.textSecondary.withOpacity(0.6),
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Colors.grey.shade200,
+            color: AppTheme.dividerColor.withOpacity(0.5),
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Colors.grey.shade200,
+            color: AppTheme.dividerColor.withOpacity(0.5),
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(
             color: AppTheme.primaryColor,
             width: 1.5,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(
-            color: Colors.red,
+            color: AppTheme.errorColor,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(
-            color: Colors.red,
+            color: AppTheme.errorColor,
             width: 1.5,
           ),
         ),
@@ -646,7 +648,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
-      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+      style: const TextStyle(
+        fontSize: 14,
         color: AppTheme.textPrimary,
       ),
     );

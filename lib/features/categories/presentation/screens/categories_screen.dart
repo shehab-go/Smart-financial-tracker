@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:debit_credit_app/core/models/category.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/features/categories/application/categories_controller.dart';
@@ -33,8 +34,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     super.dispose();
   }
 
-
-
   void _onStateChanged() {
     if (mounted) {
       setState(() {});
@@ -48,83 +47,97 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) async {
-        if (!didPop) {
-          Navigator.of(context).pop(_hasChanges);
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
+        canPop: false,
+        onPopInvoked: (didPop) async {
+          if (!didPop) {
+            HapticFeedback.lightImpact();
+            Navigator.of(context).pop(_hasChanges);
+          }
+        },
+        child: Scaffold(
           backgroundColor: AppTheme.backgroundColor,
-          foregroundColor: Colors.white,
-          title: const Text('إدارة الفئات'),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
-            onPressed: () => Navigator.of(context).pop(_hasChanges),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () => _controller.loadCategories(),
-            ),
-          ],
-        ),
-      body: SafeArea(
-        top: false,
-        child: Container(
-        color: Colors.white,
-        child: state.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  const CategoryHeader(),
-                  Expanded(
-                    child: state.categories.isEmpty
-                        ? const CategoryEmptyState()
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: state.categories.length,
-                            itemBuilder: (context, index) {
-                              final category = state.categories[index];
-                              return CategoryListItem(
-                                category: category,
-                                onEdit: () => _editCategory(category),
-                                onDelete: () => _deleteCategory(category),
-                              );
-                            },
-                          ),
-                  ),
-                ],
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: const Text(
+              'إدارة الفئات',
+              style: TextStyle(
+                fontSize: 18,
+                color: AppTheme.textPrimary,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'ArbFONTSIBMPlexArabicText',
               ),
-      ),
-      ),
-      floatingActionButton: SafeArea(
-        top: false,
-        child: FloatingActionButton(
-          onPressed: _addCategory,
-          // Minimal, consistent FAB: light background with primary-colored border and icon
-          backgroundColor: Colors.white,
-          foregroundColor: AppTheme.primaryColor,
-          elevation: 3,
-          shape: CircleBorder(
-            side: BorderSide(
-              color: AppTheme.primaryColor.withOpacity(0.6),
-              width: 1.4,
+            ),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              color: AppTheme.primaryColor,
+              iconSize: 20,
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.of(context).pop(_hasChanges);
+              },
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                color: AppTheme.primaryColor,
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _controller.loadCategories();
+                },
+              ),
+            ],
+          ),
+          body: SafeArea(
+            top: false,
+            child: state.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [
+                      const CategoryHeader(),
+                      Expanded(
+                        child: state.categories.isEmpty
+                            ? const CategoryEmptyState()
+                            : ListView.builder(
+                                padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 88),
+                                itemCount: state.categories.length,
+                                itemBuilder: (context, index) {
+                                  final category = state.categories[index];
+                                  return CategoryListItem(
+                                    category: category,
+                                    onEdit: () => _editCategory(category),
+                                    onDelete: () => _deleteCategory(category),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              _addCategory();
+            },
+            backgroundColor: Colors.white,
+            foregroundColor: AppTheme.primaryColor,
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: AppTheme.dividerColor.withOpacity(0.5),
+                width: 1,
+              ),
+            ),
+            child: const Icon(
+              Icons.add_rounded,
+              size: 24,
             ),
           ),
-          child: const Icon(
-            Icons.add,
-            size: 24,
-          ),
         ),
-      ),
-    ),
       ),
     );
   }
-
-
 
   void _addCategory() => _showCategoryDialog();
 
@@ -157,33 +170,63 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(24),
         ),
-        title: const Text('حذف الفئة'),
+        title: const Text(
+          'حذف الفئة',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            fontFamily: 'ArbFONTSIBMPlexArabicText',
+            color: AppTheme.textPrimary,
+          ),
+        ),
         content: Text(
           'هل أنت متأكد من حذف فئة "${category.name}"؟\n\n'
-          'سيتم حذف جميع الحسابات والمعاملات المرتبطة بهذه الفئة.'
+          'سيتم حذف جميع الحسابات والمعاملات المرتبطة بهذه الفئة.',
+          style: const TextStyle(
+            fontSize: 13,
+            fontFamily: 'ArbFONTSIBMPlexArabicText',
+            color: AppTheme.textSecondary,
+            height: 1.5,
+          ),
         ),
+        actionsPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(context);
+            },
             style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('إلغاء'),
+            child: const Text(
+              'إلغاء',
+              style: TextStyle(
+                fontFamily: 'ArbFONTSIBMPlexArabicText',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             onPressed: () async {
+              HapticFeedback.vibrate();
               Navigator.pop(context);
               try {
                 await _controller.deleteCategory(category.id!);
@@ -207,8 +250,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message), 
-        backgroundColor: Colors.green
+        content: Text(message),
+        backgroundColor: AppTheme.successColor,
       ),
     );
   }
@@ -216,8 +259,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message), 
-        backgroundColor: Colors.red
+        content: Text(message),
+        backgroundColor: AppTheme.errorColor,
       ),
     );
   }
