@@ -337,7 +337,7 @@ class ReportService {
         pw.Container(
           padding: const pw.EdgeInsets.all(20),
           child: pw.Text(
-            '?? ???? ?????? ????? ?????',
+            'لا توجد معاملات لعرضها في هذا الجدول',
             style: const pw.TextStyle(fontSize: 14),
             textDirection: pw.TextDirection.rtl,
           ),
@@ -527,7 +527,7 @@ class ReportService {
   static List<String> _extractTableHeaders(pw.Table table) {
     // This is a simplified extraction - in practice, you might need to access table properties
     // For now, return default headers that match the report structure
-    return ['الحساب', 'الفئة', 'له', 'عليه', 'الصافي'];
+    return ['الحساب', 'الفئة', 'لك', 'عليك', 'الصافي'];
   }
 
   static List<List<String>> _extractTableData(pw.Table table) {

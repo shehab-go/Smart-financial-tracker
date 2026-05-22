@@ -38,7 +38,7 @@ class CategoryReportGenerator {
     final netBalance = totalCredit - totalDebit;
     final netHeaderLabel = includeCurrencyColumn
         ? 'الصافي'
-        : (totalCredit >= totalDebit ? 'المتبقي لهم' : 'المتبقي عليهم');
+        : (totalCredit >= totalDebit ? 'الصافي لك' : 'الصافي عليك');
 
     final categoryInfo = pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 20),
@@ -121,7 +121,7 @@ class CategoryReportGenerator {
               mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
               children: [
                 pw.Text(
-                  'له: ${NumberFormat('#,##0').format(totalCredit)}',
+                  'لك: ${NumberFormat('#,##0').format(totalCredit)}',
                   style: pw.TextStyle(
                     fontSize: 14,
                     fontWeight: pw.FontWeight.bold,
@@ -130,7 +130,7 @@ class CategoryReportGenerator {
                   textDirection: pw.TextDirection.rtl,
                 ),
                 pw.Text(
-                  'عليه: ${NumberFormat('#,##0').format(totalDebit)}',
+                  'عليك: ${NumberFormat('#,##0').format(totalDebit)}',
                   style: pw.TextStyle(
                     fontSize: 14,
                     fontWeight: pw.FontWeight.bold,
@@ -139,7 +139,7 @@ class CategoryReportGenerator {
                   textDirection: pw.TextDirection.rtl,
                 ),
                 pw.Text(
-                  '${netBalance >= 0 ? 'المتبقي لهم' : 'المتبقي عليهم'}: ${NumberFormat('#,##0').format(netBalance.abs())}',
+                  '${netBalance >= 0 ? 'الصافي لك' : 'الصافي عليك'}: ${NumberFormat('#,##0').format(netBalance.abs())}',
                   style: pw.TextStyle(
                     fontSize: 14,
                     fontWeight: pw.FontWeight.bold,
@@ -189,7 +189,7 @@ class CategoryReportGenerator {
             ),
             pw.SizedBox(height: 12),
             pw.Table.fromTextArray(
-              headers: const ['العملة', 'له', 'عليه', 'الصافي'],
+              headers: const ['العملة', 'لك', 'عليك', 'الصافي'],
               data: currencyLines
                   .map((e) {
                     final c = e.key;
@@ -197,7 +197,7 @@ class CategoryReportGenerator {
                     final debit = e.value['debit'] ?? 0;
                     final net = e.value['net'] ?? 0;
                     final symbol = CurrencyModel.symbolFor(c);
-                    final netLabel = net >= 0 ? 'له' : 'عليه';
+                    final netLabel = net >= 0 ? 'لك' : 'عليك';
                     return [
                       symbol,
                       NumberFormat('#,##0').format(credit),
@@ -248,8 +248,8 @@ class CategoryReportGenerator {
       ],
       tableHeaders: [
         netHeaderLabel,
-        'عليه',
-        'له',
+        'عليك',
+        'لك',
         if (includeCurrencyColumn) 'العملة',
         'الحساب',
       ],

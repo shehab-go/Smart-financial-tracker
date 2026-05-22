@@ -127,9 +127,17 @@ class _SearchScreenState extends State<SearchScreen> {
         iconColor = Colors.grey;
     }
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      elevation: 2,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.dividerColor.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: AppTheme.cardShadow,
+      ),
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
@@ -146,17 +154,20 @@ class _SearchScreenState extends State<SearchScreen> {
         title: Text(
           result.title,
           style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            fontFamily: 'ArbFONTSIBMPlexArabicText',
+            color: AppTheme.textPrimary,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
           result.subtitle,
-          style: TextStyle(
+          style: const TextStyle(
             color: AppTheme.textSecondary,
-            fontSize: 14,
+            fontSize: 12,
+            fontFamily: 'ArbFONTSIBMPlexArabicText',
           ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -170,10 +181,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 child: Text(
                   result.category!,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppTheme.primaryColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
                   ),
                 ),
               )
@@ -192,48 +204,69 @@ class _SearchScreenState extends State<SearchScreen> {
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
+          scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryColor),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.textPrimary, size: 22),
             onPressed: () => Navigator.pop(context),
           ),
-          title: TextField(
-            controller: _searchController,
-            autofocus: true,
-            textDirection: TextDirection.rtl,
-            decoration: const InputDecoration(
-              hintText: 'ابحث في الحسابات والمعاملات والمصروفات...',
-              border: InputBorder.none,
-              hintStyle: TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 16,
+          titleSpacing: 0, // Reduces gap between back button and search field
+          title: Padding(
+            padding: const EdgeInsets.only(left: 16.0, right: 12.0), // Padding on both edges
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F7FA), // Cleaner soft grey/blue background
+                borderRadius: BorderRadius.circular(24), // Capsule style
               ),
-            ),
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppTheme.textPrimary,
-            ),
-            onChanged: (value) {
-              // Debounce search to avoid too many API calls
-              Future.delayed(const Duration(milliseconds: 300), () {
-                if (_searchController.text == value) {
-                  _performSearch(value);
-                }
-              });
-            },
-          ),
-          actions: [
-            if (_searchController.text.isNotEmpty)
-              IconButton(
-                icon: const Icon(Icons.clear, color: AppTheme.textSecondary),
-                onPressed: () {
-                  _searchController.clear();
-                  setState(() {
-                    _searchResults = [];
-                    _lastQuery = '';
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                textDirection: TextDirection.rtl,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+                ),
+                 decoration: InputDecoration(
+                  filled: false,
+                  hintText: 'ابحث عن حساب، معاملة، مصروف...',
+                  hintStyle: TextStyle(
+                    color: AppTheme.textSecondary.withOpacity(0.8),
+                    fontSize: 13,
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryColor, size: 22),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close_rounded, color: AppTheme.textSecondary, size: 18),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _searchResults = [];
+                              _lastQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                ),
+                onChanged: (value) {
+                  // Debounce search to avoid too many API calls
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    if (_searchController.text == value) {
+                      _performSearch(value);
+                    }
                   });
                 },
               ),
-          ],
+            ),
+          ),
         ),
         body: _isLoading
             ? const Center(
@@ -260,26 +293,35 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search,
-              size: 80,
-              color: AppTheme.textSecondary.withOpacity(0.5),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'ابحث في جميع بياناتك',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textSecondary,
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.travel_explore_rounded,
+                size: 64,
+                color: AppTheme.primaryColor,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 24),
+            const Text(
+              'ما الذي تبحث عنه؟',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+                fontFamily: 'ArbFONTSIBMPlexArabicText',
+              ),
+            ),
+            const SizedBox(height: 12),
             Text(
-              'يمكنك البحث في الحسابات والمعاملات والمصروفات',
+              'ابحث في الحسابات، المعاملات، والمصروفات بسهولة',
               style: TextStyle(
                 fontSize: 14,
-                color: AppTheme.textSecondary.withOpacity(0.7),
+                color: AppTheme.textSecondary,
+                fontFamily: 'ArbFONTSIBMPlexArabicText',
               ),
               textAlign: TextAlign.center,
             ),
@@ -291,27 +333,37 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search_off,
-              size: 80,
-              color: AppTheme.textSecondary.withOpacity(0.5),
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: AppTheme.errorColor.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.search_off_rounded,
+                size: 64,
+                color: AppTheme.errorColor,
+              ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'لا توجد نتائج',
+            const SizedBox(height: 24),
+            const Text(
+              'لم نجد أي نتائج',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textSecondary,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+                fontFamily: 'ArbFONTSIBMPlexArabicText',
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
-              'جرب البحث بكلمات مختلفة',
+              'لم يتم العثور على أية بيانات تطابق "${_searchController.text}"',
               style: TextStyle(
                 fontSize: 14,
-                color: AppTheme.textSecondary.withOpacity(0.7),
+                color: AppTheme.textSecondary,
+                fontFamily: 'ArbFONTSIBMPlexArabicText',
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

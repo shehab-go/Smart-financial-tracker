@@ -68,10 +68,6 @@ class HomeDefaultAppBar extends StatelessWidget implements PreferredSizeWidget {
               'assets/images/report_icons/pdf_report.svg',
               width: 24,
               height: 24,
-              colorFilter: const ColorFilter.mode(
-                AppTheme.primaryColor,
-                BlendMode.srcIn,
-              ),
             ),
             tooltip: 'تقرير',
             onPressed: onShowReportOptions,

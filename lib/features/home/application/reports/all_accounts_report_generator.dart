@@ -34,7 +34,7 @@ class AllAccountsReportGenerator {
     final netBalanceAll = totalCreditAll - totalDebitAll;
     final netHeaderLabelAll = includeCurrencyColumn
         ? 'الصافي'
-        : (totalCreditAll >= totalDebitAll ? 'المتبقي لهم' : 'المتبقي عليهم');
+        : (totalCreditAll >= totalDebitAll ? 'الصافي لك' : 'الصافي عليك');
 
     final allAccountsInfo = pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 20),
@@ -117,7 +117,7 @@ class AllAccountsReportGenerator {
               mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
               children: [
                 pw.Text(
-                  'له: ${NumberFormat('#,##0').format(totalCreditAll)}',
+                  'لك: ${NumberFormat('#,##0').format(totalCreditAll)}',
                   style: pw.TextStyle(
                     fontSize: 14,
                     fontWeight: pw.FontWeight.bold,
@@ -126,7 +126,7 @@ class AllAccountsReportGenerator {
                   textDirection: pw.TextDirection.rtl,
                 ),
                 pw.Text(
-                  'عليه: ${NumberFormat('#,##0').format(totalDebitAll)}',
+                  'عليك: ${NumberFormat('#,##0').format(totalDebitAll)}',
                   style: pw.TextStyle(
                     fontSize: 14,
                     fontWeight: pw.FontWeight.bold,
@@ -135,7 +135,7 @@ class AllAccountsReportGenerator {
                   textDirection: pw.TextDirection.rtl,
                 ),
                 pw.Text(
-                  '${netBalanceAll >= 0 ? 'المتبقي لهم' : 'المتبقي عليهم'}: ${NumberFormat('#,##0').format(netBalanceAll.abs())}',
+                  '${netBalanceAll >= 0 ? 'الصافي لك' : 'الصافي عليك'}: ${NumberFormat('#,##0').format(netBalanceAll.abs())}',
                   style: pw.TextStyle(
                     fontSize: 14,
                     fontWeight: pw.FontWeight.bold,
@@ -185,7 +185,7 @@ class AllAccountsReportGenerator {
             ),
             pw.SizedBox(height: 12),
             pw.Table.fromTextArray(
-              headers: const ['العملة', 'له', 'عليه', 'الصافي'],
+              headers: const ['العملة', 'لك', 'عليك', 'الصافي'],
               data: currencyLines
                   .map((e) {
                     final c = e.key;
@@ -193,7 +193,7 @@ class AllAccountsReportGenerator {
                     final debit = e.value['debit'] ?? 0;
                     final net = e.value['net'] ?? 0;
                     final symbol = CurrencyModel.symbolFor(c);
-                    final netLabel = net >= 0 ? 'له' : 'عليه';
+                    final netLabel = net >= 0 ? 'لك' : 'عليك';
                     return [
                       symbol,
                       NumberFormat('#,##0').format(credit),
@@ -245,8 +245,8 @@ class AllAccountsReportGenerator {
       ],
       tableHeaders: [
         netHeaderLabelAll,
-        'عليه',
-        'له',
+        'عليك',
+        'لك',
         if (includeCurrencyColumn) 'العملة',
         'الفئة',
         'الحساب',

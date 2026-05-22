@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:debit_credit_app/features/about/presentation/screens/about_screen.dart';
@@ -7,13 +8,12 @@ import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_s
 import 'package:debit_credit_app/features/categories/presentation/screens/categories_screen.dart';
 import 'package:debit_credit_app/features/currencies/presentation/screens/currencies_screen.dart';
 import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_backup_screen.dart';
-import 'package:debit_credit_app/features/backup/presentation/screens/google_drive_backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
-import 'package:debit_credit_app/features/settings/presentation/screens/settings_screen.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/models/user_profile.dart';
+import 'package:debit_credit_app/core/services/google_drive_backup_service.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -24,6 +24,8 @@ class AppDrawer extends StatefulWidget {
 
 class _AppDrawerState extends State<AppDrawer> {
   UserProfile? _userProfile;
+  String? _googlePhotoUrl;
+  String? _googleEmail;
   bool _isLoading = true;
 
   @override
@@ -36,9 +38,20 @@ class _AppDrawerState extends State<AppDrawer> {
     try {
       final dbHelper = DatabaseHelper();
       final profile = await dbHelper.getUserProfile();
+      String? googlePhoto;
+      String? googleEmail;
+      try {
+        if (await GoogleDriveBackupService.instance.isSignedIn()) {
+          googlePhoto = await GoogleDriveBackupService.instance.currentPhotoUrl();
+          googleEmail = await GoogleDriveBackupService.instance.currentEmail();
+        }
+      } catch (_) {}
+      
       if (mounted) {
         setState(() {
           _userProfile = profile;
+          _googlePhotoUrl = googlePhoto;
+          _googleEmail = googleEmail;
           _isLoading = false;
         });
       }
@@ -55,54 +68,42 @@ class _AppDrawerState extends State<AppDrawer> {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(4, 0),
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(2, 0),
-            ),
-          ],
+      child: Drawer(
+        backgroundColor: const Color(0xFFF1F5F9), // Light background
+        elevation: 0,
+        width: MediaQuery.of(context).size.width * 0.82,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadiusDirectional.only(
+            topEnd: Radius.circular(24),
+            bottomEnd: Radius.circular(24),
+          ),
         ),
-        child: Drawer(
-          backgroundColor: const Color(0xFFF8FAFC),
-          elevation: 16,
-          width: MediaQuery.of(context).size.width * 0.85,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(8),
-              bottomRight: Radius.circular(8),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFFF1F5F9),
+            borderRadius: BorderRadiusDirectional.only(
+              topEnd: Radius.circular(24),
+              bottomEnd: Radius.circular(24),
             ),
           ),
-        child: Container(
-          color: const Color(0xFFF8FAFC),
           child: SafeArea(
             top: false,
-            // Apply bottom inset so drawer content doesn't go under system navigation keys
             child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Container(
-                  constraints: const BoxConstraints(minHeight: 140),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 1,
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // Header (Premium Gradient Card with Wave effect)
+                SliverToBoxAdapter(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.only(top: 48, bottom: 20),
+                    decoration: const BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadiusDirectional.only(
+                        bottomEnd: Radius.circular(32),
                       ),
                     ),
-                  ),
-                  child: SafeArea(
-                    bottom: false, // Allow bottom content to extend
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: _isLoading
                           ? const Center(
                               child: CircularProgressIndicator(
@@ -112,271 +113,335 @@ class _AppDrawerState extends State<AppDrawer> {
                             )
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Row(
-                                   children: [
-                                     Container(
-                                       width: 50,
-                                       height: 50,
-                                       decoration: BoxDecoration(
-                                         color: Colors.grey.shade100,
-                                         border: Border.all(
-                                           color: AppTheme.primaryColor.withOpacity(0.3),
-                                           width: 1.5,
-                                         ),
-                                         borderRadius: BorderRadius.circular(8),
-                                       ),
-                                       child: _userProfile?.logoPath != null
+                                  children: [
+                                    // Premium Profile Circle
+                                    Container(
+                                      width: 60,
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(18),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.3),
+                                          width: 1.5,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.08),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(18),
+                                        child: _userProfile?.logoPath != null
                                             ? Image.file(
-                                                  File(_userProfile!.logoPath!),
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (context, error, stackTrace) {
-                                                    return Icon(
-                                                      Icons.person_rounded,
-                                                      size: 24,
-                                                      color: Colors.grey.shade600,
+                                                File(_userProfile!.logoPath!),
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) {
+                                                  if (_googlePhotoUrl != null && _googlePhotoUrl!.isNotEmpty) {
+                                                    return Image.network(
+                                                      _googlePhotoUrl!,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (context, error, stackTrace) {
+                                                        return const Icon(
+                                                          Icons.person_rounded,
+                                                          size: 32,
+                                                          color: Colors.white,
+                                                        );
+                                                      },
                                                     );
-                                                  },
-                                                )
-                                            : Icon(
-                                                Icons.person_rounded,
-                                                size: 24,
-                                                color: Colors.grey.shade600,
-                                              ),
-                                     ),
-                                     const SizedBox(width: 12),
-                                     Expanded(
-                                       child: Column(
-                                         crossAxisAlignment: CrossAxisAlignment.start,
-                                         children: [
-                                           Text(
-                                              _userProfile?.fullName?.isNotEmpty == true
-                                                  ? _userProfile!.fullName!
-                                                  : _userProfile?.businessName?.isNotEmpty == true
-                                                      ? _userProfile!.businessName!
-                                                      : 'إدارة الحسابات المالية',
-                                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                                color: Colors.grey.shade800,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                           const SizedBox(height: 4),
-                                           if (_userProfile?.tradingActivity?.isNotEmpty == true)
-                                             Text(
-                                               _userProfile!.tradingActivity!,
-                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                 color: Colors.grey.shade600,
-                                               ),
-                                               maxLines: 1,
-                                               overflow: TextOverflow.ellipsis,
-                                             )
-                                           else
-                                             Text(
-                                               'تطبيق شامل لإدارة أموالك بذكاء',
-                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                 color: Colors.grey.shade600,
-                                               ),
-                                             ),
-                                          if (_userProfile?.phone?.isNotEmpty == true) ...[
-                                            const SizedBox(height: 6),
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 16),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    Icons.phone_rounded,
-                                                    size: 14,
-                                                    color: Colors.grey.shade600,
+                                                  }
+                                                  return const Icon(
+                                                    Icons.person_rounded,
+                                                    size: 32,
+                                                    color: Colors.white,
+                                                  );
+                                                },
+                                              )
+                                            : (_googlePhotoUrl != null && _googlePhotoUrl!.isNotEmpty)
+                                                ? Image.network(
+                                                    _googlePhotoUrl!,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (context, error, stackTrace) {
+                                                      return const Icon(
+                                                        Icons.person_rounded,
+                                                        size: 32,
+                                                        color: Colors.white,
+                                                      );
+                                                    },
+                                                  )
+                                                : const Icon(
+                                                    Icons.person_rounded,
+                                                    size: 32,
+                                                    color: Colors.white,
                                                   ),
-                                                  const SizedBox(width: 6),
-                                                  Flexible(
-                                                    child: Text(
-                                                      _userProfile!.phone!,
-                                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                                        color: Colors.grey.shade600,
-                                                      ),
-                                                      overflow: TextOverflow.ellipsis,
-                                                      maxLines: 1,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            _userProfile?.fullName?.isNotEmpty == true
+                                                ? _userProfile!.fullName!
+                                                : _userProfile?.businessName?.isNotEmpty == true
+                                                    ? _userProfile!.businessName!
+                                                    : 'حسابات يومية',
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _userProfile?.tradingActivity?.isNotEmpty == true
+                                                ? _userProfile!.tradingActivity!
+                                                : 'تطبيق شامل لإدارة أموالك بذكاء',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.white.withOpacity(0.85),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 6),
+                                          if (_googleEmail != null)
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(
+                                                  Icons.cloud_done_rounded,
+                                                  size: 13,
+                                                  color: Colors.white,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Flexible(
+                                                  child: Text(
+                                                    _googleEmail!,
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: Colors.white.withOpacity(0.9),
+                                                      fontWeight: FontWeight.w500,
                                                     ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
                                                   ),
-                                                ],
+                                                ),
+                                              ],
+                                            )
+                                          else
+                                            GestureDetector(
+                                              onTap: () async {
+                                                try {
+                                                  final account = await GoogleDriveBackupService.instance.signIn();
+                                                  if (account != null) {
+                                                    final photo = await GoogleDriveBackupService.instance.currentPhotoUrl();
+                                                    final email = await GoogleDriveBackupService.instance.currentEmail();
+                                                    setState(() {
+                                                      _googlePhotoUrl = photo;
+                                                      _googleEmail = email;
+                                                    });
+                                                    if (mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text('تم ربط جوجل درايف بنجاح!'),
+                                                          backgroundColor: AppTheme.primaryColor,
+                                                        ),
+                                                      );
+                                                    }
+                                                  }
+                                                } catch (e) {
+                                                  if (mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(e.toString()),
+                                                        backgroundColor: Colors.red,
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white.withOpacity(0.18),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: Colors.white.withOpacity(0.3),
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.add_to_drive_rounded,
+                                                      size: 12,
+                                                      color: Colors.white,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    const Text(
+                                                      'ربط جوجل درايف',
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: Colors.white,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
-                                          ],
-                                         ],
-                                       ),
-                                     ),
-                                     // Edit Profile Button
-                                     Container(
-                                       margin: const EdgeInsets.only(left: 8),
-                                       decoration: BoxDecoration(
-                                         color: AppTheme.primaryColor.withOpacity(0.1),
-                                         borderRadius: BorderRadius.circular(8),
-                                         border: Border.all(
-                                           color: AppTheme.primaryColor.withOpacity(0.3),
-                                           width: 1,
-                                         ),
-                                       ),
-                                       child: Material(
-                                         color: Colors.transparent,
-                                         borderRadius: BorderRadius.circular(8),
-                                         child: InkWell(
-                                           borderRadius: BorderRadius.circular(8),
-                                           onTap: () async {
-                                             final result = await Navigator.push(
-                                               context,
-                                               MaterialPageRoute(builder: (context) => const UserProfileScreen()),
-                                             );
-                                             // Refresh profile data when returning from profile screen
-                                             if (result == true) {
-                                               _loadUserProfile();
-                                             }
-                                           },
-                                           child: Container(
-                                             padding: const EdgeInsets.all(8),
-                                             child: Icon(
-                                               Icons.edit_rounded,
-                                               color: AppTheme.primaryColor,
-                                               size: 18,
-                                             ),
-                                           ),
-                                         ),
-                                       ),
-                                     ),
-                                   ],
-                                 ),
-                                
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (_userProfile?.phone?.isNotEmpty == true) ...[
+                                  const SizedBox(height: 16),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.phone_android_rounded,
+                                          size: 14,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _userProfile!.phone!,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                     ),
                   ),
                 ),
-              ),
-            SliverList(
-              delegate: SliverChildListDelegate([
-                _buildSectionDivider('إدارة البيانات'),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.backup_rounded,
-                  title: 'النسخ الاحتياطية',
-                  subtitle: 'إنشاء أو استعادة قاعدة البيانات',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
+                
+                // Drawer Items list
+                SliverList(
+                  delegate: SliverChildListDelegate([
+                    _buildSectionDivider('إدارة البيانات'),
+                    _buildDrawerItem(
                       context,
-                      MaterialPageRoute(builder: (context) => const EnhancedBackupScreen()),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.cloud_rounded,
-                  title: 'Google Drive Backup',
-                  subtitle: 'نسخ واستعادة من Google Drive',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
+                      icon: Icons.backup_table_rounded,
+                      title: 'النسخ الاحتياطي',
+                      subtitle: 'إدارة النسخ الاحتياطية سحابياً ومحلياً',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const EnhancedBackupScreen()),
+                        );
+                      },
+                    ),
+                    _buildDrawerItem(
                       context,
-                      MaterialPageRoute(builder: (context) => const GoogleDriveBackupScreen()),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.category_rounded,
-                  title: 'إدارة الفئات',
-                  subtitle: 'إضافة وتعديل فئات الحسابات',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
+                      icon: Icons.grid_view_rounded,
+                      title: 'إدارة الفئات',
+                      subtitle: 'إضافة وتعديل فئات الحسابات',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CategoriesScreen()),
+                        );
+                      },
+                    ),
+                    _buildDrawerItem(
                       context,
-                      MaterialPageRoute(builder: (context) => const CategoriesScreen()),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.monetization_on_rounded,
-                  title: 'إدارة العملات',
-                  subtitle: 'إضافة وتعديل العملات المستخدمة',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
+                      icon: Icons.currency_exchange_rounded,
+                      title: 'إدارة العملات',
+                      subtitle: 'إضافة وتعديل العملات المستخدمة',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CurrenciesScreen()),
+                        );
+                      },
+                    ),
+                    _buildSectionDivider('خيارات وأمان'),
+                    _buildDrawerItem(
                       context,
-                      MaterialPageRoute(builder: (context) => const CurrenciesScreen()),
-                    );
-                  },
-                ),
-                _buildSectionDivider('أخرى'),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.system_update_rounded,
-                  title: 'تحديث التطبيق',                  
-                  // subtitle: 'تحقق من التحديثات الجديدة',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _openAppInPlayStore();
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.share_rounded,
-                  title: 'مشاركة التطبيق',
-                  // subtitle: 'شارك التطبيق مع الأصدقاء',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _shareApp();
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.settings_rounded,
-                  title: 'الإعدادات',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
+                      icon: Icons.security_rounded,
+                      title: 'سياسة الخصوصية والأمان',
+                      subtitle: 'خيارات الأمان وحماية خصوصية بياناتك',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const PrivacyScreen()),
+                        );
+                      },
+                    ),
+
+                    _buildSectionDivider('تواصل وتحديث'),
+                    _buildDrawerItem(
                       context,
-                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.info_rounded,
-                  title: 'حول التطبيق',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
+                      icon: Icons.new_releases_rounded,
+                      title: 'تحديث التطبيق',
+                      subtitle: 'احصل على آخر التحديثات الرسمية',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _openAppInPlayStore();
+                      },
+                    ),
+                    _buildDrawerItem(
                       context,
-                      MaterialPageRoute(builder: (context) => const AboutScreen()),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.privacy_tip_rounded,
-                  title: 'سياسة الخصوصية',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
+                      icon: Icons.share_location_rounded,
+                      title: 'مشاركة التطبيق',
+                      subtitle: 'شارك الأداة المالية مع شبكتك التجارية',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _shareApp();
+                      },
+                    ),
+                    _buildDrawerItem(
                       context,
-                      MaterialPageRoute(builder: (context) => const PrivacyScreen()),
-                    );
-                  },
+                      icon: Icons.workspace_premium_rounded,
+                      title: 'حول التطبيق',
+                      subtitle: 'معلومات إصدار الأداة وفريق العمل',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AboutScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                  ]),
                 ),
-                const SizedBox(height: 24),
-              ]),
+              ],
             ),
-          ],
-        ),
-          ),
           ),
         ),
       ),
-    ); 
+    );
   }
 
   Widget _buildDrawerItem(
@@ -386,104 +451,83 @@ class _AppDrawerState extends State<AppDrawer> {
     String? subtitle,
     required VoidCallback onTap,
     bool isDisabled = false,
-    String? comingSoonTag,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: isDisabled ? Colors.grey.shade100 : Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDisabled ? Colors.grey.shade300 : Colors.grey.shade300,
-          width: 1.5,
+          color: AppTheme.dividerColor.withOpacity(0.6),
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDisabled ? 0.02 : 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: isDisabled ? null : onTap,
-          borderRadius: BorderRadius.circular(8),
-          splashColor: isDisabled ? Colors.transparent : Colors.grey.withOpacity(0.1),
-          highlightColor: isDisabled ? Colors.transparent : Colors.grey.withOpacity(0.05),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(16),
+          splashColor: AppTheme.primaryColor.withOpacity(0.04),
+          highlightColor: AppTheme.primaryColor.withOpacity(0.02),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
+                // Icon wrapper
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: isDisabled ? Colors.grey.shade200 : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Colors.grey.shade300,
-                      width: 1.5,
-                    ),
+                    color: AppTheme.primaryColor.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon,
-                    color: isDisabled ? Colors.grey.shade400 : Colors.grey.shade600,
-                    size: 20,
+                    color: AppTheme.primaryColor,
+                    size: 22,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              title,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: isDisabled ? Colors.grey.shade500 : AppTheme.textPrimary,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ),
-                          if (comingSoonTag != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.shade100,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.orange.shade300,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                comingSoonTag,
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: Colors.orange.shade700,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                        ],
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
                       ),
                       if (subtitle != null) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           subtitle,
-                          style: TextStyle(
-                            color: isDisabled ? Colors.grey.shade400 : AppTheme.textSecondary,
-                            fontSize: 13,
+                          style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
                             fontWeight: FontWeight.w400,
-                            height: 1.3,
+                            height: 1.25,
                           ),
                         ),
                       ],
                     ],
+                  ),
+                ),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Icon(
+                    Directionality.of(context) == TextDirection.rtl
+                        ? Icons.arrow_back_ios_new_rounded
+                        : Icons.arrow_forward_ios_rounded,
+                    color: AppTheme.textTertiary,
+                    size: 14,
                   ),
                 ),
               ],
@@ -496,55 +540,31 @@ class _AppDrawerState extends State<AppDrawer> {
 
   Widget _buildSectionDivider(String title) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 28, 20, 16),
+      margin: const EdgeInsets.fromLTRB(20, 24, 20, 10),
       child: Row(
         children: [
           Container(
-            width: 5,
-            height: 24,
+            width: 4,
+            height: 16,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppTheme.primaryColor,
-                  AppTheme.primaryColor.withOpacity(0.7),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(3),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryColor.withOpacity(0.3),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: AppTheme.primaryColor,
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-              letterSpacing: 0.5,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryColor,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Container(
-              height: 1.5,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryColor.withOpacity(0.4),
-                    AppTheme.primaryColor.withOpacity(0.1),
-                    Colors.transparent,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(1),
-              ),
+              height: 1,
+              color: AppTheme.dividerColor.withOpacity(0.6),
             ),
           ),
         ],
@@ -554,11 +574,11 @@ class _AppDrawerState extends State<AppDrawer> {
 
   void _shareApp() {
     Share.share(
-      'تطبيق إدارة الحسابات المالية - تطبيق رائع لإدارة أموالك بسهولة وأمان!\n\n'
+      'تطبيق حسابات يومية - تطبيق رائع لإدارة أموالك بسهولة وأمان!\n\n'
       'يمكنك تتبع جميع معاملاتك المالية، تنظيم حساباتك حسب الفئات، وإدارة أموالك بشكل فعال.\n\n'
       'التطبيق يعمل بدون إنترنت ويحافظ على خصوصية بياناتك المالية.\n\n'
       'حمل التطبيق الآن:\nhttps://play.google.com/store/apps/details?id=com.ramzi.debit_credit_app',
-      subject: 'تطبيق إدارة الحسابات المالية',
+      subject: 'تطبيق حسابات يومية',
     );
   }
 
@@ -570,7 +590,6 @@ class _AppDrawerState extends State<AppDrawer> {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        // Fallback: show a snackbar with the URL
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -581,7 +600,6 @@ class _AppDrawerState extends State<AppDrawer> {
         }
       }
     } catch (e) {
-      // Handle any errors
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

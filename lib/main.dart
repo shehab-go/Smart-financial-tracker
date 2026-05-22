@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:debit_credit_app/core/widgets/main_navigation.dart';
+import 'package:debit_credit_app/features/privacy/presentation/screens/app_lock_screen.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 
@@ -12,8 +12,14 @@ void main() async {
   // Initialize date formatting for Arabic locale
   await initializeDateFormatting('ar', null);
   
-  // AndroidX EdgeToEdge already handles system bars in MainActivity.
-  // No need to set SystemChrome modes here.
+  // Set system UI style globally for pristine edge-to-edge rendering
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark, // Dark status bar icons on light background
+    statusBarBrightness: Brightness.light, // For iOS: Dark status bar icons
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.dark, // Dark navigation icons
+  ));
   
   // Set preferred orientations
   SystemChrome.setPreferredOrientations([
@@ -25,6 +31,7 @@ void main() async {
 }
 
 class PersonalFinanceApp extends StatelessWidget {
+
   const PersonalFinanceApp({super.key});
 
   @override
@@ -45,7 +52,7 @@ class PersonalFinanceApp extends StatelessWidget {
         textDirection: TextDirection.rtl,
         child: child ?? const SizedBox.shrink(),
       ),
-      home: const MainNavigation(),
+      home: const AppLockChecker(),
     );
   }
 }

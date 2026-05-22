@@ -31,8 +31,8 @@ class SelectedAccountsReportGenerator {
       headerContent: const [],
       tableHeaders: [
         'الحساب',
-        'له',
-        'عليه',
+        'لك',
+        'عليك',
         if (includeCurrencyColumn) 'العملة',
       ],
       tableData: rows,

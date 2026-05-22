@@ -1,6 +1,7 @@
 import 'package:debit_credit_app/features/home/application/home_state.dart';
 import 'package:debit_credit_app/features/home/domain/home_repository.dart';
 import 'package:debit_credit_app/core/models/account.dart';
+import 'package:debit_credit_app/core/models/category.dart';
 import 'package:flutter/foundation.dart';
 
 class _CategoryLoadResult {
@@ -46,6 +47,11 @@ class HomeController {
     final categories = await _repo.fetchCategories();
     _debugPerf('HomeController.load.fetchCategories', swCategories);
 
+    final List<CategoryModel> updatedCategories = [
+      CategoryModel(id: -1, name: 'الكل'),
+      ...categories,
+    ];
+
     final String effectiveCurrency;
     final bool isAllCurrencies = currencyFilter.trim().isEmpty || currencyFilter == 'all';
     if (isAllCurrencies) {
@@ -76,27 +82,42 @@ class HomeController {
     for (final account in allAccounts) {
       (accountsByCategory[account.category] ??= <AccountModel>[]).add(account);
     }
+    accountsByCategory['الكل'] = allAccounts;
 
     final swAllCategories = Stopwatch()..start();
     final List<_CategoryLoadResult> results = await Future.wait(
-      categories.map((category) async {
+      updatedCategories.map((category) async {
         final accounts = accountsByCategory[category.name] ?? const <AccountModel>[];
 
         final swTotals = Stopwatch()..start();
         double debit = 0.0;
         double credit = 0.0;
-        if (isAllCurrencies) {
-          // Totals should not mix currencies. When showing all currencies,
-          // compute category totals using the effectiveCurrencyName only.
-          final totals = totalsByCategoryForEffectiveCurrency[category.name];
-          if (totals != null) {
-            debit = totals['debit'] ?? 0.0;
-            credit = totals['credit'] ?? 0.0;
+        if (category.name == 'الكل') {
+          if (isAllCurrencies) {
+            for (final totals in totalsByCategoryForEffectiveCurrency.values) {
+              debit += totals['debit'] ?? 0.0;
+              credit += totals['credit'] ?? 0.0;
+            }
+          } else {
+            for (final a in accounts) {
+              debit += a.totalDebit;
+              credit += a.totalCredit;
+            }
           }
         } else {
-          for (final a in accounts) {
-            debit += a.totalDebit;
-            credit += a.totalCredit;
+          if (isAllCurrencies) {
+            // Totals should not mix currencies. When showing all currencies,
+            // compute category totals using the effectiveCurrencyName only.
+            final totals = totalsByCategoryForEffectiveCurrency[category.name];
+            if (totals != null) {
+              debit = totals['debit'] ?? 0.0;
+              credit = totals['credit'] ?? 0.0;
+            }
+          } else {
+            for (final a in accounts) {
+              debit += a.totalDebit;
+              credit += a.totalCredit;
+            }
           }
         }
         _debugPerf('HomeController.load.computeTotals(${category.name})', swTotals);
@@ -123,7 +144,7 @@ class HomeController {
 
     _state = _state.copyWith(
       isLoading: false,
-      categories: categories,
+      categories: updatedCategories,
       accountsByCategory: accountsMap.map((k, v) => MapEntry(k, List<AccountModel>.from(v))),
       totalsByCategory: totalsMap,
     );

@@ -11,20 +11,22 @@ class AccountModel {
   final double totalDebit;
   final double totalCredit;
   final DateTime createdDate;
+  final DateTime lastTransactionDate;
 
   AccountModel({
     this.id,
     required this.name,
     required this.category,
-    String this.currencyName = 'محلي',
+    this.currencyName = 'محلي',
     this.phone,
     this.address,
     this.workDetails,
     required this.createdDate,
+    DateTime? lastTransactionDate,
     this.transactionCount = 0,
     this.totalDebit = 0.0,
     this.totalCredit = 0.0,
-  });
+  }) : lastTransactionDate = lastTransactionDate ?? createdDate;
 
   Map<String, dynamic> toMap() {
     // Only base account fields saved; calculated fields ignored
@@ -53,6 +55,7 @@ class AccountModel {
       address: map['address'],
       workDetails: map['workDetails'],
       createdDate: DateTime.fromMillisecondsSinceEpoch(map['createdDate']),
+      lastTransactionDate: map['lastTransactionDate'] != null ? DateTime.fromMillisecondsSinceEpoch(map['lastTransactionDate']) : null,
       transactionCount: (map['transactionCount'] ?? 0) is int ? map['transactionCount'] ?? 0 : int.tryParse(map['transactionCount'].toString()) ?? 0,
       totalDebit: (map['totalDebit'] ?? 0.0) is num ? (map['totalDebit'] ?? 0.0).toDouble() : double.tryParse(map['totalDebit'].toString()) ?? 0.0,
       totalCredit: (map['totalCredit'] ?? 0.0) is num ? (map['totalCredit'] ?? 0.0).toDouble() : double.tryParse(map['totalCredit'].toString()) ?? 0.0,
@@ -68,6 +71,7 @@ class AccountModel {
     String? address,
     String? workDetails,
     DateTime? createdDate,
+    DateTime? lastTransactionDate,
     int? transactionCount,
     double? totalDebit,
     double? totalCredit,
@@ -81,6 +85,7 @@ class AccountModel {
       address: address ?? this.address,
       workDetails: workDetails ?? this.workDetails,
       createdDate: createdDate ?? this.createdDate,
+      lastTransactionDate: lastTransactionDate ?? this.lastTransactionDate,
       transactionCount: transactionCount ?? this.transactionCount,
       totalDebit: totalDebit ?? this.totalDebit,
       totalCredit: totalCredit ?? this.totalCredit,

@@ -38,3 +38,7 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# Ignore missing classes from AndroidX Window extensions and Sidecar
+-dontwarn androidx.window.extensions.**
+-dontwarn androidx.window.sidecar.**

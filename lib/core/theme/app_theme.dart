@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AppTheme {
-  // Modern color palette
+  // Modern premium color palette (Restored to original Teal)
   static const Color primaryColor = Color(0xFF00879E); // Teal primary color
   static const Color secondaryColor = Color(0xFF00ACC1); // Teal accent
   static const Color surfaceColor = Color(0xFFF8FAFC); // Light surface
@@ -9,7 +10,7 @@ class AppTheme {
   static const Color successColor = Color(0xFF38A169); // Modern green
   static const Color warningColor = Color(0xFFED8936); // Modern orange
   
-  // Text colors
+  // Text colors (Restored to original)
   static const Color textPrimary = Color(0xFF1A202C);
   static const Color textSecondary = Color(0xFF4A5568);
   static const Color textTertiary = Color(0xFF718096);
@@ -24,6 +25,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'ArbFONTSIBMPlexArabicText', // IBM Plex Arabic (Premium Font)
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         brightness: Brightness.light,
@@ -37,12 +39,21 @@ class AppTheme {
       // App Bar Theme
       appBarTheme: const AppBarTheme(
         elevation: 0,
+        scrolledUnderElevation: 0, // Prevent background color change on scroll
         centerTitle: false,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         foregroundColor: textPrimary,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark, // Dark status bar icons on light screen
+          statusBarBrightness: Brightness.light, // For iOS: Dark status bar icons
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarIconBrightness: Brightness.dark, // Dark navigation icons
+        ),
         titleTextStyle: TextStyle(
+          fontFamily: 'ArbFONTSIBMPlexArabicText',
           fontSize: 20,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
           color: textPrimary,
         ),
         iconTheme: IconThemeData(color: primaryColor),
@@ -50,10 +61,10 @@ class AppTheme {
       
       // Card Theme
       cardTheme: CardThemeData(
-        elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.1),
+        elevation: 0, // Handled with premium custom ambient shadow in BoxDecoration
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: dividerColor.withOpacity(0.5), width: 1),
         ),
         color: cardColor,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -62,14 +73,17 @@ class AppTheme {
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          elevation: 2,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          elevation: 0,
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
+            fontFamily: 'ArbFONTSIBMPlexArabicText',
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
@@ -79,11 +93,12 @@ class AppTheme {
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(8),
           ),
           textStyle: const TextStyle(
+            fontFamily: 'ArbFONTSIBMPlexArabicText',
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -91,29 +106,29 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surfaceColor,
+        fillColor: Colors.white,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: dividerColor, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: dividerColor, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: errorColor),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: errorColor, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       
       // List Tile Theme
       listTileTheme: const ListTileThemeData(
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         iconColor: primaryColor,
         textColor: textPrimary,
       ),
@@ -121,7 +136,7 @@ class AppTheme {
       // Drawer Theme
       drawerTheme: const DrawerThemeData(
         backgroundColor: Colors.white,
-        elevation: 8,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.zero,
         ),
@@ -133,18 +148,20 @@ class AppTheme {
         unselectedLabelColor: textSecondary,
         indicatorColor: primaryColor,
         labelStyle: TextStyle(
+          fontFamily: 'ArbFONTSIBMPlexArabicText',
           fontSize: 14,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
         ),
         unselectedLabelStyle: TextStyle(
+          fontFamily: 'ArbFONTSIBMPlexArabicText',
           fontSize: 14,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
         ),
       ),
       
       // Divider Theme
       dividerTheme: DividerThemeData(
-        color: Colors.grey.shade200,
+        color: dividerColor.withOpacity(0.6),
         thickness: 1,
         space: 1,
       ),
@@ -169,22 +186,22 @@ class AppTheme {
         ),
         headlineSmall: TextStyle(
           fontSize: 24,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
           color: textPrimary,
         ),
         titleLarge: TextStyle(
           fontSize: 20,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
           color: textPrimary,
         ),
         titleMedium: TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
         titleSmall: TextStyle(
           fontSize: 14,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: textSecondary,
         ),
         bodyLarge: TextStyle(
@@ -204,17 +221,17 @@ class AppTheme {
         ),
         labelLarge: TextStyle(
           fontSize: 14,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
         labelMedium: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: textSecondary,
         ),
         labelSmall: TextStyle(
           fontSize: 10,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
           color: textTertiary,
         ),
       ),
@@ -224,35 +241,40 @@ class AppTheme {
   // Custom colors for specific use cases
   static const Color creditColor = successColor;
   static const Color debitColor = errorColor;
-  static const Color neutralColor = Color(0xFF6B7280);
+  static const Color neutralColor = Color(0xFF64748B); // Slate 500
   
-  // Gradient definitions
+  // Premium linear gradient definitions
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [primaryColor, Color(0xFF006B7D)],
+    colors: [primaryColor, Color(0xFF006B7D)], // Teal primary to Teal dark
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
   
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Colors.white, Color(0xFFFAFAFA)],
+    colors: [Colors.white, Color(0xFFF8FAFC)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
   
-  // Shadow definitions
+  // Tinted premium soft shadows (Teal Tinted Ambient Shadow)
   static List<BoxShadow> get cardShadow => [
     BoxShadow(
-      color: Colors.black.withOpacity(0.08),
-      blurRadius: 8,
-      offset: const Offset(0, 2),
+      color: primaryColor.withOpacity(0.04),
+      blurRadius: 12,
+      offset: const Offset(0, 4),
+    ),
+    BoxShadow(
+      color: Colors.black.withOpacity(0.02),
+      blurRadius: 4,
+      offset: const Offset(0, 1),
     ),
   ];
   
   static List<BoxShadow> get elevatedShadow => [
     BoxShadow(
-      color: Colors.black.withOpacity(0.12),
-      blurRadius: 16,
-      offset: const Offset(0, 4),
+      color: primaryColor.withOpacity(0.12),
+      blurRadius: 20,
+      offset: const Offset(0, 6),
     ),
   ];
 }

@@ -20,13 +20,17 @@ class AppUpdateService {
                 onPressed: () async {
                   try {
                     await InAppUpdate.completeFlexibleUpdate();
-                  } catch (_) {}
+                  } catch (e) {
+                    debugPrint('Error completing flexible update: $e');
+                  }
                 },
               ),
             ),
           );
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Error checking for update: $e');
+    }
   }
 }
