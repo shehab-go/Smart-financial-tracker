@@ -128,6 +128,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final FocusNode _nameFocusNode = FocusNode();
+  List<String> _existingNames = [];
 
   final DatabaseHelper _db = DatabaseHelper();
 
@@ -158,10 +160,27 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _amountController.dispose();
     _detailsController.dispose();
     _phoneController.dispose();
+    _nameFocusNode.dispose();
     for (final input in _allocationInputs) {
       input.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _loadExistingNames() async {
+    try {
+      final accounts = await _db.getAccounts();
+      final names = accounts
+          .map((a) => a.name.trim())
+          .where((name) => name.isNotEmpty)
+          .toSet()
+          .toList();
+      if (mounted) {
+        setState(() {
+          _existingNames = names;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _pickImages() async {
@@ -304,6 +323,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _initCurrency();
     if (_isNewAccount) {
       _loadCurrencyQuickPickData();
+      _loadExistingNames();
     }
     _initBalancesAndAllocations();
 
@@ -692,7 +712,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       child: Text(
                         _isEditing
                             ? 'تعديل المعاملة'
-                            : (_isNewAccount ? 'حساب جديد' : 'إضافة معاملة'),
+                            : (_isNewAccount ? 'عملية جديدة' : 'إضافة معاملة'),
                         style: const TextStyle(
                           color: AppTheme.textPrimary,
                           fontSize: 16,
@@ -739,60 +759,150 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       children: [
                         // Account Name Field (if New Account)
                         if (_isNewAccount) ...[
-                          TextFormField(
-                            controller: _accountNameController,
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 14,
-                              fontFamily: 'ArbFONTSIBMPlexArabicText',
-                            ),
-                            decoration: InputDecoration(
-                              labelText: 'الاسم',
-                              labelStyle: const TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 13,
-                                fontFamily: 'ArbFONTSIBMPlexArabicText',
-                              ),
-                              suffixIcon: IconButton(
-                                icon: SvgPicture.asset(
-                                  'assets/images/user-circle.svg',
-                                  width: 20,
-                                  height: 20,
-                                  colorFilter: const ColorFilter.mode(
-                                    AppTheme.primaryColor,
-                                    BlendMode.srcIn,
+                          RawAutocomplete<String>(
+                            textEditingController: _accountNameController,
+                            focusNode: _nameFocusNode,
+                            optionsBuilder: (TextEditingValue textEditingValue) {
+                              if (textEditingValue.text.trim().isEmpty) {
+                                return const Iterable<String>.empty();
+                              }
+                              return _existingNames.where((String option) {
+                                return option.toLowerCase().contains(textEditingValue.text.trim().toLowerCase());
+                              });
+                            },
+                            onSelected: (String selection) {
+                              setState(() {
+                                _accountNameController.text = selection;
+                              });
+                            },
+                            fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                              return TextFormField(
+                                controller: textEditingController,
+                                focusNode: focusNode,
+                                style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 14,
+                                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                ),
+                                decoration: InputDecoration(
+                                  labelText: 'الاسم',
+                                  labelStyle: const TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 13,
+                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: SvgPicture.asset(
+                                      'assets/images/user-circle.svg',
+                                      width: 20,
+                                      height: 20,
+                                      colorFilter: const ColorFilter.mode(
+                                        AppTheme.primaryColor,
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                                    tooltip: 'اختيار من جهات الاتصال',
+                                    onPressed: () {
+                                      HapticFeedback.lightImpact();
+                                      _pickContactForName();
+                                    },
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: BorderSide(
+                                      color: AppTheme.dividerColor.withOpacity(0.5),
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: BorderSide(
+                                      color: AppTheme.dividerColor.withOpacity(0.5),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                      color: AppTheme.primaryColor,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: AppTheme.surfaceColor,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                                validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال الاسم' : null,
+                                onFieldSubmitted: (String value) {
+                                  onFieldSubmitted();
+                                },
+                              );
+                            },
+                            optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
+                              return Align(
+                                alignment: Alignment.topLeft,
+                                child: Material(
+                                  elevation: 4.0,
+                                  borderRadius: BorderRadius.circular(14),
+                                  shadowColor: AppTheme.textSecondary.withOpacity(0.15),
+                                  color: Colors.white,
+                                  child: Container(
+                                    width: (MediaQuery.of(context).size.width - 72).clamp(0.0, 340.0),
+                                    constraints: const BoxConstraints(maxHeight: 200),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: AppTheme.dividerColor.withOpacity(0.5),
+                                      ),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(14),
+                                      child: ListView.separated(
+                                        padding: EdgeInsets.zero,
+                                        shrinkWrap: true,
+                                        itemCount: options.length,
+                                        separatorBuilder: (context, index) => const Divider(
+                                          height: 1,
+                                          color: AppTheme.dividerColor,
+                                        ),
+                                        itemBuilder: (BuildContext context, int index) {
+                                          final String option = options.elementAt(index);
+                                          return InkWell(
+                                            onTap: () {
+                                              onSelected(option);
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 16,
+                                                vertical: 12,
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.history_rounded,
+                                                    size: 16,
+                                                    color: AppTheme.textSecondary,
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Expanded(
+                                                    child: Text(
+                                                      option,
+                                                      style: const TextStyle(
+                                                        color: AppTheme.textPrimary,
+                                                        fontSize: 14,
+                                                        fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                tooltip: 'اختيار من جهات الاتصال',
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  _pickContactForName();
-                                },
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide(
-                                  color: AppTheme.dividerColor.withOpacity(0.5),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide(
-                                  color: AppTheme.dividerColor.withOpacity(0.5),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
-                                  color: AppTheme.primaryColor,
-                                  width: 1.5,
-                                ),
-                              ),
-                              filled: true,
-                              fillColor: AppTheme.surfaceColor,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                            validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال الاسم' : null,
+                              );
+                            },
                           ),
                           const SizedBox(height: 16),
                         ],
