@@ -14,6 +14,18 @@ import '../theme/app_theme.dart';
 
 class ReportService {
   static final Future<pw.Font> _arabicFontFuture = _loadArabicFont();
+  static Uint8List? _cachedAppIconBytes;
+
+  static Future<void> _ensureAssetsLoaded() async {
+    if (_cachedAppIconBytes == null) {
+      try {
+        final data = await rootBundle.load('assets/images/app_icon.png');
+        _cachedAppIconBytes = data.buffer.asUint8List();
+      } catch (e) {
+        debugPrint('Error loading app icon asset: $e');
+      }
+    }
+  }
   
   // Premium Design System Colors
   static final PdfColor primaryColor = PdfColor.fromInt(AppTheme.primaryColor.value);
@@ -242,6 +254,7 @@ class ReportService {
   }) async {
     final pdf = pw.Document();
     final arabicFont = await _arabicFontFuture;
+    await _ensureAssetsLoaded();
     final theme = pw.ThemeData.withFont(
       base: arabicFont,
       bold: arabicFont,
@@ -368,8 +381,28 @@ class ReportService {
           );
         }
       } catch (e) {
-        // If there's an error loading the logo, fall back to placeholder
+        // If there's an error loading the logo, fall back
       }
+    }
+    
+    // Fallback to app icon asset if available
+    if (_cachedAppIconBytes != null) {
+      return pw.Container(
+        width: 50,
+        height: 50,
+        decoration: pw.BoxDecoration(
+          shape: pw.BoxShape.circle,
+          border: pw.Border.all(color: primaryColor, width: 1.5),
+        ),
+        child: pw.ClipOval(
+          child: pw.Image(
+            pw.MemoryImage(_cachedAppIconBytes!),
+            width: 47,
+            height: 47,
+            fit: pw.BoxFit.cover,
+          ),
+        ),
+      );
     }
     
     // Fallback placeholder
@@ -479,6 +512,7 @@ class ReportService {
   }) async {
 
     final arabicFont = await _arabicFontFuture;
+    await _ensureAssetsLoaded();
     final theme = pw.ThemeData.withFont(
       base: arabicFont,
       bold: arabicFont,
