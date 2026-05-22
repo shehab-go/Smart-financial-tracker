@@ -455,7 +455,7 @@ class ReportService {
             textDirection: pw.TextDirection.rtl,
           ),
           pw.Text(
-            'تطبيق إدارة الديون والائتمان',
+            'تم الإنشاء بواسطة تطبيق حسابات يومية',
             style: pw.TextStyle(fontSize: 8, color: slate500),
             textDirection: pw.TextDirection.rtl,
           ),
