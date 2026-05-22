@@ -20,120 +20,75 @@ class ExpenseAccountReportGenerator {
     final totalAmount =
         expenses.fold<double>(0.0, (sum, e) => sum + e.amount);
 
-    final accountInfo = pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 20),
-      padding: const pw.EdgeInsets.all(15),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.grey100,
-        borderRadius: pw.BorderRadius.circular(8),
-        border: pw.Border.all(color: PdfColors.grey300),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                'حساب المصروفات: ${account.name}',
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                  color: primaryColor,
-                ),
-                textDirection: pw.TextDirection.rtl,
+    final accountInfo = ReportService.buildCard(
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            ReportService.buildInfoItem(
+              'حساب المصروفات',
+              account.name,
+              valueStyle: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+                color: ReportService.primaryColor,
               ),
-              pw.Text(
-                'الفئة: ${account.category}',
-                style: const pw.TextStyle(
-                  fontSize: 14,
-                  color: PdfColors.grey700,
-                ),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 6),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                'العملة: ${CurrencyModel.symbolFor(account.currencyName)}',
-                style: const pw.TextStyle(
-                  fontSize: 12,
-                  color: PdfColors.grey700,
-                ),
-                textDirection: pw.TextDirection.rtl,
-              ),
-              pw.Text(
-                'تاريخ الإنشاء: ${DateFormat('yyyy/MM/dd').format(account.createdDate)}',
-                style: const pw.TextStyle(
-                  fontSize: 12,
-                  color: PdfColors.grey700,
-                ),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+            ReportService.buildInfoItem('الفئة', account.category),
+            ReportService.buildInfoItem(
+              'العملة',
+              CurrencyModel.symbolFor(account.currencyName),
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 10),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            ReportService.buildInfoItem(
+              'تاريخ الإنشاء',
+              DateFormat('yyyy/MM/dd').format(account.createdDate),
+            ),
+            ReportService.buildInfoItem('', ''),
+            ReportService.buildInfoItem('', ''),
+          ],
+        ),
+      ],
     );
 
-    final financialSummary = pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 20),
-      padding: const pw.EdgeInsets.all(16),
-      decoration: pw.BoxDecoration(
-        color: primaryColor,
-        borderRadius: pw.BorderRadius.circular(8),
-        border: pw.Border.all(color: primaryColor),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.center,
-        children: [
-          pw.Text(
-            'الملخص المالي للحساب',
-            style: pw.TextStyle(
-              fontSize: 16,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.white,
+    final financialSummary = pw.Column(
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Expanded(
+              child: ReportService.buildValueBlock(
+                'إجمالي المصروفات',
+                NumberFormat('#,##0').format(totalAmount),
+                CurrencyModel.symbolFor(account.currencyName),
+                isNegative: true,
+              ),
             ),
-            textDirection: pw.TextDirection.rtl,
-          ),
-          pw.SizedBox(height: 12),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-            children: [
-              pw.Text(
-                'إجمالي المصروفات: ${NumberFormat('#,##0').format(totalAmount)}',
-                style: pw.TextStyle(
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.white,
-                ),
-                textDirection: pw.TextDirection.rtl,
+            pw.SizedBox(width: 10),
+            pw.Expanded(
+              child: ReportService.buildValueBlock(
+                'عدد العمليات',
+                expenses.length.toString(),
+                'عملية',
               ),
-              pw.Text(
-                'عدد العمليات: ${expenses.length}',
-                style: pw.TextStyle(
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.white,
-                ),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
 
     final rows = expenses
         .map((e) => [
-              DateFormat('yyyy/MM/dd').format(e.createdDate),
-              e.name.isNotEmpty ? e.name : 'غير محدد',
-              e.detail.isNotEmpty ? e.detail : '-',
-              NumberFormat('#,##0').format(e.amount),
               CurrencyModel.symbolFor(e.currency),
+              NumberFormat('#,##0').format(e.amount),
+              e.detail.isNotEmpty ? e.detail : '-',
+              e.name.isNotEmpty ? e.name : 'غير محدد',
+              DateFormat('yyyy/MM/dd').format(e.createdDate),
             ])
         .toList();
 
@@ -141,14 +96,17 @@ class ExpenseAccountReportGenerator {
       title: 'تقرير حساب مصروفات ${account.name}',
       headerContent: [
         accountInfo,
+        pw.SizedBox(height: 10),
         financialSummary,
+        pw.SizedBox(height: 10),
+        ReportService.buildSectionTitle('تفاصيل العمليات'),
       ],
       tableHeaders: const [
-        'التاريخ',
-        'المصروف',
-        'التفاصيل',
-        'المبلغ',
         'العملة',
+        'المبلغ',
+        'التفاصيل',
+        'المصروف',
+        'التاريخ',
       ],
       tableData: rows,
     );

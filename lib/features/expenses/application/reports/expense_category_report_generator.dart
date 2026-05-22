@@ -33,108 +33,53 @@ class ExpenseCategoryReportGenerator {
     final totalOperations =
         filteredAccounts.fold<int>(0, (sum, a) => sum + a.expenseCount);
 
-    final categoryInfo = pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 20),
-      padding: const pw.EdgeInsets.all(15),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.grey100,
-        borderRadius: pw.BorderRadius.circular(8),
-        border: pw.Border.all(color: PdfColors.grey300),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                'فئة المصروفات: ${categoryName.isNotEmpty ? categoryName : "غير محدد"}',
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                  color: primaryColor,
-                ),
-                textDirection: pw.TextDirection.rtl,
+    final categoryInfo = ReportService.buildCard(
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            ReportService.buildInfoItem(
+              'فئة المصروفات',
+              categoryName.isNotEmpty ? categoryName : 'غير محدد',
+              valueStyle: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+                color: ReportService.primaryColor,
               ),
-              pw.Text(
-                'عدد الحسابات: ${filteredAccounts.length}',
-                style: const pw.TextStyle(
-                  fontSize: 14,
-                  color: PdfColors.grey700,
-                ),
-                textDirection: pw.TextDirection.rtl,
-              ),
-              pw.Text(
-                'العملة: $currencyLabel',
-                style: const pw.TextStyle(
-                  fontSize: 14,
-                  color: PdfColors.grey700,
-                ),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 8),
-          pw.Text(
-            'تاريخ إنشاء التقرير: ${DateFormat('yyyy/MM/dd - HH:mm').format(DateTime.now())}',
-            style: const pw.TextStyle(
-              fontSize: 12,
-              color: PdfColors.grey600,
             ),
-            textDirection: pw.TextDirection.rtl,
-          ),
-        ],
-      ),
+            ReportService.buildInfoItem('عدد الحسابات', '${filteredAccounts.length}'),
+            ReportService.buildInfoItem('العملة المفلترة', currencyLabel),
+          ],
+        ),
+      ],
     );
 
     final pw.Widget financialSummary;
     if (!includeCurrencyColumn) {
-      financialSummary = pw.Container(
-        margin: const pw.EdgeInsets.only(bottom: 20),
-        padding: const pw.EdgeInsets.all(16),
-        decoration: pw.BoxDecoration(
-          color: primaryColor,
-          borderRadius: pw.BorderRadius.circular(8),
-          border: pw.Border.all(color: primaryColor),
-        ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.center,
-          children: [
-            pw.Text(
-              'الملخص المالي للفئة',
-              style: pw.TextStyle(
-                fontSize: 16,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.white,
+      financialSummary = pw.Column(
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Expanded(
+                child: ReportService.buildValueBlock(
+                  'إجمالي المصروفات',
+                  NumberFormat('#,##0').format(totalAmount),
+                  currencyLabel,
+                  isNegative: true,
+                ),
               ),
-              textDirection: pw.TextDirection.rtl,
-            ),
-            pw.SizedBox(height: 12),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-              children: [
-                pw.Text(
-                  'إجمالي المصروفات: ${NumberFormat('#,##0').format(totalAmount)}',
-                  style: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
-                  ),
-                  textDirection: pw.TextDirection.rtl,
+              pw.SizedBox(width: 10),
+              pw.Expanded(
+                child: ReportService.buildValueBlock(
+                  'عدد العمليات',
+                  totalOperations.toString(),
+                  'عملية',
                 ),
-                pw.Text(
-                  'عدد العمليات: $totalOperations',
-                  style: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
-                  ),
-                  textDirection: pw.TextDirection.rtl,
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       );
     } else {
       final Map<String, double> totalsByCurrency = <String, double>{};
@@ -145,50 +90,56 @@ class ExpenseCategoryReportGenerator {
       final currencyLines = totalsByCurrency.entries.toList()
         ..sort((a, b) => a.key.compareTo(b.key));
 
-      financialSummary = pw.Container(
-        margin: const pw.EdgeInsets.only(bottom: 20),
-        padding: const pw.EdgeInsets.all(16),
-        decoration: pw.BoxDecoration(
-          color: primaryColor,
-          borderRadius: pw.BorderRadius.circular(8),
-          border: pw.Border.all(color: primaryColor),
-        ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              'الملخص المالي حسب العملة',
-              style: pw.TextStyle(
-                fontSize: 16,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.white,
-              ),
-              textDirection: pw.TextDirection.rtl,
-            ),
-            pw.SizedBox(height: 12),
-            pw.Text(
-              'عدد العمليات: $totalOperations',
-              style: pw.TextStyle(
-                fontSize: 14,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.white,
-              ),
-              textDirection: pw.TextDirection.rtl,
-            ),
-            pw.SizedBox(height: 8),
-            ...currencyLines.map((e) {
-              final symbol = CurrencyModel.symbolFor(e.key);
-              return pw.Padding(
-                padding: const pw.EdgeInsets.only(bottom: 4),
-                child: pw.Text(
-                  '$symbol - إجمالي المصروفات: ${NumberFormat('#,##0').format(e.value)}',
-                  style: const pw.TextStyle(fontSize: 12, color: PdfColors.white),
-                  textDirection: pw.TextDirection.rtl,
+      financialSummary = ReportService.buildCard(
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              ReportService.buildInfoItem(
+                'الملخص المالي حسب العملة',
+                'المصروفات الإجمالية',
+                valueStyle: pw.TextStyle(
+                  fontSize: 11,
+                  fontWeight: pw.FontWeight.bold,
+                  color: ReportService.slate800,
                 ),
-              );
-            }).toList(),
-          ],
-        ),
+              ),
+              ReportService.buildInfoItem('إجمالي العمليات', '$totalOperations'),
+            ],
+          ),
+          pw.SizedBox(height: 8),
+          pw.Table.fromTextArray(
+            headers: const ['العملة', 'إجمالي المصروفات'],
+            data: currencyLines
+                .map((e) {
+                  final symbol = CurrencyModel.symbolFor(e.key);
+                  return [
+                    symbol,
+                    NumberFormat('#,##0').format(e.value),
+                  ];
+                })
+                .toList(),
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              fontSize: 9,
+              color: PdfColors.white,
+            ),
+            headerDecoration: pw.BoxDecoration(
+              color: ReportService.primaryColor,
+              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+            ),
+            cellStyle: pw.TextStyle(fontSize: 9, color: ReportService.slate800),
+            cellAlignment: pw.Alignment.center,
+            cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            border: pw.TableBorder(
+              horizontalInside: pw.BorderSide(color: ReportService.slate200, width: 0.5),
+              bottom: pw.BorderSide(color: ReportService.slate200, width: 0.5),
+            ),
+            oddRowDecoration: pw.BoxDecoration(
+              color: ReportService.slate50,
+            ),
+          ),
+        ],
       );
     }
 
@@ -208,7 +159,10 @@ class ExpenseCategoryReportGenerator {
       title: 'تقرير حسابات المصروفات للفئة $categoryName',
       headerContent: [
         categoryInfo,
+        pw.SizedBox(height: 10),
         financialSummary,
+        pw.SizedBox(height: 10),
+        ReportService.buildSectionTitle('تفاصيل حسابات المصروفات للفئة'),
       ],
       tableHeaders: [
         'الإجمالي',
