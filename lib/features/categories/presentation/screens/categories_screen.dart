@@ -98,13 +98,25 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       Expanded(
                         child: state.categories.isEmpty
                             ? const CategoryEmptyState()
-                            : ListView.builder(
+                            : ReorderableListView.builder(
+                                buildDefaultDragHandles: false,
                                 padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 88),
                                 itemCount: state.categories.length,
+                                onReorder: (oldIndex, newIndex) async {
+                                  HapticFeedback.mediumImpact();
+                                  try {
+                                    await _controller.reorderCategories(oldIndex, newIndex);
+                                    _hasChanges = true;
+                                  } catch (e) {
+                                    _showErrorMessage('خطأ أثناء إعادة الترتيب: $e');
+                                  }
+                                },
                                 itemBuilder: (context, index) {
                                   final category = state.categories[index];
                                   return CategoryListItem(
+                                    key: ValueKey(category.id ?? index),
                                     category: category,
+                                    index: index,
                                     onEdit: () => _editCategory(category),
                                     onDelete: () => _deleteCategory(category),
                                   );

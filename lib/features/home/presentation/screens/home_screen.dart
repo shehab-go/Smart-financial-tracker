@@ -212,7 +212,7 @@ class HomeScreenState extends State<HomeScreen> {
     // Listen for category events
     _categoryEventSubscription = CategoryEventBus().events.listen((event) {
       // Refresh data when categories change
-      loadData();
+      loadDataPreservingCategory();
     });
   }
 

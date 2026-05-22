@@ -90,4 +90,31 @@ class CategoriesController extends ChangeNotifier {
     _state = _state.copyWith(error: null);
     notifyListeners();
   }
+
+  Future<void> reorderCategories(int oldIndex, int newIndex) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    
+    final List<CategoryModel> updatedList = List.from(_state.categories);
+    final CategoryModel category = updatedList.removeAt(oldIndex);
+    updatedList.insert(newIndex, category);
+
+    // Update state locally first for smooth animations
+    _state = _state.copyWith(categories: updatedList);
+    notifyListeners();
+
+    try {
+      await _repository.updateCategoriesOrder(updatedList);
+      
+      // Emit category reordered event
+      CategoryEventBus().emit(CategoryEvent(
+        type: CategoryEventType.reordered,
+      ));
+    } catch (e) {
+      _state = _state.copyWith(error: e.toString());
+      notifyListeners();
+      rethrow;
+    }
+  }
 }

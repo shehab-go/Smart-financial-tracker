@@ -100,7 +100,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 16,
+      version: 17,
       onCreate: _createDatabase,
       onUpgrade: MigrationHelper.migrate,
       onOpen: (db) async {
@@ -128,7 +128,8 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE
+        name TEXT NOT NULL UNIQUE,
+        sortOrder INTEGER DEFAULT 0
       )
     ''');
 
@@ -380,7 +381,6 @@ class DatabaseHelper {
       resourceId = existingResources.first['id'] as int;
     }
 
-    int defaultBalanceId;
     final existingDefaultBalance = await db.query(
       'income_balances',
       where: 'isDefault = ?',
@@ -388,7 +388,7 @@ class DatabaseHelper {
       limit: 1,
     );
     if (existingDefaultBalance.isEmpty) {
-      defaultBalanceId = await db.insert('income_balances', {
+      await db.insert('income_balances', {
         'resourceId': resourceId,
         'name': 'الرصيد الأساسي',
         'currencyName': 'محلي',
@@ -396,14 +396,18 @@ class DatabaseHelper {
         'isDefault': 1,
         'createdDate': now,
       });
-    } else {
-      defaultBalanceId = existingDefaultBalance.first['id'] as int;
     }
 
     // Insert default categories
     final defaultCategories = CategoryModel.getDefaultCategories();
-    for (CategoryModel category in defaultCategories) {
-      await db.insert('categories', category.toMap());
+    for (int i = 0; i < defaultCategories.length; i++) {
+      final category = defaultCategories[i];
+      final categoryWithOrder = CategoryModel(
+        id: category.id,
+        name: category.name,
+        sortOrder: i,
+      );
+      await db.insert('categories', categoryWithOrder.toMap());
     }
 
     // Insert default currencies
@@ -418,7 +422,7 @@ class DatabaseHelper {
   // Category operations
   Future<List<CategoryModel>> getCategories() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('categories');
+    final List<Map<String, dynamic>> maps = await db.query('categories', orderBy: 'sortOrder ASC');
     return List.generate(maps.length, (i) {
       return CategoryModel.fromMap(maps[i]);
     });
@@ -426,7 +430,14 @@ class DatabaseHelper {
 
   Future<int> insertCategory(CategoryModel category) async {
     final db = await database;
-    return await db.insert('categories', category.toMap());
+    final List<Map<String, dynamic>> result = await db.rawQuery('SELECT MAX(sortOrder) as maxOrder FROM categories');
+    final int maxOrder = (result.first['maxOrder'] as num?)?.toInt() ?? -1;
+    final categoryWithOrder = CategoryModel(
+      id: category.id,
+      name: category.name,
+      sortOrder: maxOrder + 1,
+    );
+    return await db.insert('categories', categoryWithOrder.toMap());
   }
 
   Future<int> updateCategory(CategoryModel category) async {

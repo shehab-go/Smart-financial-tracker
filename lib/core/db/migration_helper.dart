@@ -13,7 +13,7 @@ import 'database_helper.dart';
 /// - Detailed logging is provided for debugging and monitoring
 class MigrationHelper {
   /// Current database schema version
-  static const int currentVersion = 16;
+  static const int currentVersion = 17;
   
   // Constants for default values and common strings
   static const String defaultCurrencyName = 'محلي';
@@ -105,6 +105,10 @@ class MigrationHelper {
       if (oldVersion < 16) {
         print('[MigrationHelper] Applying migration to version 16');
         await _migrateToV16(db);
+      }
+      if (oldVersion < 17) {
+        print('[MigrationHelper] Applying migration to version 17');
+        await _migrateToV17(db);
       }
       
       print('[MigrationHelper] Database migration completed successfully');
@@ -955,6 +959,35 @@ class MigrationHelper {
       print('[MigrationHelper] Migration to v16 completed successfully');
     } catch (e) {
       print('[MigrationHelper] ERROR in _migrateToV16: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 17: Add sortOrder column to categories table and initialize it
+  static Future<void> _migrateToV17(Database db) async {
+    try {
+      await _addColumnIfNotExists(
+        db,
+        'categories',
+        'sortOrder',
+        'INTEGER DEFAULT 0',
+      );
+
+      // Backfill sortOrder sequentially based on id
+      final categories = await db.query('categories', orderBy: 'id ASC');
+      for (int i = 0; i < categories.length; i++) {
+        final id = categories[i]['id'];
+        await db.update(
+          'categories',
+          {'sortOrder': i},
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      }
+
+      print('[MigrationHelper] Migration to v17 completed successfully');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV17: $e');
       rethrow;
     }
   }
