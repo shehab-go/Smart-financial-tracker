@@ -118,7 +118,7 @@ class ReportService {
     pw.TextStyle? labelStyle,
     pw.TextStyle? valueStyle,
   }) {
-    final defaultLabelStyle = pw.TextStyle(fontSize: 9, color: slate500);
+    final defaultLabelStyle = pw.TextStyle(fontSize: 9, color: slate500, height: 1.4);
     final defaultValColor = (isNegative == true)
         ? errorRed
         : (isPositive == true)
@@ -128,20 +128,29 @@ class ReportService {
       fontSize: 10,
       fontWeight: pw.FontWeight.bold,
       color: defaultValColor,
+      height: 1.4,
     );
+
+    final resolvedLabelStyle = labelStyle != null
+        ? labelStyle.copyWith(height: labelStyle.height ?? 1.4)
+        : defaultLabelStyle;
+
+    final resolvedValueStyle = valueStyle != null
+        ? valueStyle.copyWith(height: valueStyle.height ?? 1.4)
+        : defaultValueStyle;
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.end,
       children: [
         pw.Text(
           label,
-          style: labelStyle ?? defaultLabelStyle,
+          style: resolvedLabelStyle,
           textDirection: pw.TextDirection.rtl,
         ),
-        pw.SizedBox(height: 2),
+        pw.SizedBox(height: 6),
         pw.Text(
           value,
-          style: valueStyle ?? defaultValueStyle,
+          style: resolvedValueStyle,
           textDirection: pw.TextDirection.rtl,
         ),
       ],
@@ -174,17 +183,17 @@ class ReportService {
         children: [
           pw.Text(
             label,
-            style: pw.TextStyle(fontSize: 9, color: slate500),
+            style: pw.TextStyle(fontSize: 9, color: slate500, height: 1.4),
             textDirection: pw.TextDirection.rtl,
           ),
-          pw.SizedBox(height: 4),
+          pw.SizedBox(height: 6),
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.center,
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
                 ' $currency',
-                style: pw.TextStyle(fontSize: 10, color: slate500),
+                style: pw.TextStyle(fontSize: 10, color: slate500, height: 1.4),
                 textDirection: pw.TextDirection.rtl,
               ),
               pw.Text(
@@ -193,6 +202,7 @@ class ReportService {
                   fontSize: 16,
                   fontWeight: pw.FontWeight.bold,
                   color: defaultValColor,
+                  height: 1.4,
                 ),
                 textDirection: pw.TextDirection.rtl,
               ),
@@ -310,13 +320,13 @@ class ReportService {
               children: [
                 pw.Text(
                   'تاريخ التقرير: ${DateFormat('yyyy/MM/dd').format(DateTime.now())}',
-                  style: pw.TextStyle(fontSize: 9, color: slate500),
+                  style: pw.TextStyle(fontSize: 9, color: slate500, height: 1.4),
                   textDirection: pw.TextDirection.rtl,
                 ),
-                pw.SizedBox(height: 2),
+                pw.SizedBox(height: 5),
                 pw.Text(
                   'الوقت: ${DateFormat('HH:mm').format(DateTime.now())}',
-                  style: pw.TextStyle(fontSize: 9, color: slate500),
+                  style: pw.TextStyle(fontSize: 9, color: slate500, height: 1.4),
                   textDirection: pw.TextDirection.rtl,
                 ),
               ],
@@ -342,14 +352,14 @@ class ReportService {
                       : (profile?.fullName?.isNotEmpty == true)
                           ? profile!.fullName!
                           : 'حسابات يومية',
-                  style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: slate800),
+                  style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: slate800, height: 1.4),
                   textDirection: pw.TextDirection.rtl,
                 ),
                 if (profile?.fullName?.isNotEmpty == true) ...[
-                  pw.SizedBox(height: 2),
+                  pw.SizedBox(height: 5),
                   pw.Text(
                     profile!.fullName!,
-                    style: pw.TextStyle(fontSize: 10, color: slate500),
+                    style: pw.TextStyle(fontSize: 10, color: slate500, height: 1.4),
                     textDirection: pw.TextDirection.rtl,
                   ),
                 ],
@@ -463,7 +473,6 @@ class ReportService {
       ),
     );
   }
-
   static List<pw.Widget> _buildProfileHeader(UserProfile profile) {
     return [
       buildCard(
@@ -474,35 +483,35 @@ class ReportService {
                 : (profile.fullName.isNotEmpty == true)
                     ? profile.fullName
                     : 'حسابات يومية',
-            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: slate800),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: slate800, height: 1.4),
             textDirection: pw.TextDirection.rtl,
           ),
           if (profile.fullName?.isNotEmpty == true) ...[
-            pw.SizedBox(height: 2),
+            pw.SizedBox(height: 5),
             pw.Text(
               profile.fullName!,
-              style: pw.TextStyle(fontSize: 12, color: slate800),
+              style: pw.TextStyle(fontSize: 12, color: slate800, height: 1.4),
               textDirection: pw.TextDirection.rtl,
             ),
           ],
-          pw.SizedBox(height: 4),
+          pw.SizedBox(height: 6),
           pw.Text(
             'النشاط التجاري: ${(profile.tradingActivity?.isNotEmpty == true) ? profile.tradingActivity! : "غير محدد"}',
-            style: pw.TextStyle(fontSize: 10, color: slate500),
+            style: pw.TextStyle(fontSize: 10, color: slate500, height: 1.4),
             textDirection: pw.TextDirection.rtl,
           ),
-          pw.SizedBox(height: 6),
+          pw.SizedBox(height: 8),
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               pw.Text(
                 'الهاتف: ${(profile.phone?.isNotEmpty == true) ? profile.phone! : "غير محدد"}',
-                style: pw.TextStyle(fontSize: 9, color: slate500),
+                style: pw.TextStyle(fontSize: 9, color: slate500, height: 1.4),
                 textDirection: pw.TextDirection.rtl,
               ),
               pw.Text(
                 'العنوان: ${(profile.address?.isNotEmpty == true) ? profile.address! : "غير محدد"}',
-                style: pw.TextStyle(fontSize: 9, color: slate500),
+                style: pw.TextStyle(fontSize: 9, color: slate500, height: 1.4),
                 textDirection: pw.TextDirection.rtl,
               ),
             ],
