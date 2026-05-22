@@ -5,12 +5,14 @@ import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 class CategoryListItem extends StatelessWidget {
   final CategoryModel category;
+  final int index;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const CategoryListItem({
     super.key,
     required this.category,
+    required this.index,
     required this.onEdit,
     required this.onDelete,
   });
@@ -86,6 +88,25 @@ class CategoryListItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.delete_outline_rounded, color: AppTheme.errorColor, size: 18),
+              ),
+            ),
+            const SizedBox(width: 12),
+            ReorderableDragStartListener(
+              index: index,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.grab,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.drag_indicator_rounded,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                ),
               ),
             ),
           ],

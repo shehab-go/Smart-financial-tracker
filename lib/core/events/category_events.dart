@@ -5,6 +5,7 @@ enum CategoryEventType {
   added,
   updated,
   deleted,
+  reordered,
 }
 
 /// Category change event

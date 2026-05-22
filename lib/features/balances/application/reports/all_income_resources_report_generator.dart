@@ -44,108 +44,80 @@ class AllIncomeResourcesReportGenerator {
       }
     }
 
-    final resourcesInfo = pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 20),
-      padding: const pw.EdgeInsets.all(15),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.grey100,
-        borderRadius: pw.BorderRadius.circular(8),
-        border: pw.Border.all(color: PdfColors.grey300),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                'تقرير جميع مصادر الدخل',
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                  color: primaryColor,
-                ),
-                textDirection: pw.TextDirection.rtl,
+    final resourcesInfo = ReportService.buildCard(
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            ReportService.buildInfoItem(
+              'نوع التقرير',
+              'تقرير مصادر الدخل',
+              valueStyle: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+                color: ReportService.primaryColor,
               ),
-              pw.Text(
-                'إجمالي المصادر: ${resources.length} | إجمالي الأرصدة: $totalBalancesCount',
-                style: const pw.TextStyle(
-                  fontSize: 14,
-                  color: PdfColors.grey700,
-                ),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 8),
-          pw.Text(
-            'تاريخ إنشاء التقرير: ${DateFormat('yyyy/MM/dd - HH:mm').format(DateTime.now())}',
-            style: const pw.TextStyle(
-              fontSize: 12,
-              color: PdfColors.grey600,
             ),
-            textDirection: pw.TextDirection.rtl,
-          ),
-        ],
-      ),
+            ReportService.buildInfoItem('إجمالي المصادر', '${resources.length}'),
+            ReportService.buildInfoItem('إجمالي الأرصدة المرتبطة', '$totalBalancesCount'),
+          ],
+        ),
+      ],
     );
 
-    final currencySummaryLines = <pw.Widget>[];
-
-    if (totalByCurrency.isEmpty) {
-      currencySummaryLines.add(
-        pw.Text(
-          'لا توجد أرصدة مسجلة للمصادر',
-          style: const pw.TextStyle(
-            fontSize: 12,
-            color: PdfColors.white,
+    final List<pw.Widget> summaryBlocks = [];
+    totalByCurrency.forEach((currency, total) {
+      final displayCurrency = _normalizeCurrencyName(currency);
+      final symbol = CurrencyModel.symbolFor(displayCurrency);
+      summaryBlocks.add(
+        pw.Expanded(
+          child: ReportService.buildValueBlock(
+            'إجمالي الدخل ($displayCurrency)',
+            NumberFormat('#,##0.00').format(total),
+            symbol,
+            isPositive: true,
           ),
-          textDirection: pw.TextDirection.rtl,
         ),
       );
-    } else {
-      totalByCurrency.forEach((currency, total) {
-        final displayCurrency = _normalizeCurrencyName(currency);
-        final symbol = CurrencyModel.symbolFor(displayCurrency);
-        currencySummaryLines.add(
-          pw.Text(
-            '${NumberFormat('#,##0.00').format(total)} $symbol',
-            style: const pw.TextStyle(
-              fontSize: 14,
-              color: PdfColors.white,
+    });
+
+    final pw.Widget summaryWidget;
+    if (summaryBlocks.isEmpty) {
+      summaryWidget = ReportService.buildCard(
+        children: [
+          pw.Center(
+            child: pw.Text(
+              'لا توجد أرصدة مسجلة',
+              style: pw.TextStyle(fontSize: 11, color: ReportService.slate500),
+              textDirection: pw.TextDirection.rtl,
             ),
-            textDirection: pw.TextDirection.rtl,
+          ),
+        ],
+      );
+    } else {
+      final List<pw.Widget> summaryRows = [];
+      for (int i = 0; i < summaryBlocks.length; i += 2) {
+        final rowChildren = <pw.Widget>[];
+        rowChildren.add(summaryBlocks[i]);
+        if (i + 1 < summaryBlocks.length) {
+          rowChildren.add(pw.SizedBox(width: 10));
+          rowChildren.add(summaryBlocks[i + 1]);
+        } else {
+          rowChildren.add(pw.SizedBox(width: 10));
+          rowChildren.add(pw.Expanded(child: pw.Container()));
+        }
+        summaryRows.add(
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: rowChildren,
           ),
         );
-      });
+        if (i + 2 < summaryBlocks.length) {
+          summaryRows.add(pw.SizedBox(height: 10));
+        }
+      }
+      summaryWidget = pw.Column(children: summaryRows);
     }
-
-    final summary = pw.Container(
-      width: double.infinity,
-      margin: const pw.EdgeInsets.only(bottom: 20),
-      padding: const pw.EdgeInsets.all(16),
-      decoration: pw.BoxDecoration(
-        color: primaryColor,
-        borderRadius: pw.BorderRadius.circular(8),
-        border: pw.Border.all(color: primaryColor),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.center,
-        children: [
-          pw.Text(
-            'الملخص العام للأرصدة',
-            style: pw.TextStyle(
-              fontSize: 16,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.white,
-            ),
-            textDirection: pw.TextDirection.rtl,
-          ),
-          pw.SizedBox(height: 12),
-          ...currencySummaryLines,
-        ],
-      ),
-    );
 
     final List<List<String>> rows = [];
 
@@ -167,22 +139,20 @@ class AllIncomeResourcesReportGenerator {
 
       if (totalsByCurrencyForResource.isEmpty) {
         rows.add([
-          '0.00',
-          '-',
-          resource.name.isNotEmpty ? resource.name : 'غير محدد',
           (resource.description ?? '').isNotEmpty ? resource.description! : '-',
+          resource.name.isNotEmpty ? resource.name : 'غير محدد',
+          '-',
+          '0.00',
         ]);
       } else {
         totalsByCurrencyForResource.forEach((currency, total) {
           final displayCurrency = _normalizeCurrencyName(currency);
           final symbol = CurrencyModel.symbolFor(displayCurrency);
           rows.add([
-            NumberFormat('#,##0.00').format(total),
-            symbol,
+            (resource.description ?? '').isNotEmpty ? resource.description! : '-',
             resource.name.isNotEmpty ? resource.name : 'غير محدد',
-            (resource.description ?? '').isNotEmpty
-                ? resource.description!
-                : '-',
+            symbol,
+            NumberFormat('#,##0.00').format(total),
           ]);
         });
       }
@@ -192,13 +162,16 @@ class AllIncomeResourcesReportGenerator {
       title: 'تقرير جميع مصادر الدخل',
       headerContent: [
         resourcesInfo,
-        summary,
+        pw.SizedBox(height: 10),
+        summaryWidget,
+        pw.SizedBox(height: 10),
+        ReportService.buildSectionTitle('تفاصيل مصادر الدخل والأرصدة'),
       ],
       tableHeaders: const [
-        'الإجمالي',
-        'العملة',
-        'المصدر',
         'الوصف',
+        'المصدر',
+        'العملة',
+        'الإجمالي',
       ],
       tableData: rows,
     );

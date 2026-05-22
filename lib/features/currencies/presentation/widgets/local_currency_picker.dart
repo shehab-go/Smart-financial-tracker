@@ -24,6 +24,7 @@ class _LocalCurrencyPickerDialogState extends State<LocalCurrencyPickerDialog> {
   List<CurrencyModel> _filteredCurrencies = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  String _defaultCurrencyName = 'محلي';
 
   @override
   void initState() {
@@ -42,6 +43,9 @@ class _LocalCurrencyPickerDialogState extends State<LocalCurrencyPickerDialog> {
   Future<void> _loadCurrencies() async {
     setState(() => _isLoading = true);
     try {
+      final defaultName = await _db.getDefaultCurrencyName();
+      final resolvedDefaultName = (defaultName != null && defaultName.trim().isNotEmpty) ? defaultName.trim() : 'محلي';
+
       final currencies = await _db.getCurrencies();
       
       // If we don't want to show 'محلي' (Local) option inside the list itself
@@ -51,11 +55,27 @@ class _LocalCurrencyPickerDialogState extends State<LocalCurrencyPickerDialog> {
         currencies.removeWhere((c) => c.name == 'محلي');
       }
 
+      // Map 'محلي' to resolvedDefaultName and deduplicate
+      final List<CurrencyModel> mappedCurrencies = [];
+      final Set<String> seenNames = {};
+
+      for (var c in currencies) {
+        final name = c.name.trim();
+        final mappedName = name == 'محلي' ? resolvedDefaultName : name;
+        if (mappedName.isNotEmpty && !seenNames.contains(mappedName)) {
+          seenNames.add(mappedName);
+          mappedCurrencies.add(c.copyWith(name: mappedName));
+        }
+      }
+
       // Sort favorites or defaults first, or keep database order
       final favorites = await _db.getFavoriteCurrencies();
-      currencies.sort((a, b) {
-        final aFav = favorites.contains(a.name);
-        final bFav = favorites.contains(b.name);
+      // Map favorites list to resolvedDefaultName if they contain 'محلي'
+      final mappedFavorites = favorites.map((f) => f == 'محلي' ? resolvedDefaultName : f).toSet();
+
+      mappedCurrencies.sort((a, b) {
+        final aFav = mappedFavorites.contains(a.name);
+        final bFav = mappedFavorites.contains(b.name);
         if (aFav != bFav) {
           return bFav ? 1 : -1;
         }
@@ -64,7 +84,8 @@ class _LocalCurrencyPickerDialogState extends State<LocalCurrencyPickerDialog> {
 
       if (mounted) {
         setState(() {
-          _allCurrencies = currencies;
+          _defaultCurrencyName = resolvedDefaultName;
+          _allCurrencies = mappedCurrencies;
           _isLoading = false;
           _filterCurrencies();
         });

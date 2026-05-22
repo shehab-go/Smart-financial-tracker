@@ -40,117 +40,63 @@ class CategoryReportGenerator {
         ? 'الصافي'
         : (totalCredit >= totalDebit ? 'الصافي لك' : 'الصافي عليك');
 
-    final categoryInfo = pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 20),
-      padding: const pw.EdgeInsets.all(15),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.grey100,
-        borderRadius: pw.BorderRadius.circular(8),
-        border: pw.Border.all(color: PdfColors.grey300),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                'الفئة: ${category.name.isNotEmpty ? category.name : "غير محدد"}',
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                  color: primaryColor,
-                ),
-                textDirection: pw.TextDirection.rtl,
+    final categoryInfo = ReportService.buildCard(
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            ReportService.buildInfoItem(
+              'الفئة',
+              category.name.isNotEmpty ? category.name : 'غير محدد',
+              valueStyle: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+                color: ReportService.primaryColor,
               ),
-              pw.Text(
-                'عدد الحسابات: ${filteredAccounts.length}',
-                style: const pw.TextStyle(
-                  fontSize: 14,
-                  color: PdfColors.grey700,
-                ),
-                textDirection: pw.TextDirection.rtl,
-              ),
-              pw.Text(
-                'العملة: $currencyLabel',
-                style: const pw.TextStyle(
-                  fontSize: 14,
-                  color: PdfColors.grey700,
-                ),
-                textDirection: pw.TextDirection.rtl,
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 8),
-          pw.Text(
-            'تاريخ إنشاء التقرير: ${DateFormat('yyyy/MM/dd - HH:mm').format(DateTime.now())}',
-            style: const pw.TextStyle(
-              fontSize: 12,
-              color: PdfColors.grey600,
             ),
-            textDirection: pw.TextDirection.rtl,
-          ),
-        ],
-      ),
+            ReportService.buildInfoItem('عدد الحسابات', '${filteredAccounts.length}'),
+            ReportService.buildInfoItem('العملة المفلترة', currencyLabel),
+          ],
+        ),
+      ],
     );
 
     final pw.Widget financialSummary;
     if (!includeCurrencyColumn) {
-      financialSummary = pw.Container(
-        margin: const pw.EdgeInsets.only(bottom: 20),
-        padding: const pw.EdgeInsets.all(16),
-        decoration: pw.BoxDecoration(
-          color: primaryColor,
-          borderRadius: pw.BorderRadius.circular(8),
-          border: pw.Border.all(color: primaryColor),
-        ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.center,
-          children: [
-            pw.Text(
-              'الملخص المالي',
-              style: pw.TextStyle(
-                fontSize: 16,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.white,
+      final netAmount = totalCredit - totalDebit;
+      financialSummary = pw.Column(
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Expanded(
+                child: ReportService.buildValueBlock(
+                  'إجمالي لك (دائن)',
+                  NumberFormat('#,##0').format(totalCredit),
+                  currencyLabel,
+                  isPositive: true,
+                ),
               ),
-              textDirection: pw.TextDirection.rtl,
-            ),
-            pw.SizedBox(height: 12),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-              children: [
-                pw.Text(
-                  'لك: ${NumberFormat('#,##0').format(totalCredit)}',
-                  style: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
-                  ),
-                  textDirection: pw.TextDirection.rtl,
+              pw.SizedBox(width: 10),
+              pw.Expanded(
+                child: ReportService.buildValueBlock(
+                  'إجمالي عليك (مدين)',
+                  NumberFormat('#,##0').format(totalDebit),
+                  currencyLabel,
+                  isNegative: true,
                 ),
-                pw.Text(
-                  'عليك: ${NumberFormat('#,##0').format(totalDebit)}',
-                  style: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
-                  ),
-                  textDirection: pw.TextDirection.rtl,
-                ),
-                pw.Text(
-                  '${netBalance >= 0 ? 'الصافي لك' : 'الصافي عليك'}: ${NumberFormat('#,##0').format(netBalance.abs())}',
-                  style: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
-                  ),
-                  textDirection: pw.TextDirection.rtl,
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 10),
+          ReportService.buildValueBlock(
+            netAmount >= 0 ? 'صافي الرصيد المتبقي (لك)' : 'صافي الرصيد المتبقي (عليك)',
+            NumberFormat('#,##0').format(netAmount.abs()),
+            currencyLabel,
+            isPositive: netAmount >= 0,
+            isNegative: netAmount < 0,
+          ),
+        ],
       );
     } else {
       final Map<String, Map<String, double>> totalsByCurrency = <String, Map<String, double>>{};
@@ -167,63 +113,57 @@ class CategoryReportGenerator {
       final currencyLines = totalsByCurrency.entries.toList()
         ..sort((a, b) => a.key.compareTo(b.key));
 
-      financialSummary = pw.Container(
-        margin: const pw.EdgeInsets.only(bottom: 20),
-        padding: const pw.EdgeInsets.all(16),
-        decoration: pw.BoxDecoration(
-          color: primaryColor,
-          borderRadius: pw.BorderRadius.circular(8),
-          border: pw.Border.all(color: primaryColor),
-        ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              'الملخص المالي حسب العملة',
-              style: pw.TextStyle(
-                fontSize: 16,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.white,
-              ),
-              textDirection: pw.TextDirection.rtl,
+      financialSummary = ReportService.buildCard(
+        children: [
+          pw.Text(
+            'الملخص المالي حسب العملة',
+            style: pw.TextStyle(
+              fontSize: 11,
+              fontWeight: pw.FontWeight.bold,
+              color: ReportService.slate800,
             ),
-            pw.SizedBox(height: 12),
-            pw.Table.fromTextArray(
-              headers: const ['العملة', 'لك', 'عليك', 'الصافي'],
-              data: currencyLines
-                  .map((e) {
-                    final c = e.key;
-                    final credit = e.value['credit'] ?? 0;
-                    final debit = e.value['debit'] ?? 0;
-                    final net = e.value['net'] ?? 0;
-                    final symbol = CurrencyModel.symbolFor(c);
-                    final netLabel = net >= 0 ? 'لك' : 'عليك';
-                    return [
-                      symbol,
-                      NumberFormat('#,##0').format(credit),
-                      NumberFormat('#,##0').format(debit),
-                      '$netLabel ${NumberFormat('#,##0').format(net.abs())}',
-                    ];
-                  })
-                  .toList(),
-              headerStyle: pw.TextStyle(
-                fontWeight: pw.FontWeight.bold,
-                fontSize: 11,
-                color: primaryColor,
-              ),
-              headerDecoration: const pw.BoxDecoration(
-                color: PdfColors.white,
-              ),
-              cellStyle: const pw.TextStyle(
-                fontSize: 11,
-                color: PdfColors.white,
-              ),
-              cellAlignment: pw.Alignment.center,
-              cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-              border: pw.TableBorder.all(color: PdfColors.white, width: 0.5),
+            textDirection: pw.TextDirection.rtl,
+          ),
+          pw.SizedBox(height: 8),
+          pw.Table.fromTextArray(
+            headers: const ['العملة', 'لك', 'عليك', 'الصافي'],
+            data: currencyLines
+                .map((e) {
+                  final c = e.key;
+                  final credit = e.value['credit'] ?? 0;
+                  final debit = e.value['debit'] ?? 0;
+                  final net = e.value['net'] ?? 0;
+                  final symbol = CurrencyModel.symbolFor(c);
+                  final netLabel = net >= 0 ? 'لك' : 'عليك';
+                  return [
+                    symbol,
+                    NumberFormat('#,##0').format(credit),
+                    NumberFormat('#,##0').format(debit),
+                    '$netLabel ${NumberFormat('#,##0').format(net.abs())}',
+                  ];
+                })
+                .toList(),
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              fontSize: 9,
+              color: PdfColors.white,
             ),
-          ],
-        ),
+            headerDecoration: pw.BoxDecoration(
+              color: ReportService.primaryColor,
+              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+            ),
+            cellStyle: pw.TextStyle(fontSize: 9, color: ReportService.slate800),
+            cellAlignment: pw.Alignment.center,
+            cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            border: pw.TableBorder(
+              horizontalInside: pw.BorderSide(color: ReportService.slate200, width: 0.5),
+              bottom: pw.BorderSide(color: ReportService.slate200, width: 0.5),
+            ),
+            oddRowDecoration: pw.BoxDecoration(
+              color: ReportService.slate50,
+            ),
+          ),
+        ],
       );
     }
 
@@ -244,7 +184,10 @@ class CategoryReportGenerator {
       title: 'تقرير فئة ${category.name}',
       headerContent: [
         categoryInfo,
+        pw.SizedBox(height: 10),
         financialSummary,
+        pw.SizedBox(height: 10),
+        ReportService.buildSectionTitle('تفاصيل الحسابات للفئة'),
       ],
       tableHeaders: [
         netHeaderLabel,

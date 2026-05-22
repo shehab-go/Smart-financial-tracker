@@ -100,7 +100,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 16,
+      version: 17,
       onCreate: _createDatabase,
       onUpgrade: MigrationHelper.migrate,
       onOpen: (db) async {
@@ -128,7 +128,8 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE
+        name TEXT NOT NULL UNIQUE,
+        sortOrder INTEGER DEFAULT 0
       )
     ''');
 
@@ -380,7 +381,6 @@ class DatabaseHelper {
       resourceId = existingResources.first['id'] as int;
     }
 
-    int defaultBalanceId;
     final existingDefaultBalance = await db.query(
       'income_balances',
       where: 'isDefault = ?',
@@ -388,7 +388,7 @@ class DatabaseHelper {
       limit: 1,
     );
     if (existingDefaultBalance.isEmpty) {
-      defaultBalanceId = await db.insert('income_balances', {
+      await db.insert('income_balances', {
         'resourceId': resourceId,
         'name': 'الرصيد الأساسي',
         'currencyName': 'محلي',
@@ -396,14 +396,18 @@ class DatabaseHelper {
         'isDefault': 1,
         'createdDate': now,
       });
-    } else {
-      defaultBalanceId = existingDefaultBalance.first['id'] as int;
     }
 
     // Insert default categories
     final defaultCategories = CategoryModel.getDefaultCategories();
-    for (CategoryModel category in defaultCategories) {
-      await db.insert('categories', category.toMap());
+    for (int i = 0; i < defaultCategories.length; i++) {
+      final category = defaultCategories[i];
+      final categoryWithOrder = CategoryModel(
+        id: category.id,
+        name: category.name,
+        sortOrder: i,
+      );
+      await db.insert('categories', categoryWithOrder.toMap());
     }
 
     // Insert default currencies
@@ -418,7 +422,7 @@ class DatabaseHelper {
   // Category operations
   Future<List<CategoryModel>> getCategories() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('categories');
+    final List<Map<String, dynamic>> maps = await db.query('categories', orderBy: 'sortOrder ASC');
     return List.generate(maps.length, (i) {
       return CategoryModel.fromMap(maps[i]);
     });
@@ -426,7 +430,14 @@ class DatabaseHelper {
 
   Future<int> insertCategory(CategoryModel category) async {
     final db = await database;
-    return await db.insert('categories', category.toMap());
+    final List<Map<String, dynamic>> result = await db.rawQuery('SELECT MAX(sortOrder) as maxOrder FROM categories');
+    final int maxOrder = (result.first['maxOrder'] as num?)?.toInt() ?? -1;
+    final categoryWithOrder = CategoryModel(
+      id: category.id,
+      name: category.name,
+      sortOrder: maxOrder + 1,
+    );
+    return await db.insert('categories', categoryWithOrder.toMap());
   }
 
   Future<int> updateCategory(CategoryModel category) async {
@@ -778,13 +789,43 @@ class DatabaseHelper {
 
 
 
+  Future<List<AccountModel>> _attachCurrencyStats(List<AccountModel> accounts) async {
+    if (accounts.isEmpty) return accounts;
+    final db = await database;
+    final List<int> ids = accounts.map((a) => a.id).whereType<int>().toList();
+    if (ids.isEmpty) return accounts;
+
+    // Query all currency stats for these accounts
+    final String idPlaceholders = List.filled(ids.length, '?').join(',');
+    final List<Map<String, dynamic>> statsMaps = await db.rawQuery('''
+      SELECT * FROM account_currency_stats
+      WHERE accountId IN ($idPlaceholders)
+    ''', ids);
+
+    // Group stats by accountId
+    final Map<int, List<AccountCurrencyStats>> statsByAccountId = {};
+    for (final map in statsMaps) {
+      final int accountId = map['accountId'] as int;
+      final stats = AccountCurrencyStats.fromMap(map);
+      (statsByAccountId[accountId] ??= []).add(stats);
+    }
+
+    // Attach to accounts
+    return accounts.map((account) {
+      if (account.id == null) return account;
+      final stats = statsByAccountId[account.id] ?? [];
+      return account.copyWith(currencyStats: stats);
+    }).toList();
+  }
+
   // Account operations
   Future<List<AccountModel>> getAccounts() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('accounts');
-    return List.generate(maps.length, (i) {
+    final accounts = List.generate(maps.length, (i) {
       return AccountModel.fromMap(maps[i]);
     });
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<AccountModel>> getAccountsByCategory(String category) async {
@@ -796,9 +837,10 @@ class DatabaseHelper {
       whereArgs: [category],
       orderBy: 'createdDate DESC',
     );
-    return List.generate(maps.length, (i) {
+    final accounts = List.generate(maps.length, (i) {
       return AccountModel.fromMap(maps[i]);
     });
+    return await _attachCurrencyStats(accounts);
   }
 
   /// Returns accounts in a category along with aggregated stats
@@ -817,7 +859,8 @@ class DatabaseHelper {
       ORDER BY a.createdDate DESC
     ''', [category]);
 
-    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<AccountModel>> getAccountsWithStatsUsingAccountCurrencyAllCategories() async {
@@ -834,7 +877,8 @@ class DatabaseHelper {
       ORDER BY a.category ASC, a.createdDate DESC
     ''');
 
-    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<AccountModel>> getAccountsWithStatsByCurrencyAllCategories(
@@ -854,7 +898,8 @@ class DatabaseHelper {
       ORDER BY a.category ASC, a.createdDate DESC
     ''', [cur]);
 
-    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<AccountModel>> getAccountsWithStatsByCategoryUsingAccountCurrency(
@@ -874,7 +919,8 @@ class DatabaseHelper {
       ORDER BY a.createdDate DESC
     ''', [category]);
 
-    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<AccountModel>> getAccountsWithStatsByCategoryAndCurrency(
@@ -896,7 +942,8 @@ class DatabaseHelper {
       ORDER BY a.createdDate DESC
     ''', [cur, category]);
 
-    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<String>> getDistinctTransactionCurrencies() async {
@@ -1001,7 +1048,9 @@ class DatabaseHelper {
       limit: 1,
     );
     if (maps.isNotEmpty) {
-      return AccountModel.fromMap(maps.first);
+      final account = AccountModel.fromMap(maps.first);
+      final attached = await _attachCurrencyStats([account]);
+      return attached.first;
     }
     return null;
   }

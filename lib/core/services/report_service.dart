@@ -14,9 +14,220 @@ import '../theme/app_theme.dart';
 
 class ReportService {
   static final Future<pw.Font> _arabicFontFuture = _loadArabicFont();
+  static Uint8List? _cachedAppIconBytes;
+
+  static Future<void> _ensureAssetsLoaded() async {
+    if (_cachedAppIconBytes == null) {
+      try {
+        final data = await rootBundle.load('assets/images/app_icon.png');
+        _cachedAppIconBytes = data.buffer.asUint8List();
+      } catch (e) {
+        debugPrint('Error loading app icon asset: $e');
+      }
+    }
+  }
   
-  // Convert AppTheme primary color to PDF color
+  // Premium Design System Colors
   static final PdfColor primaryColor = PdfColor.fromInt(AppTheme.primaryColor.value);
+  static final PdfColor slate800 = PdfColor.fromInt(0xFF1E293B);
+  static final PdfColor slate500 = PdfColor.fromInt(0xFF64748B);
+  static final PdfColor slate200 = PdfColor.fromInt(0xFFE2E8F0);
+  static final PdfColor slate50 = PdfColor.fromInt(0xFFF8FAFC);
+  static final PdfColor successGreen = PdfColor.fromInt(0xFF10B981);
+  static final PdfColor errorRed = PdfColor.fromInt(0xFFEF4444);
+
+  static String _getInitials(String text) {
+    if (text.isEmpty) return '';
+    final words = text.trim().split(RegExp(r'\s+'));
+    if (words.length == 1) {
+      return words[0].isNotEmpty ? words[0][0] : '';
+    } else if (words.length >= 2) {
+      final first = words[0].isNotEmpty ? words[0][0] : '';
+      final second = words[1].isNotEmpty ? words[1][0] : '';
+      return '$first$second';
+    }
+    return '';
+  }
+
+  // Bento Card Layout Helper
+  static pw.Widget buildCard({
+    required List<pw.Widget> children,
+    PdfColor? color,
+    pw.EdgeInsetsGeometry? padding,
+    pw.CrossAxisAlignment crossAxisAlignment = pw.CrossAxisAlignment.start,
+  }) {
+    return pw.Container(
+      padding: padding ?? const pw.EdgeInsets.all(12),
+      decoration: pw.BoxDecoration(
+        color: color ?? slate50,
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+        border: pw.Border.all(color: slate200, width: 1),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: crossAxisAlignment,
+        children: children,
+      ),
+    );
+  }
+
+  static pw.Widget buildInfoRow(
+    String label,
+    String value, {
+    bool? isNegative,
+    bool? isPositive,
+    pw.TextStyle? labelStyle,
+    pw.TextStyle? valueStyle,
+  }) {
+    final defaultLabelStyle = pw.TextStyle(fontSize: 10, color: slate500);
+    final defaultValColor = (isNegative == true)
+        ? errorRed
+        : (isPositive == true)
+            ? successGreen
+            : slate800;
+    final defaultValueStyle = pw.TextStyle(
+      fontSize: 10,
+      fontWeight: pw.FontWeight.bold,
+      color: defaultValColor,
+    );
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 4),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            value,
+            style: valueStyle ?? defaultValueStyle,
+            textDirection: pw.TextDirection.rtl,
+          ),
+          pw.Text(
+            label,
+            style: labelStyle ?? defaultLabelStyle,
+            textDirection: pw.TextDirection.rtl,
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget buildInfoItem(
+    String label,
+    String value, {
+    bool? isNegative,
+    bool? isPositive,
+    pw.TextStyle? labelStyle,
+    pw.TextStyle? valueStyle,
+  }) {
+    final defaultLabelStyle = pw.TextStyle(fontSize: 9, color: slate500, height: 1.4);
+    final defaultValColor = (isNegative == true)
+        ? errorRed
+        : (isPositive == true)
+            ? successGreen
+            : slate800;
+    final defaultValueStyle = pw.TextStyle(
+      fontSize: 10,
+      fontWeight: pw.FontWeight.bold,
+      color: defaultValColor,
+      height: 1.4,
+    );
+
+    final resolvedLabelStyle = labelStyle != null
+        ? labelStyle.copyWith(height: labelStyle.height ?? 1.4)
+        : defaultLabelStyle;
+
+    final resolvedValueStyle = valueStyle != null
+        ? valueStyle.copyWith(height: valueStyle.height ?? 1.4)
+        : defaultValueStyle;
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.end,
+      children: [
+        pw.Text(
+          label,
+          style: resolvedLabelStyle,
+          textDirection: pw.TextDirection.rtl,
+        ),
+        pw.SizedBox(height: 6),
+        pw.Text(
+          value,
+          style: resolvedValueStyle,
+          textDirection: pw.TextDirection.rtl,
+        ),
+      ],
+    );
+  }
+
+  static pw.Widget buildValueBlock(
+    String label,
+    String amount,
+    String currency, {
+    bool? isNegative,
+    bool? isPositive,
+  }) {
+    final defaultValColor = (isNegative == true)
+        ? errorRed
+        : (isPositive == true)
+            ? successGreen
+            : slate800;
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.white,
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+        border: pw.Border.all(color: slate200, width: 1),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        mainAxisAlignment: pw.MainAxisAlignment.center,
+        children: [
+          pw.Text(
+            label,
+            style: pw.TextStyle(fontSize: 9, color: slate500, height: 1.4),
+            textDirection: pw.TextDirection.rtl,
+          ),
+          pw.SizedBox(height: 6),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.center,
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [
+              pw.Text(
+                ' $currency',
+                style: pw.TextStyle(fontSize: 10, color: slate500, height: 1.4),
+                textDirection: pw.TextDirection.rtl,
+              ),
+              pw.Text(
+                amount,
+                style: pw.TextStyle(
+                  fontSize: 16,
+                  fontWeight: pw.FontWeight.bold,
+                  color: defaultValColor,
+                  height: 1.4,
+                ),
+                textDirection: pw.TextDirection.rtl,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget buildSectionTitle(String title) {
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(top: 15, bottom: 8),
+      alignment: pw.Alignment.centerRight,
+      child: pw.Text(
+        title,
+        style: pw.TextStyle(
+          fontSize: 12,
+          fontWeight: pw.FontWeight.bold,
+          color: slate800,
+        ),
+        textDirection: pw.TextDirection.rtl,
+      ),
+    );
+  }
 
   static Future<UserProfile?> _getUserProfile() async {
     final dbHelper = DatabaseHelper();
@@ -53,6 +264,7 @@ class ReportService {
   }) async {
     final pdf = pw.Document();
     final arabicFont = await _arabicFontFuture;
+    await _ensureAssetsLoaded();
     final theme = pw.ThemeData.withFont(
       base: arabicFont,
       bold: arabicFont,
@@ -91,66 +303,69 @@ class ReportService {
 
   static pw.Widget _buildProfessionalHeader(String title, UserProfile? profile) {
     return pw.Container(
+      margin: const pw.EdgeInsets.only(bottom: 15),
       padding: const pw.EdgeInsets.only(bottom: 10),
-      decoration: const pw.BoxDecoration(
-        border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey600, width: 2)),
+      decoration: pw.BoxDecoration(
+        border: pw.Border(bottom: pw.BorderSide(color: slate200, width: 1)),
       ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              // Left side - Time
-              pw.Expanded(
-                flex: 2,
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      'تاريخ التقرير: ${DateFormat('yyyy/MM/dd').format(DateTime.now())}',
-                      style: pw.TextStyle(fontSize: 10, color: primaryColor.shade(0.6)),
-                      textDirection: pw.TextDirection.rtl,
-                    ),
-                    pw.Text(
-                      'الوقت: ${DateFormat('HH:mm').format(DateTime.now())}',
-                      style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
-                      textDirection: pw.TextDirection.rtl,
-                    ),
-                  ],
+          // Left side - Time
+          pw.Expanded(
+            flex: 2,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'تاريخ التقرير: ${DateFormat('yyyy/MM/dd').format(DateTime.now())}',
+                  style: pw.TextStyle(fontSize: 9, color: slate500, height: 1.4),
+                  textDirection: pw.TextDirection.rtl,
                 ),
-              ),
-              // Center - Logo
-              pw.Expanded(
-                flex: 1,
-                child: pw.Container(
-                  alignment: pw.Alignment.center,
-                  child: _buildLogoWidget(profile),
+                pw.SizedBox(height: 5),
+                pw.Text(
+                  'الوقت: ${DateFormat('HH:mm').format(DateTime.now())}',
+                  style: pw.TextStyle(fontSize: 9, color: slate500, height: 1.4),
+                  textDirection: pw.TextDirection.rtl,
                 ),
-              ),
-              // Right side - User name and company
-              pw.Expanded(
-                flex: 2,
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.end,
-                  children: [
-                    pw.Text(
-                      (profile?.businessName?.isNotEmpty == true) ? profile!.businessName! : 'غير محدد',
-                      style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: primaryColor),
-                      textDirection: pw.TextDirection.rtl,
-                    ),
-                    pw.Text(
-                      (profile?.fullName?.isNotEmpty == true) ? profile!.fullName! : 'غير محدد',
-                      style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
-                      textDirection: pw.TextDirection.rtl,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-          // Title removed as requested - account name is already in account info
+          // Center - Logo
+          pw.Expanded(
+            flex: 1,
+            child: pw.Container(
+              alignment: pw.Alignment.center,
+              child: _buildLogoWidget(profile),
+            ),
+          ),
+          // Right side - User name and company
+          pw.Expanded(
+            flex: 2,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text(
+                  (profile?.businessName?.isNotEmpty == true)
+                      ? profile!.businessName!
+                      : (profile?.fullName?.isNotEmpty == true)
+                          ? profile!.fullName!
+                          : 'حسابات يومية',
+                  style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: slate800, height: 1.4),
+                  textDirection: pw.TextDirection.rtl,
+                ),
+                if (profile?.fullName?.isNotEmpty == true) ...[
+                  pw.SizedBox(height: 5),
+                  pw.Text(
+                    profile!.fullName!,
+                    style: pw.TextStyle(fontSize: 10, color: slate500, height: 1.4),
+                    textDirection: pw.TextDirection.rtl,
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -163,44 +378,72 @@ class ReportService {
         if (logoFile.existsSync()) {
           final logoBytes = logoFile.readAsBytesSync();
           return pw.Container(
-            width: 60,
-            height: 60,
+            width: 50,
+            height: 50,
             decoration: pw.BoxDecoration(
-              borderRadius: pw.BorderRadius.circular(30),
-              border: pw.Border.all(color: primaryColor, width: 2),
+              shape: pw.BoxShape.circle,
+              border: pw.Border.all(color: primaryColor, width: 1.5),
             ),
             child: pw.ClipOval(
               child: pw.Image(
                 pw.MemoryImage(logoBytes),
-                width: 56,
-                height: 56,
+                width: 47,
+                height: 47,
                 fit: pw.BoxFit.cover,
               ),
             ),
           );
         }
       } catch (e) {
-        // If there's an error loading the logo, fall back to placeholder
+        // If there's an error loading the logo, fall back
       }
     }
     
+    // Fallback to app icon asset if available
+    if (_cachedAppIconBytes != null) {
+      return pw.Container(
+        width: 50,
+        height: 50,
+        decoration: pw.BoxDecoration(
+          shape: pw.BoxShape.circle,
+          border: pw.Border.all(color: primaryColor, width: 1.5),
+        ),
+        child: pw.ClipOval(
+          child: pw.Image(
+            pw.MemoryImage(_cachedAppIconBytes!),
+            width: 47,
+            height: 47,
+            fit: pw.BoxFit.cover,
+          ),
+        ),
+      );
+    }
+    
     // Fallback placeholder
+    final nameForInitials = (profile?.businessName?.isNotEmpty == true)
+        ? profile!.businessName!
+        : (profile?.fullName?.isNotEmpty == true)
+            ? profile!.fullName!
+            : 'حسابات يومية';
+    final initials = _getInitials(nameForInitials);
+
     return pw.Container(
-      width: 60,
-      height: 60,
+      width: 50,
+      height: 50,
       decoration: pw.BoxDecoration(
-        color: PdfColors.grey200,
-        borderRadius: pw.BorderRadius.circular(30),
-        border: pw.Border.all(color: PdfColors.grey400, width: 2),
+        color: slate50,
+        shape: pw.BoxShape.circle,
+        border: pw.Border.all(color: primaryColor, width: 1.5),
       ),
       child: pw.Center(
         child: pw.Text(
-          'الشعار',
+          initials,
           style: pw.TextStyle(
-            fontSize: 10,
+            fontSize: 14,
             fontWeight: pw.FontWeight.bold,
-            color: PdfColors.grey600,
+            color: primaryColor,
           ),
+          textDirection: pw.TextDirection.rtl,
         ),
       ),
     );
@@ -208,80 +451,72 @@ class ReportService {
 
   static pw.Widget _buildProfessionalFooter(pw.Context context) {
     return pw.Container(
-      padding: const pw.EdgeInsets.only(top: 10),
-      decoration: const pw.BoxDecoration(
-        border: pw.Border(top: pw.BorderSide(color: PdfColors.grey400, width: 1)),
+      margin: const pw.EdgeInsets.only(top: 15),
+      padding: const pw.EdgeInsets.only(top: 8),
+      decoration: pw.BoxDecoration(
+        border: pw.Border(top: pw.BorderSide(color: slate200, width: 1)),
       ),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Text(
             'صفحة ${context.pageNumber} من ${context.pagesCount}',
-            style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+            style: pw.TextStyle(fontSize: 8, color: slate500),
             textDirection: pw.TextDirection.rtl,
           ),
           pw.Text(
-            'تم إنشاؤه بواسطة تطبيق إدارة الحسابات',
-            style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+            'تم الإنشاء بواسطة تطبيق حسابات يومية',
+            style: pw.TextStyle(fontSize: 8, color: slate500),
             textDirection: pw.TextDirection.rtl,
           ),
         ],
       ),
     );
   }
-
   static List<pw.Widget> _buildProfileHeader(UserProfile profile) {
     return [
-      pw.Container(
-        padding: const pw.EdgeInsets.all(16),
-        decoration: pw.BoxDecoration(
-          border: pw.Border.all(color: primaryColor.shade(0.3)),
-          borderRadius: pw.BorderRadius.circular(8),
-        ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
+      buildCard(
+        children: [
+          pw.Text(
+            (profile.businessName?.isNotEmpty == true)
+                ? profile.businessName!
+                : (profile.fullName.isNotEmpty == true)
+                    ? profile.fullName
+                    : 'حسابات يومية',
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: slate800, height: 1.4),
+            textDirection: pw.TextDirection.rtl,
+          ),
+          if (profile.fullName?.isNotEmpty == true) ...[
+            pw.SizedBox(height: 5),
             pw.Text(
-              (profile.businessName?.isNotEmpty == true) ? profile.businessName! : 'غير محدد',
-              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: primaryColor),
+              profile.fullName!,
+              style: pw.TextStyle(fontSize: 12, color: slate800, height: 1.4),
               textDirection: pw.TextDirection.rtl,
-            ),
-            pw.Text(
-              (profile.fullName?.isNotEmpty == true) ? profile.fullName! : 'غير محدد',
-              style: const pw.TextStyle(fontSize: 14),
-              textDirection: pw.TextDirection.rtl,
-            ),
-            pw.Text(
-              'النشاط التجاري: ${(profile.tradingActivity?.isNotEmpty == true) ? profile.tradingActivity! : "غير محدد"}',
-              style: const pw.TextStyle(fontSize: 12),
-              textDirection: pw.TextDirection.rtl,
-            ),
-            pw.SizedBox(height: 8),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      'الهاتف: ${(profile.phone?.isNotEmpty == true) ? profile.phone! : "غير محدد"}',
-                      style: const pw.TextStyle(fontSize: 10),
-                      textDirection: pw.TextDirection.rtl,
-                    ),
-                  ],
-                ),
-                pw.Expanded(
-                  child: pw.Text(
-                    'العنوان: ${(profile.address?.isNotEmpty == true) ? profile.address! : "غير محدد"}',
-                    style: const pw.TextStyle(fontSize: 10),
-                    textDirection: pw.TextDirection.rtl,
-                    textAlign: pw.TextAlign.right,
-                  ),
-                ),
-              ],
             ),
           ],
-        ),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            'النشاط التجاري: ${(profile.tradingActivity?.isNotEmpty == true) ? profile.tradingActivity! : "غير محدد"}',
+            style: pw.TextStyle(fontSize: 10, color: slate500, height: 1.4),
+            textDirection: pw.TextDirection.rtl,
+          ),
+          pw.SizedBox(height: 8),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text(
+                'الهاتف: ${(profile.phone?.isNotEmpty == true) ? profile.phone! : "غير محدد"}',
+                style: pw.TextStyle(fontSize: 9, color: slate500, height: 1.4),
+                textDirection: pw.TextDirection.rtl,
+              ),
+              pw.Text(
+                'العنوان: ${(profile.address?.isNotEmpty == true) ? profile.address! : "غير محدد"}',
+                style: pw.TextStyle(fontSize: 9, color: slate500, height: 1.4),
+                textDirection: pw.TextDirection.rtl,
+              ),
+            ],
+          ),
+        ],
       ),
     ];
   }
@@ -294,6 +529,7 @@ class ReportService {
   }) async {
 
     final arabicFont = await _arabicFontFuture;
+    await _ensureAssetsLoaded();
     final theme = pw.ThemeData.withFont(
       base: arabicFont,
       bold: arabicFont,
@@ -356,18 +592,21 @@ class ReportService {
             data: chunk,
             headerStyle: pw.TextStyle(
               fontWeight: pw.FontWeight.bold,
-              fontSize: 12,
+              fontSize: 10,
               color: PdfColors.white,
             ),
             headerDecoration: pw.BoxDecoration(
               color: primaryColor,
             ),
-            cellStyle: const pw.TextStyle(fontSize: 11),
+            cellStyle: pw.TextStyle(fontSize: 9, color: slate800),
             cellAlignment: pw.Alignment.center,
-            cellPadding: const pw.EdgeInsets.all(8),
-            border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-            oddRowDecoration: const pw.BoxDecoration(
-              color: PdfColors.grey50,
+            cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            border: pw.TableBorder(
+              horizontalInside: pw.BorderSide(color: slate200, width: 0.5),
+              bottom: pw.BorderSide(color: slate200, width: 0.5),
+            ),
+            oddRowDecoration: pw.BoxDecoration(
+              color: slate50,
             ),
           ),
         );
@@ -541,25 +780,26 @@ class ReportService {
     List<List<String>> data,
     pw.Table originalTable,
   ) {
-    final primaryColor = PdfColor.fromHex('#2196F3');
-    
     return pw.Table.fromTextArray(
       headers: headers,
       data: data,
       headerStyle: pw.TextStyle(
         fontWeight: pw.FontWeight.bold,
-        fontSize: 12,
+        fontSize: 10,
         color: PdfColors.white,
       ),
       headerDecoration: pw.BoxDecoration(
         color: primaryColor,
       ),
-      cellStyle: const pw.TextStyle(fontSize: 11),
+      cellStyle: pw.TextStyle(fontSize: 9, color: slate800),
       cellAlignment: pw.Alignment.center,
-      cellPadding: const pw.EdgeInsets.all(8),
-      border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-      oddRowDecoration: const pw.BoxDecoration(
-        color: PdfColors.grey50,
+      cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      border: pw.TableBorder(
+        horizontalInside: pw.BorderSide(color: slate200, width: 0.5),
+        bottom: pw.BorderSide(color: slate200, width: 0.5),
+      ),
+      oddRowDecoration: pw.BoxDecoration(
+        color: slate50,
       ),
     );
   }

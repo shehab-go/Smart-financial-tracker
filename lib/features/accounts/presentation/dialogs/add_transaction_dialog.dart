@@ -128,11 +128,14 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final FocusNode _nameFocusNode = FocusNode();
+  List<AccountModel> _existingAccounts = [];
+  AccountModel? _selectedAccount;
 
   final DatabaseHelper _db = DatabaseHelper();
 
   DateTime _selectedDate = DateTime.now();
-  String _selectedType = 'debit';
+  String _selectedType = '';
   String? _selectedCurrency;
   Set<String> _favoriteCurrencyNames = <String>{};
   String? _defaultCurrencyName;
@@ -158,10 +161,22 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _amountController.dispose();
     _detailsController.dispose();
     _phoneController.dispose();
+    _nameFocusNode.dispose();
     for (final input in _allocationInputs) {
       input.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _loadExistingAccounts() async {
+    try {
+      final accounts = await _db.getAccounts();
+      if (mounted) {
+        setState(() {
+          _existingAccounts = accounts;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _pickImages() async {
@@ -304,6 +319,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _initCurrency();
     if (_isNewAccount) {
       _loadCurrencyQuickPickData();
+      _loadExistingAccounts();
     }
     _initBalancesAndAllocations();
 
@@ -334,7 +350,16 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
     updateReady();
     _amountController.addListener(updateReady);
-    _accountNameController.addListener(updateReady);
+    _accountNameController.addListener(() {
+      updateReady();
+      if (_selectedAccount != null &&
+          _accountNameController.text.trim().toLowerCase() !=
+              _selectedAccount!.name.trim().toLowerCase()) {
+        setState(() {
+          _selectedAccount = null;
+        });
+      }
+    });
   }
 
   Future<void> _loadCurrencyQuickPickData() async {
@@ -362,7 +387,12 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     initial ??= (widget.accountCurrencyCode != null && widget.accountCurrencyCode!.isNotEmpty)
         ? widget.accountCurrencyCode
         : null;
-    initial ??= await _db.getDefaultCurrencyName();
+    final defaultName = await _db.getDefaultCurrencyName();
+    initial ??= defaultName;
+
+    if (initial == 'محلي' && defaultName != null && defaultName.trim().isNotEmpty) {
+      initial = defaultName.trim();
+    }
 
     if (!mounted) return;
     setState(() {
@@ -439,7 +469,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
       if (selected != null && mounted) {
         setState(() {
-          _selectedCurrency = selected;
+          _selectedCurrency = (selected == 'محلي' && _defaultCurrencyName != null && _defaultCurrencyName!.trim().isNotEmpty)
+              ? _defaultCurrencyName!.trim()
+              : selected;
         });
       }
     } catch (e) {
@@ -472,6 +504,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     int accountId = widget.accountId ?? -1;
+    AccountModel? existingAccount;
     
     try {
       final db = _db;
@@ -590,21 +623,45 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         }
 
         if (_isNewAccount) {
-          final account = AccountModel(
-            name: _accountNameController.text.trim(),
-            category: widget.category,
-            currencyName: selectedCurrency,
-            phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-            createdDate: DateTime.now(),
-          );
-          accountId = await db.insertAccount(account);
+          final name = _accountNameController.text.trim();
+          if (_selectedAccount != null &&
+              _selectedAccount!.name.trim().toLowerCase() == name.toLowerCase()) {
+            existingAccount = _selectedAccount;
+          } else {
+            final existingAccounts = await db.getAccounts();
+            try {
+              existingAccount = existingAccounts.firstWhere((a) =>
+                  a.name.trim().toLowerCase() == name.toLowerCase() &&
+                  a.category == widget.category);
+            } catch (_) {
+              try {
+                existingAccount = existingAccounts.firstWhere((a) =>
+                    a.name.trim().toLowerCase() == name.toLowerCase());
+              } catch (_) {
+                existingAccount = null;
+              }
+            }
+          }
+
+          if (existingAccount != null) {
+            accountId = existingAccount.id!;
+          } else {
+            final account = AccountModel(
+              name: name,
+              category: widget.category,
+              currencyName: selectedCurrency,
+              phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+              createdDate: DateTime.now(),
+            );
+            accountId = await db.insertAccount(account);
+          }
         }
 
         final transaction = TransactionModel(
           accountId: accountId,
           amount: totalAmount,
           type: _selectedType,
-          category: widget.category,
+          category: _isNewAccount && existingAccount != null ? existingAccount.category : widget.category,
           currencyName: selectedCurrency,
           date: _selectedDate,
           description: _detailsController.text.trim(),
@@ -692,7 +749,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       child: Text(
                         _isEditing
                             ? 'تعديل المعاملة'
-                            : (_isNewAccount ? 'حساب جديد' : 'إضافة معاملة'),
+                            : (_isNewAccount ? 'عملية جديدة' : 'إضافة معاملة'),
                         style: const TextStyle(
                           color: AppTheme.textPrimary,
                           fontSize: 16,
@@ -739,60 +796,244 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       children: [
                         // Account Name Field (if New Account)
                         if (_isNewAccount) ...[
-                          TextFormField(
-                            controller: _accountNameController,
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 14,
-                              fontFamily: 'ArbFONTSIBMPlexArabicText',
-                            ),
-                            decoration: InputDecoration(
-                              labelText: 'الاسم',
-                              labelStyle: const TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 13,
-                                fontFamily: 'ArbFONTSIBMPlexArabicText',
-                              ),
-                              suffixIcon: IconButton(
-                                icon: SvgPicture.asset(
-                                  'assets/images/user-circle.svg',
-                                  width: 20,
-                                  height: 20,
-                                  colorFilter: const ColorFilter.mode(
-                                    AppTheme.primaryColor,
-                                    BlendMode.srcIn,
+                          RawAutocomplete<AccountModel>(
+                            textEditingController: _accountNameController,
+                            focusNode: _nameFocusNode,
+                            displayStringForOption: (AccountModel option) => option.name,
+                            optionsBuilder: (TextEditingValue textEditingValue) {
+                              if (textEditingValue.text.trim().isEmpty) {
+                                  return const Iterable<AccountModel>.empty();
+                              }
+                              final searchTerm = textEditingValue.text.trim().toLowerCase();
+                              final matched = _existingAccounts.where((AccountModel option) {
+                                return option.name.toLowerCase().contains(searchTerm);
+                              }).toList();
+
+                              // Deduplicate by name+category+phone only (not currency)
+                              // so that multi-currency accounts appear once
+                              final Map<String, AccountModel> uniqueMap = {};
+                              for (final option in matched) {
+                                final key = '${option.name.trim().toLowerCase()}_${option.category.trim().toLowerCase()}_${(option.phone ?? '').trim()}';
+                                uniqueMap.putIfAbsent(key, () => option);
+                              }
+                              return uniqueMap.values;
+                            },
+                            onSelected: (AccountModel selection) {
+                              setState(() {
+                                _selectedAccount = selection;
+                                _accountNameController.text = selection.name;
+                                final phone = selection.phone;
+                                if (phone != null && phone.isNotEmpty) {
+                                  _phoneController.text = phone;
+                                }
+                                // Map 'محلي' to the user's configured default currency name
+                                if (selection.currencyName.isNotEmpty) {
+                                  final rawCur = selection.currencyName.trim();
+                                  _selectedCurrency = (rawCur == 'محلي' && _defaultCurrencyName != null && _defaultCurrencyName!.trim().isNotEmpty)
+                                      ? _defaultCurrencyName!.trim()
+                                      : rawCur;
+                                }
+                              });
+                            },
+                            fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                              return TextFormField(
+                                controller: textEditingController,
+                                focusNode: focusNode,
+                                style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 14,
+                                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                ),
+                                decoration: InputDecoration(
+                                  labelText: 'الاسم',
+                                  labelStyle: const TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 13,
+                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: SvgPicture.asset(
+                                      'assets/images/user-circle.svg',
+                                      width: 20,
+                                      height: 20,
+                                      colorFilter: const ColorFilter.mode(
+                                        AppTheme.primaryColor,
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                                    tooltip: 'اختيار من جهات الاتصال',
+                                    onPressed: () {
+                                      HapticFeedback.lightImpact();
+                                      _pickContactForName();
+                                    },
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: BorderSide(
+                                      color: AppTheme.dividerColor.withOpacity(0.5),
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: BorderSide(
+                                      color: AppTheme.dividerColor.withOpacity(0.5),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                      color: AppTheme.primaryColor,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: AppTheme.surfaceColor,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                                validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال الاسم' : null,
+                                onFieldSubmitted: (String value) {
+                                  onFieldSubmitted();
+                                },
+                              );
+                            },
+                            optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<AccountModel> onSelected, Iterable<AccountModel> options) {
+                              return Align(
+                                alignment: Alignment.topRight,
+                                child: Material(
+                                  elevation: 4.0,
+                                  borderRadius: BorderRadius.circular(14),
+                                  shadowColor: AppTheme.textSecondary.withOpacity(0.15),
+                                  color: Colors.white,
+                                  child: Container(
+                                    width: (MediaQuery.of(context).size.width - 72).clamp(0.0, 340.0),
+                                    constraints: const BoxConstraints(maxHeight: 200),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: AppTheme.dividerColor.withOpacity(0.5),
+                                      ),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(14),
+                                      child: ListView.separated(
+                                        padding: EdgeInsets.zero,
+                                        shrinkWrap: true,
+                                        itemCount: options.length,
+                                        separatorBuilder: (context, index) => const Divider(
+                                          height: 1,
+                                          color: AppTheme.dividerColor,
+                                        ),
+                                        itemBuilder: (BuildContext context, int index) {
+                                          final AccountModel option = options.elementAt(index);
+                                          return InkWell(
+                                            onTap: () {
+                                              onSelected(option);
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 16,
+                                                vertical: 12,
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.history_rounded,
+                                                    size: 16,
+                                                    color: AppTheme.textSecondary,
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          option.name,
+                                                          style: const TextStyle(
+                                                            color: AppTheme.textPrimary,
+                                                            fontSize: 14,
+                                                            fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                        if (option.category.isNotEmpty || (option.phone != null && option.phone!.isNotEmpty)) ...[
+                                                           const SizedBox(height: 2),
+                                                           Text(
+                                                             [
+                                                               if (option.category.isNotEmpty) option.category,
+                                                               if (option.phone != null && option.phone!.isNotEmpty) option.phone!,
+                                                             ].join(' | '),
+                                                             style: const TextStyle(
+                                                               color: AppTheme.textTertiary,
+                                                               fontSize: 11,
+                                                               fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                                             ),
+                                                           ),
+                                                         ],
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  Builder(builder: (context) {
+                                                    // Determine which currencies to show
+                                                    final String localDefault = (_defaultCurrencyName != null && _defaultCurrencyName!.trim().isNotEmpty)
+                                                        ? _defaultCurrencyName!.trim()
+                                                        : 'محلي';
+                                                    // Build deduplicated currency set from stats or fallback to currencyName
+                                                    final Set<String> seenCurrencies = {};
+                                                    final List<String> displayCurrencies = [];
+                                                    if (option.currencyStats.isNotEmpty) {
+                                                      for (final stat in option.currencyStats) {
+                                                        final name = (stat.currencyName.trim() == 'محلي' || stat.currencyName.trim() == localDefault)
+                                                            ? localDefault
+                                                            : stat.currencyName.trim();
+                                                        if (seenCurrencies.add(name)) {
+                                                          displayCurrencies.add(name);
+                                                        }
+                                                      }
+                                                    } else if (option.currencyName.isNotEmpty) {
+                                                      final rawName = option.currencyName.trim();
+                                                      final name = (rawName == 'محلي') ? localDefault : rawName;
+                                                      displayCurrencies.add(name);
+                                                    }
+                                                    if (displayCurrencies.isEmpty) return const SizedBox.shrink();
+                                                    return Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        const SizedBox(width: 8),
+                                                        ...displayCurrencies.map((cur) => Container(
+                                                          margin: const EdgeInsets.only(right: 4),
+                                                          padding: const EdgeInsets.symmetric(
+                                                            horizontal: 6,
+                                                            vertical: 2,
+                                                          ),
+                                                          decoration: BoxDecoration(
+                                                            color: AppTheme.primaryColor.withOpacity(0.06),
+                                                            borderRadius: BorderRadius.circular(6),
+                                                          ),
+                                                          child: Text(
+                                                            cur,
+                                                            style: const TextStyle(
+                                                              color: AppTheme.primaryColor,
+                                                              fontSize: 10,
+                                                              fontWeight: FontWeight.bold,
+                                                              fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                                            ),
+                                                          ),
+                                                        )),
+                                                      ],
+                                                    );
+                                                  }),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                tooltip: 'اختيار من جهات الاتصال',
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  _pickContactForName();
-                                },
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide(
-                                  color: AppTheme.dividerColor.withOpacity(0.5),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide(
-                                  color: AppTheme.dividerColor.withOpacity(0.5),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(
-                                  color: AppTheme.primaryColor,
-                                  width: 1.5,
-                                ),
-                              ),
-                              filled: true,
-                              fillColor: AppTheme.surfaceColor,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                            validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال الاسم' : null,
+                              );
+                            },
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -848,7 +1089,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                             ),
                             suffixIcon: Builder(
                               builder: (context) {
-                                final String displayCurrency = _isNewAccount
+                                String displayCurrency = _isNewAccount
                                     ? (_selectedCurrency ?? 'العملة')
                                     : ((widget.accountCurrencyCode != null &&
                                                 widget.accountCurrencyCode!.isNotEmpty)
@@ -860,6 +1101,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                         _defaultCurrencyName!.trim().isNotEmpty)
                                     ? _defaultCurrencyName!.trim()
                                     : null;
+                                if (displayCurrency == 'محلي' && defaultName != null) {
+                                  displayCurrency = defaultName;
+                                }
                                 final List<String> favoriteNames =
                                     _favoriteCurrencyNames.toList(growable: true)
                                       ..sort();
@@ -873,18 +1117,23 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                         ? _selectedCurrency!.trim()
                                         : null;
 
-                                if (selected != null && !dropdownItems.contains(selected)) {
-                                  dropdownItems.add(selected);
+                                final String? mappedSelected = (selected == 'محلي' && defaultName != null)
+                                    ? defaultName
+                                    : selected;
+
+                                if (mappedSelected != null && !dropdownItems.contains(mappedSelected)) {
+                                  dropdownItems.add(mappedSelected);
                                 }
                                 if (defaultName != null && !dropdownItems.contains(defaultName)) {
                                   dropdownItems.add(defaultName);
                                 }
-                                if (!dropdownItems.contains('محلي')) {
+                                if (defaultName == null && !dropdownItems.contains('محلي')) {
                                   dropdownItems.add('محلي');
                                 }
                                 for (final name in favoriteNames) {
-                                  if (!dropdownItems.contains(name)) {
-                                    dropdownItems.add(name);
+                                  final mappedName = (name == 'محلي' && defaultName != null) ? defaultName : name;
+                                  if (!dropdownItems.contains(mappedName)) {
+                                    dropdownItems.add(mappedName);
                                   }
                                 }
 
@@ -1453,9 +1702,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 ),
                 child: Row(
                   children: [
-                    // Credit "له" Button
+                    // Credit "ديون لك" Button
                     Expanded(
-                      child: InkWell(
+                      child: GestureDetector(
                         onTap: (_isLoading || !_isFormReady)
                             ? null
                             : () async {
@@ -1463,49 +1712,35 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                 setState(() => _selectedType = 'credit');
                                 await _save();
                               },
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeInOut,
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                           decoration: BoxDecoration(
-                            gradient: (_isFormReady && isCreditSelected)
-                                ? const LinearGradient(
-                                    colors: [Color(0xFF48BB78), AppTheme.successColor],
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                  )
-                                : null,
-                            color: (_isFormReady && !isCreditSelected)
-                                ? AppTheme.successColor.withOpacity(0.08)
-                                : ((!_isFormReady)
-                                    ? Colors.grey.shade100
-                                    : null),
+                            color: isCreditSelected && _isFormReady
+                                ? AppTheme.successColor
+                                : (_isFormReady
+                                    ? AppTheme.successColor.withOpacity(0.07)
+                                    : Colors.grey.shade100),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: _isFormReady
                                   ? AppTheme.successColor
-                                  : AppTheme.successColor.withOpacity(0.2),
+                                  : Colors.grey.shade300,
                               width: 1.5,
                             ),
-                            boxShadow: (_isFormReady && isCreditSelected)
+                            boxShadow: (isCreditSelected && _isFormReady)
                                 ? [
                                     BoxShadow(
-                                      color: AppTheme.successColor.withOpacity(0.25),
-                                      blurRadius: 12,
+                                      color: AppTheme.successColor.withOpacity(0.30),
+                                      blurRadius: 14,
                                       offset: const Offset(0, 4),
                                     ),
                                   ]
-                                : null,
+                                : [],
                           ),
-                          child: Builder(
-                            builder: (context) {
-                              final Color textColor = (_isFormReady && isCreditSelected)
-                                  ? Colors.white
-                                  : (_isFormReady
-                                      ? AppTheme.successColor
-                                      : AppTheme.successColor.withOpacity(0.35));
-
-                              if (_isLoading && _selectedType == 'credit') {
-                                return const Center(
+                          child: _isLoading && _selectedType == 'credit'
+                              ? const Center(
                                   child: SizedBox(
                                     height: 20,
                                     width: 20,
@@ -1514,17 +1749,23 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
                                   ),
-                                );
-                              }
-                              return Center(
-                                child: Row(
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     SvgPicture.asset(
                                       'assets/images/arrow-long-up.svg',
                                       width: 16,
                                       height: 16,
-                                      colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+                                      colorFilter: ColorFilter.mode(
+                                        (isCreditSelected && _isFormReady)
+                                            ? Colors.white
+                                            : (_isFormReady
+                                                ? AppTheme.successColor
+                                                : Colors.grey.shade400),
+                                        BlendMode.srcIn,
+                                      ),
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
@@ -1532,23 +1773,24 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: textColor,
                                         fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                        color: (isCreditSelected && _isFormReady)
+                                            ? Colors.white
+                                            : (_isFormReady
+                                                ? AppTheme.successColor
+                                                : Colors.grey.shade400),
                                       ),
                                     ),
                                   ],
                                 ),
-                              );
-                            },
-                          ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    
-                    // Debit "عليه" Button
+
+                    // Debit "ديون عليك" Button
                     Expanded(
-                      child: InkWell(
+                      child: GestureDetector(
                         onTap: (_isLoading || !_isFormReady)
                             ? null
                             : () async {
@@ -1556,49 +1798,35 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                 setState(() => _selectedType = 'debit');
                                 await _save();
                               },
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeInOut,
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                           decoration: BoxDecoration(
-                            gradient: (_isFormReady && isDebitSelected)
-                                ? const LinearGradient(
-                                    colors: [Color(0xFFF56565), AppTheme.errorColor],
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                  )
-                                : null,
-                            color: (_isFormReady && !isDebitSelected)
-                                ? AppTheme.errorColor.withOpacity(0.08)
-                                : ((!_isFormReady)
-                                    ? Colors.grey.shade100
-                                    : null),
+                            color: isDebitSelected && _isFormReady
+                                ? AppTheme.errorColor
+                                : (_isFormReady
+                                    ? AppTheme.errorColor.withOpacity(0.07)
+                                    : Colors.grey.shade100),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: _isFormReady
                                   ? AppTheme.errorColor
-                                  : AppTheme.errorColor.withOpacity(0.2),
+                                  : Colors.grey.shade300,
                               width: 1.5,
                             ),
-                            boxShadow: (_isFormReady && isDebitSelected)
+                            boxShadow: (isDebitSelected && _isFormReady)
                                 ? [
                                     BoxShadow(
-                                      color: AppTheme.errorColor.withOpacity(0.25),
-                                      blurRadius: 12,
+                                      color: AppTheme.errorColor.withOpacity(0.30),
+                                      blurRadius: 14,
                                       offset: const Offset(0, 4),
                                     ),
                                   ]
-                                : null,
+                                : [],
                           ),
-                          child: Builder(
-                            builder: (context) {
-                              final Color textColor = (_isFormReady && isDebitSelected)
-                                  ? Colors.white
-                                  : (_isFormReady
-                                      ? AppTheme.errorColor
-                                      : AppTheme.errorColor.withOpacity(0.35));
-
-                              if (_isLoading && _selectedType == 'debit') {
-                                return const Center(
+                          child: _isLoading && _selectedType == 'debit'
+                              ? const Center(
                                   child: SizedBox(
                                     height: 20,
                                     width: 20,
@@ -1607,17 +1835,23 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
                                   ),
-                                );
-                              }
-                              return Center(
-                                child: Row(
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     SvgPicture.asset(
                                       'assets/images/arrow-long-down.svg',
                                       width: 16,
                                       height: 16,
-                                      colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+                                      colorFilter: ColorFilter.mode(
+                                        (isDebitSelected && _isFormReady)
+                                            ? Colors.white
+                                            : (_isFormReady
+                                                ? AppTheme.errorColor
+                                                : Colors.grey.shade400),
+                                        BlendMode.srcIn,
+                                      ),
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
@@ -1625,15 +1859,16 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: textColor,
                                         fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                        color: (isDebitSelected && _isFormReady)
+                                            ? Colors.white
+                                            : (_isFormReady
+                                                ? AppTheme.errorColor
+                                                : Colors.grey.shade400),
                                       ),
                                     ),
                                   ],
                                 ),
-                              );
-                            },
-                          ),
                         ),
                       ),
                     ),
@@ -1705,11 +1940,14 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   }
 
   Widget _buildCurrencyReadonly() {
-    final String displayName =
+    String displayName =
         (widget.accountCurrencyCode != null &&
                 widget.accountCurrencyCode!.isNotEmpty)
             ? widget.accountCurrencyCode!
             : 'محلي';
+    if (displayName == 'محلي' && _defaultCurrencyName != null && _defaultCurrencyName!.trim().isNotEmpty) {
+      displayName = _defaultCurrencyName!.trim();
+    }
 
     return TextFormField(
       initialValue: displayName,
@@ -1760,7 +1998,12 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               if (effectiveCurrency == null) {
                 return true;
               }
-              return balance.currencyName == effectiveCurrency;
+              final balanceCur = balance.currencyName.trim();
+              final effCur = effectiveCurrency.trim();
+              if (effCur == 'محلي' || (_defaultCurrencyName != null && effCur == _defaultCurrencyName!.trim())) {
+                return balanceCur == 'محلي' || (_defaultCurrencyName != null && balanceCur == _defaultCurrencyName!.trim());
+              }
+              return balanceCur == effCur;
             }).toList();
             return Padding(
               padding: const EdgeInsets.only(bottom: 10.0),

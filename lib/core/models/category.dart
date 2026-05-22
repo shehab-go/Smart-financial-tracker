@@ -1,16 +1,19 @@
 class CategoryModel {
   final int? id;
   final String name;
+  final int sortOrder;
 
   CategoryModel({
     this.id,
     required this.name,
+    this.sortOrder = 0,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
+      'sortOrder': sortOrder,
     };
   }
 
@@ -18,6 +21,7 @@ class CategoryModel {
     return CategoryModel(
       id: map['id'],
       name: map['name'],
+      sortOrder: map['sortOrder'] ?? 0,
     );
   }
 
