@@ -43,6 +43,7 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
   late TextEditingController _workDetailsController;
   String? _selectedCurrency;
   final _formKey = GlobalKey<FormState>();
+  String _localCurrencyName = 'محلي';
 
   Future<void> _pickCurrency() async {
     try {
@@ -67,6 +68,18 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
     _addressController = TextEditingController(text: widget.account.address ?? '');
     _workDetailsController = TextEditingController(text: widget.account.workDetails ?? '');
     _selectedCurrency = widget.account.currencyName.trim();
+    _loadLocalCurrencyName();
+  }
+
+  Future<void> _loadLocalCurrencyName() async {
+    try {
+      final name = await DatabaseHelper().getDefaultCurrencyName();
+      if (mounted && name != null && name.trim().isNotEmpty) {
+        setState(() {
+          _localCurrencyName = name.trim();
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _pickContact() async {
@@ -446,7 +459,7 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
                                   ),
                                   child: Text(
                                     (_selectedCurrency != null && _selectedCurrency!.trim().isNotEmpty)
-                                        ? _selectedCurrency!.trim()
+                                        ? (_selectedCurrency!.trim() == 'محلي' ? _localCurrencyName : _selectedCurrency!.trim())
                                         : 'اختر العملة',
                                     style: const TextStyle(
                                       fontSize: 14,
@@ -567,6 +580,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   int? _currentHighlightId;
   String _selectedCurrencyFilter = 'all';
   List<String> _availableCurrencies = const <String>[];
+  String _localCurrencyName = 'محلي';
 
   @override
   void initState() {
@@ -643,8 +657,15 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
 
   List<TransactionModel> get _filteredTransactions {
     if (_selectedCurrencyFilter == 'all') return _transactions;
+    final filter = _selectedCurrencyFilter.trim();
     return _transactions
-        .where((t) => t.currencyName.trim() == _selectedCurrencyFilter.trim())
+        .where((t) {
+          final tCur = t.currencyName.trim();
+          if (filter == _localCurrencyName) {
+            return tCur == 'محلي' || tCur == _localCurrencyName;
+          }
+          return tCur == filter;
+        })
         .toList();
   }
 
@@ -806,7 +827,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
               t.description ?? '-',
               t.type == 'credit' ? t.amount.toStringAsFixed(0) : '-',
               t.type == 'debit' ? t.amount.toStringAsFixed(0) : '-',
-              if (includeCurrencyColumn) t.currencyName,
+              if (includeCurrencyColumn) (t.currencyName.trim() == 'محلي' ? _localCurrencyName : t.currencyName),
             ])
         .toList();
 
@@ -832,7 +853,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
           final label = t.type == 'debit' ? 'عليك' : 'لك';
           final amountPart = '${t.amount.toStringAsFixed(0)}';
           if (_selectedCurrencyFilter == 'all') {
-            return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label $amountPart ${t.currencyName}';
+            return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label $amountPart ${(t.currencyName.trim() == 'محلي' ? _localCurrencyName : t.currencyName)}';
           }
           return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label $amountPart';
         })
@@ -930,6 +951,9 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     });
 
     try {
+      final localName = await DatabaseHelper().getDefaultCurrencyName();
+      final resolvedLocalName = (localName != null && localName.trim().isNotEmpty) ? localName.trim() : 'محلي';
+
       final swDb = Stopwatch()..start();
       final transactions = await DatabaseHelper().getTransactionsByAccount(widget.account.id!);
       _debugPerf('AccountTransactions._loadTransactions.db', swDb);
@@ -939,26 +963,34 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
       for (final t in transactions) {
         final name = t.currencyName.trim();
         if (name.isNotEmpty) {
-          currencySet.add(name);
+          if (name == 'محلي') {
+            currencySet.add(resolvedLocalName);
+          } else {
+            currencySet.add(name);
+          }
         }
       }
       final currencies = currencySet.toList()..sort();
-      if (currencies.isNotEmpty && currencies.first != 'محلي' && currencies.contains('محلي')) {
+      if (currencies.isNotEmpty && currencies.first != resolvedLocalName && currencies.contains(resolvedLocalName)) {
         currencies
-          ..remove('محلي')
-          ..insert(0, 'محلي');
+          ..remove(resolvedLocalName)
+          ..insert(0, resolvedLocalName);
       }
-      if (!currencies.contains('محلي')) {
-        currencies.insert(0, 'محلي');
+      if (!currencies.contains(resolvedLocalName)) {
+        currencies.insert(0, resolvedLocalName);
       }
       _debugPerf('AccountTransactions._loadTransactions.buildCurrencies', swCurrencies);
 
       String selected = _selectedCurrencyFilter;
+      if (selected == 'محلي') {
+        selected = resolvedLocalName;
+      }
       if (selected != 'all' && !currencySet.contains(selected)) {
         selected = 'all';
       }
 
       setState(() {
+        _localCurrencyName = resolvedLocalName;
         _transactions = transactions;
         _availableCurrencies = currencies;
         _selectedCurrencyFilter = selected;
@@ -993,7 +1025,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
           builder: (context) => AddTransactionDialog(
             accountId: widget.account.id!,
             category: widget.account.category,
-            accountCurrencyCode: _currentAccount.currencyName,
+            accountCurrencyCode: _currentAccount.currencyName.trim() == 'محلي' ? _localCurrencyName : _currentAccount.currencyName,
           ),
         ) ??
         false;
@@ -1087,7 +1119,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                     ),
                     child: Column(
                       children: [
-                        _buildDetailRow('المبلغ', '${NumberFormat('#,##0').format(transaction.amount)} ${transaction.currencyName}', isBold: true, valueColor: badgeColor),
+                        _buildDetailRow('المبلغ', '${NumberFormat('#,##0').format(transaction.amount)} ${(transaction.currencyName.trim() == 'محلي' ? _localCurrencyName : transaction.currencyName)}', isBold: true, valueColor: badgeColor),
                         const SizedBox(height: 12),
                         _buildDetailRow('النوع', isCredit ? 'ديون لك (إيداع)' : 'ديون عليك (سحب)', isBold: true, valueColor: badgeColor),
                         const SizedBox(height: 12),
@@ -1328,7 +1360,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
           builder: (context) => AddTransactionDialog(
             accountId: widget.account.id!,
             category: widget.account.category,
-            accountCurrencyCode: _currentAccount.currencyName,
+            accountCurrencyCode: _currentAccount.currencyName.trim() == 'محلي' ? _localCurrencyName : _currentAccount.currencyName,
             transaction: transaction,
           ),
         ) ??
@@ -1644,7 +1676,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                       border: Border.all(color: AppTheme.primaryColor.withOpacity(0.15)),
                     ),
                     child: Text(
-                      _currentAccount.currencyName,
+                      _currentAccount.currencyName.trim() == 'محلي' ? _localCurrencyName : _currentAccount.currencyName,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                       textAlign: TextAlign.center,
@@ -1748,7 +1780,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                                       account: _currentAccount,
                                       netBalance: _totals['net']!,
                                       currency: _selectedCurrencyFilter == 'all' 
-                                          ? _currentAccount.currencyName 
+                                          ? (_currentAccount.currencyName.trim() == 'محلي' ? _localCurrencyName : _currentAccount.currencyName) 
                                           : _selectedCurrencyFilter,
                                     ),
                                   );

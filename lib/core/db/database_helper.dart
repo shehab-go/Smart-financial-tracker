@@ -789,13 +789,43 @@ class DatabaseHelper {
 
 
 
+  Future<List<AccountModel>> _attachCurrencyStats(List<AccountModel> accounts) async {
+    if (accounts.isEmpty) return accounts;
+    final db = await database;
+    final List<int> ids = accounts.map((a) => a.id).whereType<int>().toList();
+    if (ids.isEmpty) return accounts;
+
+    // Query all currency stats for these accounts
+    final String idPlaceholders = List.filled(ids.length, '?').join(',');
+    final List<Map<String, dynamic>> statsMaps = await db.rawQuery('''
+      SELECT * FROM account_currency_stats
+      WHERE accountId IN ($idPlaceholders)
+    ''', ids);
+
+    // Group stats by accountId
+    final Map<int, List<AccountCurrencyStats>> statsByAccountId = {};
+    for (final map in statsMaps) {
+      final int accountId = map['accountId'] as int;
+      final stats = AccountCurrencyStats.fromMap(map);
+      (statsByAccountId[accountId] ??= []).add(stats);
+    }
+
+    // Attach to accounts
+    return accounts.map((account) {
+      if (account.id == null) return account;
+      final stats = statsByAccountId[account.id] ?? [];
+      return account.copyWith(currencyStats: stats);
+    }).toList();
+  }
+
   // Account operations
   Future<List<AccountModel>> getAccounts() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('accounts');
-    return List.generate(maps.length, (i) {
+    final accounts = List.generate(maps.length, (i) {
       return AccountModel.fromMap(maps[i]);
     });
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<AccountModel>> getAccountsByCategory(String category) async {
@@ -807,9 +837,10 @@ class DatabaseHelper {
       whereArgs: [category],
       orderBy: 'createdDate DESC',
     );
-    return List.generate(maps.length, (i) {
+    final accounts = List.generate(maps.length, (i) {
       return AccountModel.fromMap(maps[i]);
     });
+    return await _attachCurrencyStats(accounts);
   }
 
   /// Returns accounts in a category along with aggregated stats
@@ -828,7 +859,8 @@ class DatabaseHelper {
       ORDER BY a.createdDate DESC
     ''', [category]);
 
-    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<AccountModel>> getAccountsWithStatsUsingAccountCurrencyAllCategories() async {
@@ -845,7 +877,8 @@ class DatabaseHelper {
       ORDER BY a.category ASC, a.createdDate DESC
     ''');
 
-    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<AccountModel>> getAccountsWithStatsByCurrencyAllCategories(
@@ -865,7 +898,8 @@ class DatabaseHelper {
       ORDER BY a.category ASC, a.createdDate DESC
     ''', [cur]);
 
-    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<AccountModel>> getAccountsWithStatsByCategoryUsingAccountCurrency(
@@ -885,7 +919,8 @@ class DatabaseHelper {
       ORDER BY a.createdDate DESC
     ''', [category]);
 
-    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<AccountModel>> getAccountsWithStatsByCategoryAndCurrency(
@@ -907,7 +942,8 @@ class DatabaseHelper {
       ORDER BY a.createdDate DESC
     ''', [cur, category]);
 
-    return List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    return await _attachCurrencyStats(accounts);
   }
 
   Future<List<String>> getDistinctTransactionCurrencies() async {
@@ -1012,7 +1048,9 @@ class DatabaseHelper {
       limit: 1,
     );
     if (maps.isNotEmpty) {
-      return AccountModel.fromMap(maps.first);
+      final account = AccountModel.fromMap(maps.first);
+      final attached = await _attachCurrencyStats([account]);
+      return attached.first;
     }
     return null;
   }

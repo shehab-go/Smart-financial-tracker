@@ -8,11 +8,13 @@ import 'package:debit_credit_app/core/theme/app_theme.dart';
 class CategoryStatsCard extends StatefulWidget {
   final List<AccountModel> accounts;
   final double shrinkProgress;
+  final String localCurrencyName;
 
   const CategoryStatsCard({
     super.key,
     required this.accounts,
     this.shrinkProgress = 0.0,
+    this.localCurrencyName = 'محلي',
   });
 
   @override
@@ -123,7 +125,8 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
     // Group accounts by currency to calculate correct totals
     final Map<String, List<AccountModel>> currencyGroups = {};
     for (var account in widget.accounts) {
-      currencyGroups.putIfAbsent(account.currencyName, () => []).add(account);
+      final String mappedName = account.currencyName == 'محلي' ? widget.localCurrencyName : account.currencyName;
+      currencyGroups.putIfAbsent(mappedName, () => []).add(account);
     }
 
     // Determine active currency (interactive selection or fallback to primary currency)

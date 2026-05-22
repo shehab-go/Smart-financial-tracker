@@ -1,3 +1,41 @@
+class AccountCurrencyStats {
+  final String currencyName;
+  final double totalDebit;
+  final double totalCredit;
+  final int transactionCount;
+
+  AccountCurrencyStats({
+    required this.currencyName,
+    required this.totalDebit,
+    required this.totalCredit,
+    required this.transactionCount,
+  });
+
+  factory AccountCurrencyStats.fromMap(Map<String, dynamic> map) {
+    return AccountCurrencyStats(
+      currencyName: map['currencyName'] ?? 'محلي',
+      totalDebit: (map['totalDebit'] ?? 0.0) is num
+          ? (map['totalDebit'] ?? 0.0).toDouble()
+          : double.tryParse(map['totalDebit'].toString()) ?? 0.0,
+      totalCredit: (map['totalCredit'] ?? 0.0) is num
+          ? (map['totalCredit'] ?? 0.0).toDouble()
+          : double.tryParse(map['totalCredit'].toString()) ?? 0.0,
+      transactionCount: (map['transactionCount'] ?? 0) is int
+          ? map['transactionCount'] ?? 0
+          : int.tryParse(map['transactionCount'].toString()) ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'currencyName': currencyName,
+      'totalDebit': totalDebit,
+      'totalCredit': totalCredit,
+      'transactionCount': transactionCount,
+    };
+  }
+}
+
 class AccountModel {
   final int? id;
   final String name;
@@ -12,6 +50,7 @@ class AccountModel {
   final double totalCredit;
   final DateTime createdDate;
   final DateTime lastTransactionDate;
+  final List<AccountCurrencyStats> currencyStats;
 
   AccountModel({
     this.id,
@@ -26,6 +65,7 @@ class AccountModel {
     this.transactionCount = 0,
     this.totalDebit = 0.0,
     this.totalCredit = 0.0,
+    this.currencyStats = const [],
   }) : lastTransactionDate = lastTransactionDate ?? createdDate;
 
   Map<String, dynamic> toMap() {
@@ -59,6 +99,7 @@ class AccountModel {
       transactionCount: (map['transactionCount'] ?? 0) is int ? map['transactionCount'] ?? 0 : int.tryParse(map['transactionCount'].toString()) ?? 0,
       totalDebit: (map['totalDebit'] ?? 0.0) is num ? (map['totalDebit'] ?? 0.0).toDouble() : double.tryParse(map['totalDebit'].toString()) ?? 0.0,
       totalCredit: (map['totalCredit'] ?? 0.0) is num ? (map['totalCredit'] ?? 0.0).toDouble() : double.tryParse(map['totalCredit'].toString()) ?? 0.0,
+      currencyStats: map['currencyStats'] as List<AccountCurrencyStats>? ?? const [],
     );
   }
 
@@ -75,6 +116,7 @@ class AccountModel {
     int? transactionCount,
     double? totalDebit,
     double? totalCredit,
+    List<AccountCurrencyStats>? currencyStats,
   }) {
     return AccountModel(
       id: id ?? this.id,
@@ -89,6 +131,8 @@ class AccountModel {
       transactionCount: transactionCount ?? this.transactionCount,
       totalDebit: totalDebit ?? this.totalDebit,
       totalCredit: totalCredit ?? this.totalCredit,
+      currencyStats: currencyStats ?? this.currencyStats,
     );
   }
 }
+

@@ -15,7 +15,9 @@ import 'package:debit_credit_app/features/home/application/home_controller.dart'
 import 'package:debit_credit_app/features/home/application/home_state.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/events/category_events.dart';
+import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'search_screen.dart';
+
 
 class StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double minHeight;
@@ -61,6 +63,7 @@ class HomeScreenState extends State<HomeScreen> {
   final HomeController _controller = HomeController();
   HomeState _state = HomeState.initial();
   StreamSubscription<CategoryEvent>? _categoryEventSubscription;
+  String _localCurrencyName = 'محلي';
   
   // State for category navigation
   int _selectedCategoryIndex = 0;
@@ -221,8 +224,12 @@ class HomeScreenState extends State<HomeScreen> {
   Future<void> loadData() async {
     setState(() => _state = _state.copyWith(isLoading: true));
     try {
+      final defaultCurrency = await DatabaseHelper().getDefaultCurrencyName();
       final newState = await _controller.load().timeout(const Duration(seconds: 10));
-      setState(() => _state = newState);
+      setState(() {
+        _state = newState;
+        _localCurrencyName = defaultCurrency ?? 'محلي';
+      });
     } catch (e) {
       setState(() => _state = _state.copyWith(isLoading: false));
       if (mounted) {
@@ -241,6 +248,7 @@ class HomeScreenState extends State<HomeScreen> {
     
     setState(() => _state = _state.copyWith(isLoading: true));
     try {
+      final defaultCurrency = await DatabaseHelper().getDefaultCurrencyName();
       final newState = await _controller.load().timeout(const Duration(seconds: 10));
       
       // Find the new index for the preserved category before updating state
@@ -255,6 +263,7 @@ class HomeScreenState extends State<HomeScreen> {
       setState(() {
         _state = newState;
         _selectedCategoryIndex = newSelectedIndex;
+        _localCurrencyName = defaultCurrency ?? 'محلي';
       });
       
       // Ensure PageController and CategoryScrollController are synchronized with the selected index
@@ -597,15 +606,53 @@ class HomeScreenState extends State<HomeScreen> {
       accounts: accounts,
       tileBuilder: _buildAccountTile,
       emptyState: emptyState,
+      localCurrencyName: _localCurrencyName,
     );
   }
 
   Widget _buildAccountTile(AccountModel account) {
     final isSelected = _selectedAccountIds.contains(account.id.toString());
     
-    // Calculate total and balances for progress indicators
-    final double creditVal = account.totalCredit;
-    final double debitVal = account.totalDebit;
+    // Map and merge currency stats to treat 'محلي' and _localCurrencyName as equivalent
+    final List<AccountCurrencyStats> stats = [];
+    final Map<String, AccountCurrencyStats> statsMap = {};
+    for (final s in account.currencyStats) {
+      final name = (s.currencyName.trim() == 'محلي' || s.currencyName.trim() == _localCurrencyName.trim())
+          ? _localCurrencyName.trim()
+          : s.currencyName.trim();
+      if (statsMap.containsKey(name)) {
+        final existing = statsMap[name]!;
+        statsMap[name] = AccountCurrencyStats(
+          currencyName: name,
+          totalDebit: existing.totalDebit + s.totalDebit,
+          totalCredit: existing.totalCredit + s.totalCredit,
+          transactionCount: existing.transactionCount + s.transactionCount,
+        );
+      } else {
+        statsMap[name] = AccountCurrencyStats(
+          currencyName: name,
+          totalDebit: s.totalDebit,
+          totalCredit: s.totalCredit,
+          transactionCount: s.transactionCount,
+        );
+      }
+    }
+    stats.addAll(statsMap.values);
+    final isMultiCurrency = stats.length > 1;
+
+    double creditVal = 0.0;
+    double debitVal = 0.0;
+
+    if (stats.isNotEmpty) {
+      for (final s in stats) {
+        creditVal += s.totalCredit;
+        debitVal += s.totalDebit;
+      }
+    } else {
+      creditVal = account.totalCredit;
+      debitVal = account.totalDebit;
+    }
+
     final double totalVal = creditVal + debitVal;
     
     double creditRatio = 0.0;
@@ -619,6 +666,14 @@ class HomeScreenState extends State<HomeScreen> {
     final Color sideBarColor = creditVal >= debitVal
         ? AppTheme.creditColor
         : AppTheme.debitColor;
+
+    final String displayCurrency;
+    if (isMultiCurrency) {
+      displayCurrency = 'عملات متعددة';
+    } else {
+      final rawName = stats.isNotEmpty ? stats.first.currencyName : account.currencyName;
+      displayCurrency = rawName == 'محلي' ? _localCurrencyName : rawName;
+    }
         
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -730,13 +785,17 @@ class HomeScreenState extends State<HomeScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppTheme.backgroundColor,
+                              color: isMultiCurrency 
+                                  ? AppTheme.primaryColor.withOpacity(0.08) 
+                                  : AppTheme.backgroundColor,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              account.currencyName,
-                              style: const TextStyle(
-                                color: AppTheme.textSecondary,
+                              displayCurrency,
+                              style: TextStyle(
+                                color: isMultiCurrency 
+                                    ? AppTheme.primaryColor 
+                                    : AppTheme.textSecondary,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -747,115 +806,197 @@ class HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 14),
                       
                       // Account Balances Section
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Credit Balance Column
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Row(
-                                  children: [
-                                    Icon(Icons.arrow_upward_rounded, color: AppTheme.creditColor, size: 12),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      'ديون لك',
-                                      style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  NumberFormat('#,##0').format(creditVal),
-                                  style: const TextStyle(
-                                    color: AppTheme.creditColor,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          
-                          // Divider
-                          Container(
-                            width: 1,
-                            height: 28,
-                            color: AppTheme.dividerColor.withOpacity(0.8),
-                          ),
-                          const SizedBox(width: 16),
-                          
-                          // Debit Balance Column
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Row(
-                                  children: [
-                                    Icon(Icons.arrow_downward_rounded, color: AppTheme.debitColor, size: 12),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      'ديون عليك',
-                                      style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  NumberFormat('#,##0').format(debitVal),
-                                  style: const TextStyle(
-                                    color: AppTheme.debitColor,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      
-                      // Repayment Progress Bar
-                      if (totalVal > 0) ...[
-                        const SizedBox(height: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      if (!isMultiCurrency) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  creditVal >= debitVal ? 'حساب مائل للائتمان' : 'حساب مائل للمديونية',
-                                  style: const TextStyle(fontSize: 9, color: AppTheme.textSecondary, fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  creditVal >= debitVal
-                                      ? '${(creditRatio * 100).toStringAsFixed(0)}% لصالحك'
-                                      : '${(debitRatio * 100).toStringAsFixed(0)}% مستحقة',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    color: creditVal >= debitVal ? AppTheme.creditColor : AppTheme.debitColor,
-                                    fontWeight: FontWeight.bold,
+                            // Credit Balance Column
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Row(
+                                    children: [
+                                      Icon(Icons.arrow_upward_rounded, color: AppTheme.creditColor, size: 12),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'ديون لك',
+                                        style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    NumberFormat('#,##0').format(creditVal),
+                                    style: const TextStyle(
+                                      color: AppTheme.creditColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 5),
-                            // Micro visual progress indicator
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: SizedBox(
-                                height: 4,
-                                child: LinearProgressIndicator(
-                                  value: creditVal >= debitVal ? creditRatio : debitRatio,
-                                  backgroundColor: AppTheme.backgroundColor,
-                                  valueColor: AlwaysStoppedAnimation<Color>(sideBarColor),
-                                ),
+                            
+                            // Divider
+                            Container(
+                              width: 1,
+                              height: 28,
+                              color: AppTheme.dividerColor.withOpacity(0.8),
+                            ),
+                            const SizedBox(width: 16),
+                            
+                            // Debit Balance Column
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Row(
+                                    children: [
+                                      Icon(Icons.arrow_downward_rounded, color: AppTheme.debitColor, size: 12),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'ديون عليك',
+                                        style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    NumberFormat('#,##0').format(debitVal),
+                                    style: const TextStyle(
+                                      color: AppTheme.debitColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
+                        
+                        // Repayment Progress Bar
+                        if (totalVal > 0) ...[
+                          const SizedBox(height: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    creditVal >= debitVal ? 'حساب مائل للائتمان' : 'حساب مائل للمديونية',
+                                    style: const TextStyle(fontSize: 9, color: AppTheme.textSecondary, fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    creditVal >= debitVal
+                                        ? '${(creditRatio * 100).toStringAsFixed(0)}% لصالحك'
+                                        : '${(debitRatio * 100).toStringAsFixed(0)}% مستحقة',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: creditVal >= debitVal ? AppTheme.creditColor : AppTheme.debitColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 5),
+                              // Micro visual progress indicator
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: SizedBox(
+                                  height: 4,
+                                  child: LinearProgressIndicator(
+                                    value: creditVal >= debitVal ? creditRatio : debitRatio,
+                                    backgroundColor: AppTheme.backgroundColor,
+                                    valueColor: AlwaysStoppedAnimation<Color>(sideBarColor),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ] else ...[
+                        // Multi-currency list
+                        ...stats.map((s) {
+                          final String statCurrencyName = s.currencyName == 'محلي' ? _localCurrencyName : s.currencyName;
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6.0),
+                            child: Row(
+                              children: [
+                                // Currency Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.backgroundColor,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    statCurrencyName,
+                                    style: const TextStyle(
+                                      color: AppTheme.textPrimary,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // Credit (له)
+                                // Credit (ديون لك)
+                                Expanded(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.arrow_upward_rounded, color: AppTheme.creditColor, size: 10),
+                                      const SizedBox(width: 2),
+                                      const Text(
+                                        'ديون لك: ',
+                                        style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        NumberFormat('#,##0').format(s.totalCredit),
+                                        style: const TextStyle(
+                                          color: AppTheme.creditColor,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Divider
+                                Container(
+                                  width: 1,
+                                  height: 16,
+                                  color: AppTheme.dividerColor.withOpacity(0.5),
+                                ),
+                                // Debit (ديون عليك)
+                                Expanded(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.arrow_downward_rounded, color: AppTheme.debitColor, size: 10),
+                                      const SizedBox(width: 2),
+                                      const Text(
+                                        'ديون عليك: ',
+                                        style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        NumberFormat('#,##0').format(s.totalDebit),
+                                        style: const TextStyle(
+                                          color: AppTheme.debitColor,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
                       ],
                     ],
                   ),
@@ -877,6 +1018,7 @@ class CategoryAccountsTab extends StatefulWidget {
   final List<AccountModel> accounts;
   final Widget Function(AccountModel) tileBuilder;
   final Widget emptyState;
+  final String localCurrencyName;
 
   const CategoryAccountsTab({
     super.key,
@@ -884,6 +1026,7 @@ class CategoryAccountsTab extends StatefulWidget {
     required this.accounts,
     required this.tileBuilder,
     required this.emptyState,
+    required this.localCurrencyName,
   });
 
   @override
@@ -917,7 +1060,10 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
     
     final Map<String, List<AccountModel>> currencyGroups = {};
     for (var account in widget.accounts) {
-      currencyGroups.putIfAbsent(account.currencyName, () => []).add(account);
+      final String mappedName = (account.currencyName.trim() == 'محلي' && widget.localCurrencyName.trim().isNotEmpty)
+          ? widget.localCurrencyName.trim()
+          : account.currencyName.trim();
+      currencyGroups.putIfAbsent(mappedName, () => []).add(account);
     }
 
     String primaryCurrency = currencyGroups.keys.first;
@@ -1708,6 +1854,7 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
           delegate: _CategoryStatsHeaderDelegate(
             accounts: widget.accounts,
             isSmall: MediaQuery.of(context).size.width < 360,
+            localCurrencyName: widget.localCurrencyName,
           ),
         ),
 
@@ -1880,10 +2027,12 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
 class _CategoryStatsHeaderDelegate extends SliverPersistentHeaderDelegate {
   final List<AccountModel> accounts;
   final bool isSmall;
+  final String localCurrencyName;
 
   _CategoryStatsHeaderDelegate({
     required this.accounts,
     required this.isSmall,
+    required this.localCurrencyName,
   });
 
   @override
@@ -1898,6 +2047,7 @@ class _CategoryStatsHeaderDelegate extends SliverPersistentHeaderDelegate {
         child: CategoryStatsCard(
           accounts: accounts,
           shrinkProgress: progress,
+          localCurrencyName: localCurrencyName,
         ),
       ),
     );
@@ -1910,7 +2060,10 @@ class _CategoryStatsHeaderDelegate extends SliverPersistentHeaderDelegate {
     // Group accounts by currency to find primary currency and non-zero other currencies
     final Map<String, List<AccountModel>> currencyGroups = {};
     for (var account in accounts) {
-      currencyGroups.putIfAbsent(account.currencyName, () => []).add(account);
+      final String mappedName = (account.currencyName.trim() == 'محلي' && localCurrencyName.trim().isNotEmpty)
+          ? localCurrencyName.trim()
+          : account.currencyName.trim();
+      currencyGroups.putIfAbsent(mappedName, () => []).add(account);
     }
 
     String primaryCurrency = currencyGroups.keys.first;
@@ -1952,6 +2105,8 @@ class _CategoryStatsHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _CategoryStatsHeaderDelegate oldDelegate) {
-    return oldDelegate.accounts != accounts || oldDelegate.isSmall != isSmall;
+    return oldDelegate.accounts != accounts ||
+        oldDelegate.isSmall != isSmall ||
+        oldDelegate.localCurrencyName != localCurrencyName;
   }
 }
