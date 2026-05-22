@@ -102,7 +102,7 @@ class AboutScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(30),
                           ),
                           child: const Text(
-                            'الإصدار 1.3.4',
+                            'الإصدار 1.3.5',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
