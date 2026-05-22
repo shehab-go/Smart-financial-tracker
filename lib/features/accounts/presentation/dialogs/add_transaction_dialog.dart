@@ -129,7 +129,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final FocusNode _nameFocusNode = FocusNode();
-  List<String> _existingNames = [];
+  List<AccountModel> _existingAccounts = [];
   AccountModel? _selectedAccount;
 
   final DatabaseHelper _db = DatabaseHelper();
@@ -168,17 +168,12 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     super.dispose();
   }
 
-  Future<void> _loadExistingNames() async {
+  Future<void> _loadExistingAccounts() async {
     try {
       final accounts = await _db.getAccounts();
-      final names = accounts
-          .map((a) => a.name.trim())
-          .where((name) => name.isNotEmpty)
-          .toSet()
-          .toList();
       if (mounted) {
         setState(() {
-          _existingNames = names;
+          _existingAccounts = accounts;
         });
       }
     } catch (_) {}
@@ -324,7 +319,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     _initCurrency();
     if (_isNewAccount) {
       _loadCurrencyQuickPickData();
-      _loadExistingNames();
+      _loadExistingAccounts();
     }
     _initBalancesAndAllocations();
 
@@ -794,50 +789,30 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                       children: [
                         // Account Name Field (if New Account)
                         if (_isNewAccount) ...[
-                          RawAutocomplete<String>(
+                          RawAutocomplete<AccountModel>(
                             textEditingController: _accountNameController,
                             focusNode: _nameFocusNode,
+                            displayStringForOption: (AccountModel option) => option.name,
                             optionsBuilder: (TextEditingValue textEditingValue) {
                               if (textEditingValue.text.trim().isEmpty) {
-                                return const Iterable<String>.empty();
+                                return const Iterable<AccountModel>.empty();
                               }
-                              return _existingNames.where((String option) {
-                                return option.toLowerCase().contains(textEditingValue.text.trim().toLowerCase());
+                              return _existingAccounts.where((AccountModel option) {
+                                return option.name.toLowerCase().contains(textEditingValue.text.trim().toLowerCase());
                               });
                             },
-                            onSelected: (String selection) async {
+                            onSelected: (AccountModel selection) {
                               setState(() {
-                                _accountNameController.text = selection;
+                                _selectedAccount = selection;
+                                _accountNameController.text = selection.name;
+                                final phone = selection.phone;
+                                if (phone != null && phone.isNotEmpty) {
+                                  _phoneController.text = phone;
+                                }
+                                if (selection.currencyName.isNotEmpty) {
+                                  _selectedCurrency = selection.currencyName;
+                                }
                               });
-                              try {
-                                final accounts = await _db.getAccounts();
-                                AccountModel? matched;
-                                try {
-                                  matched = accounts.firstWhere((a) =>
-                                      a.name.trim().toLowerCase() == selection.trim().toLowerCase() &&
-                                      a.category == widget.category);
-                                } catch (_) {
-                                  try {
-                                    matched = accounts.firstWhere((a) =>
-                                        a.name.trim().toLowerCase() == selection.trim().toLowerCase());
-                                  } catch (_) {
-                                    matched = null;
-                                  }
-                                }
-                                final actualMatched = matched;
-                                if (actualMatched != null) {
-                                  setState(() {
-                                    _selectedAccount = actualMatched;
-                                    final phone = actualMatched.phone;
-                                    if (phone != null && phone.isNotEmpty) {
-                                      _phoneController.text = phone;
-                                    }
-                                    if (actualMatched.currencyName.isNotEmpty) {
-                                      _selectedCurrency = actualMatched.currencyName;
-                                    }
-                                  });
-                                }
-                              } catch (_) {}
                             },
                             fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
                               return TextFormField(
@@ -900,9 +875,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                 },
                               );
                             },
-                            optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
+                            optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<AccountModel> onSelected, Iterable<AccountModel> options) {
                               return Align(
-                                alignment: Alignment.topLeft,
+                                alignment: Alignment.topRight,
                                 child: Material(
                                   elevation: 4.0,
                                   borderRadius: BorderRadius.circular(14),
@@ -928,7 +903,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                           color: AppTheme.dividerColor,
                                         ),
                                         itemBuilder: (BuildContext context, int index) {
-                                          final String option = options.elementAt(index);
+                                          final AccountModel option = options.elementAt(index);
                                           return InkWell(
                                             onTap: () {
                                               onSelected(option);
@@ -947,15 +922,55 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                                   ),
                                                   const SizedBox(width: 12),
                                                   Expanded(
-                                                    child: Text(
-                                                      option,
-                                                      style: const TextStyle(
-                                                        color: AppTheme.textPrimary,
-                                                        fontSize: 14,
-                                                        fontFamily: 'ArbFONTSIBMPlexArabicText',
-                                                      ),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          option.name,
+                                                          style: const TextStyle(
+                                                            color: AppTheme.textPrimary,
+                                                            fontSize: 14,
+                                                            fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                        if (option.category.isNotEmpty) ...[
+                                                          const SizedBox(height: 2),
+                                                          Text(
+                                                            option.category,
+                                                            style: const TextStyle(
+                                                              color: AppTheme.textTertiary,
+                                                              fontSize: 11,
+                                                              fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ],
                                                     ),
                                                   ),
+                                                  if (option.currencyName.isNotEmpty) ...[
+                                                    const SizedBox(width: 8),
+                                                    Container(
+                                                      padding: const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: AppTheme.primaryColor.withOpacity(0.06),
+                                                        borderRadius: BorderRadius.circular(6),
+                                                      ),
+                                                      child: Text(
+                                                        option.currencyName,
+                                                        style: const TextStyle(
+                                                          color: AppTheme.primaryColor,
+                                                          fontSize: 10,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ],
                                               ),
                                             ),
