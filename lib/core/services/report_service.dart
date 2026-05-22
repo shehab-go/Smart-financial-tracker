@@ -337,7 +337,11 @@ class ReportService {
               crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [
                 pw.Text(
-                  (profile?.businessName?.isNotEmpty == true) ? profile!.businessName! : 'تطبيق مالي',
+                  (profile?.businessName?.isNotEmpty == true)
+                      ? profile!.businessName!
+                      : (profile?.fullName?.isNotEmpty == true)
+                          ? profile!.fullName!
+                          : 'حسابات يومية',
                   style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: slate800),
                   textDirection: pw.TextDirection.rtl,
                 ),
@@ -410,7 +414,7 @@ class ReportService {
         ? profile!.businessName!
         : (profile?.fullName?.isNotEmpty == true)
             ? profile!.fullName!
-            : 'تطبيق مالي';
+            : 'حسابات يومية';
     final initials = _getInitials(nameForInitials);
 
     return pw.Container(
@@ -465,7 +469,11 @@ class ReportService {
       buildCard(
         children: [
           pw.Text(
-            (profile.businessName?.isNotEmpty == true) ? profile.businessName! : 'تطبيق مالي',
+            (profile.businessName?.isNotEmpty == true)
+                ? profile.businessName!
+                : (profile.fullName.isNotEmpty == true)
+                    ? profile.fullName
+                    : 'حسابات يومية',
             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: slate800),
             textDirection: pw.TextDirection.rtl,
           ),
