@@ -29,7 +29,7 @@ class TransactionTile extends StatelessWidget {
 
     final String description = (transaction.description != null && transaction.description!.trim().isNotEmpty)
         ? transaction.description!.trim()
-        : (isCredit ? 'إيداع مالي (له)' : 'سحب مالي (عليه)');
+        : (isCredit ? 'إيداع مالي (لك)' : 'سحب مالي (عليك)');
 
     final Color badgeColor = isCredit ? AppTheme.creditColor : AppTheme.debitColor;
 
@@ -153,7 +153,7 @@ class TransactionTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          isCredit ? 'له (ائتمان)' : 'عليه (خصم)',
+                          isCredit ? 'ديون لك' : 'ديون عليك',
                           style: TextStyle(
                             color: badgeColor.withOpacity(0.8),
                             fontSize: 10,

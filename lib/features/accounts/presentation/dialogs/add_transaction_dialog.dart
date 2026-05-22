@@ -12,7 +12,8 @@ import 'package:debit_credit_app/core/models/income_balance.dart';
 import 'package:debit_credit_app/core/models/transaction_balance_allocation.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
-import 'package:world_countries/world_countries.dart';
+import 'package:debit_credit_app/core/models/currency.dart';
+import 'package:debit_credit_app/features/currencies/presentation/widgets/local_currency_picker.dart';
 
 class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
   @override
@@ -135,7 +136,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   String? _selectedCurrency;
   Set<String> _favoriteCurrencyNames = <String>{};
   String? _defaultCurrencyName;
-  Iterable<FiatCurrency>? _allFiatCurrencies;
 
   static const String _pickNewCurrencyValue = '__pick_new_currency__';
 
@@ -234,7 +234,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      _getCurrencySymbol(cur),
+                      CurrencyModel.symbolFor(cur),
                       style: const TextStyle(
                         fontSize: 14,
                         color: AppTheme.textSecondary,
@@ -349,83 +349,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     } catch (_) {}
   }
 
-  Iterable<FiatCurrency> _getAllFiatCurrencies() {
-    if (_allFiatCurrencies != null) {
-      return _allFiatCurrencies!;
-    }
-    final picker = CurrencyPicker(onSelect: (_) {});
-    _allFiatCurrencies = picker.currencies.toList(growable: false);
-    return _allFiatCurrencies!;
-  }
-
-  FiatCurrency? _findFiatByDisplayName(String displayName) {
-    final typedLocale = context.maybeLocale;
-    final all = _getAllFiatCurrencies();
-
-    for (final c in all) {
-      if (typedLocale != null) {
-        final common = c.translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name;
-        if (common != null && common == displayName) {
-          return c;
-        }
-      }
-      if (c.internationalName == displayName) {
-        return c;
-      }
-    }
-    return null;
-  }
-
-  FiatCurrency? _findFiatByCode(String code) {
-    final normalized = code.trim().toUpperCase();
-    if (normalized.isEmpty) return null;
-
-    for (final c in _getAllFiatCurrencies()) {
-      if (c.code.toUpperCase() == normalized) {
-        return c;
-      }
-    }
-    return null;
-  }
-
-  String _getCurrencySymbol(String displayName) {
-    final name = displayName.trim();
-    if (name.isEmpty) return '';
-
-    if (name == 'محلي') return 'م';
-
-    final fiat = _findFiatByDisplayName(name) ?? _findFiatByCode(name);
-    if (fiat == null) return 'م';
-
-    switch (fiat.code) {
-      case 'SAR':
-        return 'ر.س';
-      case 'AED':
-        return 'د.إ';
-      case 'EGP':
-        return 'ج.م';
-      default:
-        break;
-    }
-
-    if (fiat.symbol != null && fiat.symbol!.isNotEmpty) {
-      return fiat.symbol!;
-    }
-
-    String? symbol;
-    if (fiat.disambiguateSymbol != null && fiat.disambiguateSymbol!.isNotEmpty) {
-      symbol = fiat.disambiguateSymbol;
-    } else if (fiat.alternateSymbols != null && fiat.alternateSymbols!.isNotEmpty) {
-      symbol = fiat.alternateSymbols!.first;
-    }
-
-    if (symbol != null && symbol.isNotEmpty) {
-      return symbol;
-    }
-
-    return fiat.code;
-  }
-
   Future<void> _initCurrency() async {
     // Priority:
     // 1) accountCurrencyCode passed from the account (if any)
@@ -509,112 +432,14 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
   Future<void> _pickCurrency() async {
     try {
-      FiatCurrency? chosen;
-      await showDialog(
+      final selected = await showLocalCurrencyPicker(
         context: context,
-        barrierDismissible: true,
-        builder: (dialogContext) {
-          return Dialog(
-            insetPadding: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Container(
-                constraints:
-                    const BoxConstraints(maxWidth: 380, maxHeight: 520),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Header
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            // child: const Icon(
-                            //   Icons.payments_outlined,
-                            //   color: AppTheme.primaryColor,
-                            //   size: 18,
-                            // ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              'العملة',
-                              style: TextStyle(
-                                color: AppTheme.textPrimary,
-                                fontSize: 18,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () =>
-                                Navigator.of(dialogContext).pop(),
-                            icon: const Icon(
-                              Icons.close,
-                              color: AppTheme.textSecondary,
-                              size: 18,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1, color: AppTheme.dividerColor),
-                    // Content
-                    Flexible(
-                      child: CurrencyPicker(
-                        onSelect: (FiatCurrency currency) {
-                          chosen = currency;
-                          Navigator.of(dialogContext).pop();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
+        showLocalOption: true,
       );
 
-      if (chosen != null && mounted) {
-        final typedLocale = context.maybeLocale;
-        String displayName;
-        if (typedLocale != null) {
-          displayName = chosen!.translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name ??
-              chosen!.internationalName;
-        } else {
-          displayName = chosen!.internationalName;
-        }
-
+      if (selected != null && mounted) {
         setState(() {
-          _selectedCurrency = displayName;
+          _selectedCurrency = selected;
         });
       }
     } catch (e) {
@@ -1081,7 +906,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                       const SizedBox(width: 8),
                                       if (!canPickCurrency)
                                         Text(
-                                          _getCurrencySymbol(displayCurrency),
+                                          CurrencyModel.symbolFor(displayCurrency),
                                           style: const TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
@@ -1093,7 +918,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                         Builder(
                                           builder: (anchorContext) {
                                             final String display = (selected != null)
-                                                ? _getCurrencySymbol(selected)
+                                                ? CurrencyModel.symbolFor(selected)
                                                 : 'العملة';
 
                                             return InkWell(
@@ -1703,7 +1528,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'له',
+                                      'ديون لك',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -1796,7 +1621,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'عليه',
+                                      'ديون عليك',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,

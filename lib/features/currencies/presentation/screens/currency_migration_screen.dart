@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
-import 'package:world_countries/world_countries.dart';
+import 'package:debit_credit_app/features/currencies/presentation/widgets/local_currency_picker.dart';
 
 class CurrencyMigrationScreen extends StatefulWidget {
   const CurrencyMigrationScreen({
@@ -29,118 +29,15 @@ class _CurrencyMigrationScreenState extends State<CurrencyMigrationScreen> {
   Future<void> _pickCurrency(String legacyName) async {
     try {
       HapticFeedback.lightImpact();
-      FiatCurrency? chosen;
-
-      await showDialog(
+      final selected = await showLocalCurrencyPicker(
         context: context,
-        barrierDismissible: true,
-        builder: (dialogContext) {
-          return Dialog(
-            insetPadding: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Container(
-                constraints:
-                    const BoxConstraints(maxWidth: 380, maxHeight: 520),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: AppTheme.cardShadow,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Header
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 18,
-                      ),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color:
-                                  AppTheme.primaryColor.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.payments_rounded,
-                              color: AppTheme.primaryColor,
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              'اختيار العملة',
-                              style: TextStyle(
-                                color: AppTheme.textPrimary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              Navigator.of(dialogContext).pop();
-                            },
-                            icon: const Icon(
-                              Icons.close_rounded,
-                              color: AppTheme.textSecondary,
-                              size: 20,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Divider(
-                      height: 1,
-                      color: AppTheme.dividerColor.withOpacity(0.5),
-                    ),
-                    // Content
-                    Flexible(
-                      child: CurrencyPicker(
-                        onSelect: (FiatCurrency currency) {
-                          HapticFeedback.lightImpact();
-                          chosen = currency;
-                          Navigator.of(dialogContext).pop();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
+        showLocalOption: true,
       );
 
-      if (chosen != null && mounted) {
-        final typedLocale = context.maybeLocale;
-        String displayName;
-        if (typedLocale != null) {
-          displayName =
-              chosen!.translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name ?? chosen!.internationalName;
-        } else {
-          displayName = chosen!.internationalName;
-        }
-
+      if (selected != null && mounted) {
         setState(() {
-          _selectedNewNames[legacyName] = displayName;
-          _firstSelectedNewName ??= displayName;
+          _selectedNewNames[legacyName] = selected;
+          _firstSelectedNewName ??= selected;
         });
       }
     } catch (e) {

@@ -403,7 +403,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     _buildDrawerItem(
                       context,
                       icon: Icons.new_releases_rounded,
-                      title: 'تحديث التطبيق المالي',
+                      title: 'تحديث التطبيق',
                       subtitle: 'احصل على آخر التحديثات الرسمية',
                       onTap: () {
                         Navigator.pop(context);

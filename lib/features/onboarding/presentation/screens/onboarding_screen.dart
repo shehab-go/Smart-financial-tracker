@@ -485,7 +485,7 @@ class _AnimatedDebtIllustrationState extends State<AnimatedDebtIllustration> wit
                     ),
                     const SizedBox(width: 12),
                     const Text(
-                      'صديق (له)',
+                      'صديق (ديون لك)',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
@@ -535,7 +535,7 @@ class _AnimatedDebtIllustrationState extends State<AnimatedDebtIllustration> wit
                     ),
                     const SizedBox(width: 12),
                     const Text(
-                      'عميل (عليه)',
+                      'عميل (ديون عليك)',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,

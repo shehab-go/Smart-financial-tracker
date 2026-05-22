@@ -182,7 +182,7 @@ class AccountReportGenerator {
               mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
               children: [
                 pw.Text(
-                  'له: ${NumberFormat('#,##0').format(totals['credit'] ?? 0)}',
+                  'لك: ${NumberFormat('#,##0').format(totals['credit'] ?? 0)}',
                   style: pw.TextStyle(
                     fontSize: 14,
                     fontWeight: pw.FontWeight.bold,
@@ -191,7 +191,7 @@ class AccountReportGenerator {
                   textDirection: pw.TextDirection.rtl,
                 ),
                 pw.Text(
-                  'عليه: ${NumberFormat('#,##0').format(totals['debit'] ?? 0)}',
+                  'عليك: ${NumberFormat('#,##0').format(totals['debit'] ?? 0)}',
                   style: pw.TextStyle(
                     fontSize: 14,
                     fontWeight: pw.FontWeight.bold,
@@ -200,7 +200,7 @@ class AccountReportGenerator {
                   textDirection: pw.TextDirection.rtl,
                 ),
                 pw.Text(
-                  '${(totals['credit'] ?? 0) >= (totals['debit'] ?? 0) ? 'المتبقي له' : 'المتبقي عليه'}: ${NumberFormat('#,##0').format((totals['net'] ?? 0).abs())}',
+                  '${(totals['credit'] ?? 0) >= (totals['debit'] ?? 0) ? 'المتبقي لك' : 'المتبقي عليك'}: ${NumberFormat('#,##0').format((totals['net'] ?? 0).abs())}',
                   style: pw.TextStyle(
                     fontSize: 14,
                     fontWeight: pw.FontWeight.bold,
@@ -254,7 +254,7 @@ class AccountReportGenerator {
             ),
             pw.SizedBox(height: 8),
             pw.Table.fromTextArray(
-              headers: const ['العملة', 'له', 'عليه', 'الصافي'],
+              headers: const ['العملة', 'لك', 'عليك', 'الصافي'],
               data: currencyLines
                   .map((e) {
                     final c = e.key;
@@ -262,7 +262,7 @@ class AccountReportGenerator {
                     final debit = e.value['debit'] ?? 0;
                     final net = e.value['net'] ?? 0;
                     final symbol = CurrencyModel.symbolFor(c);
-                    final netLabel = net >= 0 ? 'له' : 'عليه';
+                    final netLabel = net >= 0 ? 'لك' : 'عليك';
                     return [
                       symbol,
                       NumberFormat('#,##0').format(credit),
@@ -325,8 +325,8 @@ class AccountReportGenerator {
       tableHeaders: [
         'التاريخ',
         'تفاصيل',
-        'له',
-        'عليه',
+        'لك',
+        'عليك',
         if (includeCurrencyColumn) 'العملة',
       ],
       tableData: rows,

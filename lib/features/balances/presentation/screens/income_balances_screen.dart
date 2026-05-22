@@ -18,7 +18,7 @@ import 'package:debit_credit_app/core/widgets/app_drawer.dart';
 
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
 
-import 'package:world_countries/world_countries.dart';
+import 'package:debit_credit_app/features/currencies/presentation/widgets/local_currency_picker.dart';
 
 import 'package:debit_credit_app/features/balances/application/reports/all_income_balances_report_generator.dart';
 
@@ -74,6 +74,8 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
   IncomeSection _selectedSection = IncomeSection.resources;
 
+  late final PageController _pageController;
+
 
 
   @override
@@ -82,7 +84,25 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
     super.initState();
 
+    _pageController = PageController(
+
+      initialPage: _selectedSection == IncomeSection.resources ? 0 : 1,
+
+    );
+
     _loadBalances();
+
+  }
+
+
+
+  @override
+
+  void dispose() {
+
+    _pageController.dispose();
+
+    super.dispose();
 
   }
 
@@ -376,9 +396,9 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
                   transactionType == 'credit'
 
-                      ? 'معاملة دائنة (له)'
+                      ? 'معاملة دائنة (لك)'
 
-                      : 'معاملة مدينة (عليه)',
+                      : 'معاملة مدينة (عليك)',
 
                   style: const TextStyle(
 
@@ -784,7 +804,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
                                   const Text(
 
-                                    'المعاملات الدائنة (له)',
+                                    'المعاملات الدائنة (لك)',
 
                                     style: TextStyle(
 
@@ -834,7 +854,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
                                   const Text(
 
-                                    'المعاملات المدينة (عليه)',
+                                    'المعاملات المدينة (عليك)',
 
                                     style: TextStyle(
 
@@ -1548,7 +1568,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
                                   const Text(
 
-                                    'المعاملات الدائنة (له)',
+                                    'المعاملات الدائنة (لك)',
 
                                     style: TextStyle(
 
@@ -1598,7 +1618,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
                                   const Text(
 
-                                    'المعاملات المدينة (عليه)',
+                                    'المعاملات المدينة (عليك)',
 
                                     style: TextStyle(
 
@@ -3140,429 +3160,19 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
                                   try {
 
-                                    FiatCurrency? chosen;
+                                    final selected = await showLocalCurrencyPicker(
 
+                                      context: context,
 
-
-                                    await showDialog(
-
-                                      context: dialogContext,
-
-                                      barrierDismissible: true,
-
-                                      builder: (pickerContext) {
-
-                                        return Dialog(
-
-                                          insetPadding:
-
-                                              const EdgeInsets.all(16),
-
-                                          shape: RoundedRectangleBorder(
-
-                                            borderRadius:
-
-                                                BorderRadius.circular(24),
-
-                                          ),
-
-                                          child: Directionality(
-
-                                            textDirection: TextDirection.rtl,
-
-                                            child: Container(
-
-                                              constraints:
-
-                                                  const BoxConstraints(
-
-                                                maxWidth: 380,
-
-                                                maxHeight: 520,
-
-                                              ),
-
-                                              decoration: BoxDecoration(
-
-                                                color: Colors.white,
-
-                                                borderRadius:
-
-                                                    BorderRadius.circular(24),
-
-                                                boxShadow: [
-
-                                                  BoxShadow(
-
-                                                    color: Colors.black
-
-                                                        .withOpacity(0.05),
-
-                                                    blurRadius: 10,
-
-                                                    offset:
-
-                                                        const Offset(0, 2),
-
-                                                  ),
-
-                                                ],
-
-                                              ),
-
-                                              child: Column(
-
-                                                mainAxisSize:
-
-                                                    MainAxisSize.min,
-
-                                                children: [
-
-                                                  // Header
-
-                                                  Container(
-
-                                                    padding: const EdgeInsets
-
-                                                        .symmetric(
-
-                                                      horizontal: 20,
-
-                                                      vertical: 16,
-
-                                                    ),
-
-                                                    decoration:
-
-                                                        const BoxDecoration(
-
-                                                      color: Colors.white,
-
-                                                      borderRadius:
-
-                                                          BorderRadius.only(
-
-                                                        topLeft:
-
-                                                            Radius.circular(
-
-                                                                24),
-
-                                                        topRight:
-
-                                                            Radius.circular(
-
-                                                                24),
-
-                                                      ),
-
-                                                    ),
-
-                                                    child: Row(
-
-                                                      children: [
-
-                                                        Container(
-
-                                                          padding:
-
-                                                              const EdgeInsets
-
-                                                                  .all(8),
-
-                                                          decoration:
-
-                                                              BoxDecoration(
-
-                                                            color: AppTheme
-
-                                                                .primaryColor
-
-                                                                .withOpacity(
-
-                                                                    0.1),
-
-                                                            borderRadius:
-
-                                                                BorderRadius
-
-                                                                    .circular(
-
-                                                                        12),
-
-                                                          ),
-
-                                                          child: const Icon(
-
-                                                            Icons
-
-                                                                .payments_outlined,
-
-                                                            color: AppTheme
-
-                                                                .primaryColor,
-
-                                                            size: 18,
-
-                                                          ),
-
-                                                        ),
-
-                                                        const SizedBox(
-
-                                                            width: 12),
-
-                                                        const Expanded(
-
-                                                          child: Text(
-
-                                                            'اختيار العملة',
-
-                                                            style: TextStyle(
-
-                                                              color: AppTheme
-
-                                                                  .textPrimary,
-
-                                                              fontWeight:
-
-                                                                  FontWeight
-
-                                                                      .bold,
-
-                                                              fontSize: 16,
-
-                                                              fontFamily: 'ArbFONTSIBMPlexArabicText',
-
-                                                            ),
-
-                                                          ),
-
-                                                        ),
-
-                                                        IconButton(
-
-                                                          onPressed: () {
-
-                                                            HapticFeedback.lightImpact();
-
-                                                            Navigator.of(
-
-                                                                    pickerContext)
-
-                                                                .pop();
-
-                                                          },
-
-                                                          icon: const Icon(
-
-                                                            Icons.close,
-
-                                                            color: AppTheme
-
-                                                                .textSecondary,
-
-                                                            size: 18,
-
-                                                          ),
-
-                                                        ),
-
-                                                      ],
-
-                                                    ),
-
-                                                  ),
-
-                                                  const Divider(
-
-                                                    height: 1,
-
-                                                    color:
-
-                                                        AppTheme.dividerColor,
-
-                                                  ),
-
-                                                  // Favorites strip (quick selection)
-
-                                                  if (favorites.isNotEmpty)
-
-                                                    Padding(
-
-                                                      padding:
-
-                                                          const EdgeInsets
-
-                                                              .symmetric(
-
-                                                        horizontal: 16,
-
-                                                        vertical: 8,
-
-                                                      ),
-
-                                                      child: SizedBox(
-
-                                                        height: 32,
-
-                                                        child: ListView(
-
-                                                          scrollDirection:
-
-                                                              Axis.horizontal,
-
-                                                          children: favorites
-
-                                                              .map(
-
-                                                                (name) =>
-
-                                                                    Padding(
-
-                                                                  padding:
-
-                                                                      const EdgeInsetsDirectional
-
-                                                                          .only(
-
-                                                                    start: 4,
-
-                                                                    end: 4,
-
-                                                                  ),
-
-                                                                  child:
-
-                                                                      ActionChip(
-
-                                                                    label:
-
-                                                                        Text(
-
-                                                                      name,
-
-                                                                      style: const TextStyle(
-
-                                                                          fontSize: 12,
-
-                                                                          fontFamily: 'ArbFONTSIBMPlexArabicText',
-
-                                                                      ),
-
-                                                                    ),
-
-                                                                    shape: RoundedRectangleBorder(
-
-                                                                      borderRadius: BorderRadius.circular(12),
-
-                                                                    ),
-
-                                                                    onPressed:
-
-                                                                        () {
-
-                                                                      selectedCurrency =
-
-                                                                          name;
-
-                                                                      (dialogContext
-
-                                                                              as Element)
-
-                                                                          .markNeedsBuild();
-
-                                                                      Navigator.of(
-
-                                                                              pickerContext)
-
-                                                                          .pop();
-
-                                                                    },
-
-                                                                  ),
-
-                                                                ),
-
-                                                              )
-
-                                                              .toList(),
-
-                                                        ),
-
-                                                      ),
-
-                                                    ),
-
-                                                  // Content
-
-                                                  Flexible(
-
-                                                    child: CurrencyPicker(
-
-                                                      onSelect:
-
-                                                          (FiatCurrency c) {
-
-                                                        chosen = c;
-
-                                                        Navigator.of(
-
-                                                                pickerContext)
-
-                                                            .pop();
-
-                                                      },
-
-                                                    ),
-
-                                                  ),
-
-                                                ],
-
-                                              ),
-
-                                            ),
-
-                                          ),
-
-                                        );
-
-                                      },
+                                      showLocalOption: true,
 
                                     );
 
+                                    if (selected != null) {
 
+                                      selectedCurrency = selected;
 
-                                    if (chosen != null) {
-
-                                      final typedLocale =
-
-                                          dialogContext.maybeLocale;
-
-                                      String displayName;
-
-                                      if (typedLocale != null) {
-
-                                        displayName = chosen!
-
-                                                .translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name ??
-
-                                            chosen!.internationalName;
-
-                                      } else {
-
-                                        displayName =
-
-                                            chosen!.internationalName;
-
-                                      }
-
-                                      selectedCurrency = displayName;
-
-                                      (dialogContext as Element)
-
-                                          .markNeedsBuild();
+                                      (dialogContext as Element).markNeedsBuild();
 
                                     }
 
@@ -4752,165 +4362,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
 
 
-  Widget _buildMainContent() {
-
-    if (_isLoading) {
-
-      return const Center(child: CircularProgressIndicator());
-
-    }
-
-
-
-    if (_resources.isEmpty) {
-
-      return Center(
-
-        child: Container(
-
-          padding: const EdgeInsets.all(32),
-
-          child: Column(
-
-            mainAxisAlignment: MainAxisAlignment.center,
-
-            children: [
-
-              Container(
-
-                padding: const EdgeInsets.all(24),
-
-                decoration: BoxDecoration(
-
-                  color: AppTheme.primaryColor.withOpacity(0.1),
-
-                  shape: BoxShape.circle,
-
-                ),
-
-                child: Icon(
-
-                  Icons.account_balance_rounded,
-
-                  size: 64,
-
-                  color: AppTheme.primaryColor.withOpacity(0.6),
-
-                ),
-
-              ),
-
-              const SizedBox(height: 24),
-
-              const Text(
-
-                'لا توجد مصادر دخل متاحة',
-
-                style: TextStyle(
-
-                  fontSize: 15,
-
-                  fontWeight: FontWeight.bold,
-
-                  color: AppTheme.textPrimary,
-
-                  fontFamily: 'ArbFONTSIBMPlexArabicText',
-
-                ),
-
-                textAlign: TextAlign.center,
-
-              ),
-
-              const SizedBox(height: 8),
-
-              const Text(
-
-                'قم بإنشاء مصادر دخل لبدء إدارة أرصدتك الحالية',
-
-                style: TextStyle(
-
-                  fontSize: 13,
-
-                  color: AppTheme.textSecondary,
-
-                  fontFamily: 'ArbFONTSIBMPlexArabicText',
-
-                ),
-
-                textAlign: TextAlign.center,
-
-              ),
-
-              const SizedBox(height: 24),
-
-              ElevatedButton.icon(
-
-                onPressed: () {
-
-                  HapticFeedback.lightImpact();
-
-                  _showEditResourceDialog();
-
-                },
-
-                style: ElevatedButton.styleFrom(
-
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-
-                  backgroundColor: AppTheme.primaryColor,
-
-                  foregroundColor: Colors.white,
-
-                  elevation: 2,
-
-                  shadowColor: AppTheme.primaryColor.withOpacity(0.2),
-
-                  shape: RoundedRectangleBorder(
-
-                    borderRadius: BorderRadius.circular(24),
-
-                  ),
-
-                ),
-
-                icon: const Icon(Icons.add_rounded, size: 20),
-
-                label: const Text(
-
-                  'إضافة مصدر دخل',
-
-                  style: TextStyle(
-
-                    fontFamily: 'ArbFONTSIBMPlexArabicText',
-
-                    fontWeight: FontWeight.bold,
-
-                  ),
-
-                ),
-
-              ),
-
-            ],
-
-          ),
-
-        ),
-
-      );
-
-    }
-
-
-
-    if (_selectedSection == IncomeSection.balances) {
-
-      return _buildBalancesList();
-
-    }
-
-
+  Widget _buildResourcesList() {
 
     return ListView.builder(
 
@@ -5618,9 +5070,189 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
           ),
 
-        );;
+        );
 
       },
+
+    );
+
+  }
+
+
+
+  Widget _buildMainContent() {
+
+    if (_isLoading) {
+
+      return const Center(child: CircularProgressIndicator());
+
+    }
+
+
+
+    if (_resources.isEmpty) {
+
+      return Center(
+
+        child: Container(
+
+          padding: const EdgeInsets.all(32),
+
+          child: Column(
+
+            mainAxisAlignment: MainAxisAlignment.center,
+
+            children: [
+
+              Container(
+
+                padding: const EdgeInsets.all(24),
+
+                decoration: BoxDecoration(
+
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+
+                  shape: BoxShape.circle,
+
+                ),
+
+                child: Icon(
+
+                  Icons.account_balance_rounded,
+
+                  size: 64,
+
+                  color: AppTheme.primaryColor.withOpacity(0.6),
+
+                ),
+
+              ),
+
+              const SizedBox(height: 24),
+
+              const Text(
+
+                'لا توجد مصادر دخل متاحة',
+
+                style: TextStyle(
+
+                  fontSize: 15,
+
+                  fontWeight: FontWeight.bold,
+
+                  color: AppTheme.textPrimary,
+
+                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+
+                ),
+
+                textAlign: TextAlign.center,
+
+              ),
+
+              const SizedBox(height: 8),
+
+              const Text(
+
+                'قم بإنشاء مصادر دخل لبدء إدارة أرصدتك الحالية',
+
+                style: TextStyle(
+
+                  fontSize: 13,
+
+                  color: AppTheme.textSecondary,
+
+                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+
+                ),
+
+                textAlign: TextAlign.center,
+
+              ),
+
+              const SizedBox(height: 24),
+
+              ElevatedButton.icon(
+
+                onPressed: () {
+
+                  HapticFeedback.lightImpact();
+
+                  _showEditResourceDialog();
+
+                },
+
+                style: ElevatedButton.styleFrom(
+
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+
+                  backgroundColor: AppTheme.primaryColor,
+
+                  foregroundColor: Colors.white,
+
+                  elevation: 2,
+
+                  shadowColor: AppTheme.primaryColor.withOpacity(0.2),
+
+                  shape: RoundedRectangleBorder(
+
+                    borderRadius: BorderRadius.circular(24),
+
+                  ),
+
+                ),
+
+                icon: const Icon(Icons.add_rounded, size: 20),
+
+                label: const Text(
+
+                  'إضافة مصدر دخل',
+
+                  style: TextStyle(
+
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+
+                    fontWeight: FontWeight.bold,
+
+                  ),
+
+                ),
+
+              ),
+
+            ],
+
+          ),
+
+        ),
+
+      );
+
+    }
+
+
+
+    return PageView(
+
+      controller: _pageController,
+
+      onPageChanged: (index) {
+
+        setState(() {
+
+          _selectedSection = index == 0 ? IncomeSection.resources : IncomeSection.balances;
+
+        });
+
+      },
+
+      children: [
+
+        _buildResourcesList(),
+
+        _buildBalancesList(),
+
+      ],
 
     );
 
@@ -5768,6 +5400,16 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
                           });
 
+                          _pageController.animateToPage(
+
+                            0,
+
+                            duration: const Duration(milliseconds: 300),
+
+                            curve: Curves.easeInOut,
+
+                          );
+
                         },
 
                         child: AnimatedContainer(
@@ -5839,6 +5481,16 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
                             _selectedSection = IncomeSection.balances;
 
                           });
+
+                          _pageController.animateToPage(
+
+                            1,
+
+                            duration: const Duration(milliseconds: 300),
+
+                            curve: Curves.easeInOut,
+
+                          );
 
                         },
 

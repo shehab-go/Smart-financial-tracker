@@ -66,8 +66,6 @@ dependencies:
   # SVG support
   flutter_svg: ^2.0.17
 
-  # Currency data
-  world_countries: ^2.0.2
 
   # Background tasks
   workmanager: ^0.6.0

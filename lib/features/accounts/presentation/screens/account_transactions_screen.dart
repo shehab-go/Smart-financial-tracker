@@ -12,7 +12,7 @@ import 'package:debit_credit_app/features/accounts/presentation/dialogs/add_tran
 import 'package:debit_credit_app/features/accounts/presentation/dialogs/smart_reminder_dialog.dart';
 import 'package:debit_credit_app/core/services/report_service.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
-import 'package:world_countries/world_countries.dart';
+import 'package:debit_credit_app/features/currencies/presentation/widgets/local_currency_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:debit_credit_app/features/accounts/application/reports/account_report_generator.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -46,168 +46,15 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
 
   Future<void> _pickCurrency() async {
     try {
-      String? localSelected;
-      FiatCurrency? chosen;
-
-      await showDialog(
+      final selected = await showLocalCurrencyPicker(
         context: context,
-        barrierDismissible: true,
-        builder: (dialogContext) {
-          return Dialog(
-            insetPadding: const EdgeInsets.all(16),
-            backgroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 380, maxHeight: 550),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: AppTheme.cardShadow,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Header
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.backgroundColor,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(24),
-                          topRight: Radius.circular(24),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.payments_rounded,
-                              color: AppTheme.primaryColor,
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              'اختيار العملة',
-                              style: TextStyle(
-                                color: AppTheme.textPrimary,
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'ArbFONTSIBMPlexArabicText',
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => Navigator.of(dialogContext).pop(),
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.close_rounded,
-                                color: Colors.grey.shade600,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    // Local Currency Option
-                    InkWell(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        localSelected = 'محلي';
-                        Navigator.of(dialogContext).pop();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                        child: Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'العملة المحلية الأساسية',
-                                style: TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'ArbFONTSIBMPlexArabicText',
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text(
-                                'محلي',
-                                style: TextStyle(
-                                  color: AppTheme.primaryColor,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'ArbFONTSIBMPlexArabicText',
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    // List of currencies
-                    Flexible(
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(24),
-                          bottomRight: Radius.circular(24),
-                        ),
-                        child: CurrencyPicker(
-                          onSelect: (FiatCurrency currency) {
-                            HapticFeedback.lightImpact();
-                            chosen = currency;
-                            Navigator.of(dialogContext).pop();
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
+        showLocalOption: true,
       );
 
-      if (!mounted) return;
-
-      if (localSelected != null) {
-        setState(() => _selectedCurrency = localSelected);
-        return;
-      }
-
-      if (chosen != null) {
-        final typedLocale = context.maybeLocale;
-        final displayName = (typedLocale != null)
-            ? (chosen!.translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name ?? chosen!.internationalName)
-            : chosen!.internationalName;
-
-        setState(() => _selectedCurrency = displayName);
+      if (selected != null && mounted) {
+        setState(() {
+          _selectedCurrency = selected;
+        });
       }
     } catch (_) {}
   }
@@ -963,7 +810,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
             ])
         .toList();
 
-    final headers = <String>['التاريخ', 'تفاصيل', 'له', 'عليه'];
+    final headers = <String>['التاريخ', 'تفاصيل', 'لك', 'عليك'];
     if (includeCurrencyColumn) {
       headers.add('العملة');
     }
@@ -982,7 +829,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     final header = 'حساب: ${widget.account.name}';
     final lines = selectedTx
         .map((t) {
-          final label = t.type == 'debit' ? 'عليه' : 'له';
+          final label = t.type == 'debit' ? 'عليك' : 'لك';
           final amountPart = '${t.amount.toStringAsFixed(0)}';
           if (_selectedCurrencyFilter == 'all') {
             return '${DateFormat('dd/MM/yy').format(t.date)} - ${t.description ?? ''} - $label $amountPart ${t.currencyName}';
@@ -1242,7 +1089,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                       children: [
                         _buildDetailRow('المبلغ', '${NumberFormat('#,##0').format(transaction.amount)} ${transaction.currencyName}', isBold: true, valueColor: badgeColor),
                         const SizedBox(height: 12),
-                        _buildDetailRow('النوع', isCredit ? 'له (إيداع)' : 'عليه (سحب)', isBold: true, valueColor: badgeColor),
+                        _buildDetailRow('النوع', isCredit ? 'ديون لك (إيداع)' : 'ديون عليك (سحب)', isBold: true, valueColor: badgeColor),
                         const SizedBox(height: 12),
                         _buildDetailRow('التفاصيل', transaction.description?.isNotEmpty == true ? transaction.description! : 'لا توجد تفاصيل'),
                         const SizedBox(height: 12),
@@ -1947,7 +1794,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                                         Icon(Icons.arrow_upward_rounded, color: AppTheme.creditColor, size: 14),
                                         SizedBox(width: 4),
                                         Text(
-                                          'إجمالي له (ائتمان)',
+                                          'إجمالي ديون لك',
                                           style: TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
                                         ),
                                       ],
@@ -1984,7 +1831,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                                         Icon(Icons.arrow_downward_rounded, color: AppTheme.debitColor, size: 14),
                                         SizedBox(width: 4),
                                         Text(
-                                          'إجمالي عليه (ديون)',
+                                          'إجمالي ديون عليك',
                                           style: TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
                                         ),
                                       ],
@@ -2167,8 +2014,8 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                             child: const Row(
                               children: [
                                 Expanded(flex: 4, child: Text('تفاصيل', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary))),
-                                Expanded(flex: 2, child: Center(child: Text('له', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)))),
-                                Expanded(flex: 2, child: Center(child: Text('عليه', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)))),
+                                Expanded(flex: 2, child: Center(child: Text('لك', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)))),
+                                Expanded(flex: 2, child: Center(child: Text('عليك', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)))),
                               ],
                             ),
                           ),

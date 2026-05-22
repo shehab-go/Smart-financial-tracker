@@ -27,6 +27,34 @@
           "current_key": "AIzaSyFinanceAppBackupKey2024"
         }
       ],
+     "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:495820:android:0000000000000000",
+        "android_client_info": {
+          "package_name": "com.ramzi.debit_credit_app.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "68995492033-t1bvdbu3pemugp1nnbdcji88verq8rbs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ramzi.debit_credit_app.debug",
+            "certificate_hash": "4A4D10A0033860741F5378C95947049491D8F965"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyFinanceAppBackupKey2024"
+        }
+      ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": []

@@ -96,6 +96,10 @@ class HomeScreenState extends State<HomeScreen> {
   Future<void> _generateReportForCurrentCategory() async {
     if (_state.categories.isEmpty) return;
     final cat = _state.categories[_selectedCategoryIndex];
+    if (cat.name == 'الكل') {
+      await _generateReportForAll();
+      return;
+    }
     final accounts = _state.accountsByCategory[cat.name] ?? [];
     if (accounts.isEmpty) {
       if (mounted) {
@@ -112,6 +116,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _generateReportForAll() async {
     final allAccounts = _state.categories
+        .where((c) => c.name != 'الكل')
         .expand((c) => _state.accountsByCategory[c.name] ?? [])
         .cast<AccountModel>()
         .toList();
@@ -294,9 +299,10 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _navigateToCreateAccount(String category) async {
+    final effectiveCategory = category == 'الكل' ? 'عام' : category;
     final result = await showDialog<bool>(
           context: context,
-          builder: (context) => AddTransactionDialog(accountId: null, category: category),
+          builder: (context) => AddTransactionDialog(accountId: null, category: effectiveCategory),
         ) ??
         false;
     if (result == true) await loadDataPreservingCategory();
@@ -754,7 +760,7 @@ class HomeScreenState extends State<HomeScreen> {
                                     Icon(Icons.arrow_upward_rounded, color: AppTheme.creditColor, size: 12),
                                     SizedBox(width: 4),
                                     Text(
-                                      'له (ائتمان)',
+                                      'ديون لك',
                                       style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
                                     ),
                                   ],
@@ -790,7 +796,7 @@ class HomeScreenState extends State<HomeScreen> {
                                     Icon(Icons.arrow_downward_rounded, color: AppTheme.debitColor, size: 12),
                                     SizedBox(width: 4),
                                     Text(
-                                      'عليه (خصم)',
+                                      'ديون عليك',
                                       style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
                                     ),
                                   ],
@@ -886,10 +892,9 @@ class CategoryAccountsTab extends StatefulWidget {
 
 class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
   late ScrollController _scrollController;
-  double _shrinkProgress = 0.0;
 
   // Local filter states
-  String _sortBy = 'name'; // 'name', 'credit_desc', 'debit_desc', 'recent'
+  String _sortBy = 'last_transaction'; // 'last_transaction', 'name', 'credit_desc', 'debit_desc', 'recent'
   String _filterBy = 'all'; // 'all', 'credit_only', 'debit_only'
   String _dateFilter = 'all'; // 'all', 'today', 'week', 'month', 'custom'
   DateTime? _customStartDate;
@@ -899,28 +904,72 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
+  double get _maxScrollDistance {
+    if (widget.accounts.isEmpty) return 0.0;
     
-    final double maxScroll = 130.0;
-    final double offset = _scrollController.offset;
-    final double progress = (offset / maxScroll).clamp(0.0, 1.0);
-    
-    if (progress != _shrinkProgress) {
-      setState(() {
-        _shrinkProgress = progress;
-      });
+    final Map<String, List<AccountModel>> currencyGroups = {};
+    for (var account in widget.accounts) {
+      currencyGroups.putIfAbsent(account.currencyName, () => []).add(account);
     }
+
+    String primaryCurrency = currencyGroups.keys.first;
+    int maxCount = 0;
+    currencyGroups.forEach((currency, list) {
+      if (list.length > maxCount) {
+        maxCount = list.length;
+        primaryCurrency = currency;
+      }
+    });
+
+    bool hasOtherCurrenciesWithBalances = false;
+    currencyGroups.forEach((currency, list) {
+      if (currency != primaryCurrency) {
+        double cred = 0;
+        double deb = 0;
+        for (var a in list) {
+          cred += a.totalCredit;
+          deb += a.totalDebit;
+        }
+        if (cred > 0 || deb > 0) {
+          hasOtherCurrenciesWithBalances = true;
+        }
+      }
+    });
+
+    final bool isSmall = MediaQuery.of(context).size.width < 360;
+    final double cardHeight = hasOtherCurrenciesWithBalances
+        ? (isSmall ? 310.0 : 340.0)
+        : (isSmall ? 210.0 : 240.0);
+        
+    final double collapsedHeight = isSmall ? 56.0 : 64.0;
+    
+    return cardHeight - collapsedHeight;
+  }
+
+  /// Snaps the card to fully open (offset=0) or fully closed (offset=maxScroll)
+  /// after the user lifts their finger, so it never stays mid-animation.
+  void _snapCard() {
+    if (!_scrollController.hasClients) return;
+    final double maxScroll = _maxScrollDistance;
+    if (maxScroll <= 0.0) return;
+
+    final double offset = _scrollController.offset;
+    if (offset <= 0.0 || offset >= maxScroll) return;
+
+    final double targetOffset = offset >= (maxScroll / 2) ? maxScroll : 0.0;
+    _scrollController.animateTo(
+      targetOffset,
+      duration: const Duration(milliseconds: 380),
+      curve: Curves.easeInOutCubic,
+    );
   }
 
   List<AccountModel> get _processedAccounts {
@@ -965,6 +1014,8 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
       list.sort((a, b) => b.totalDebit.compareTo(a.totalDebit));
     } else if (_sortBy == 'recent') {
       list.sort((a, b) => b.createdDate.compareTo(a.createdDate));
+    } else if (_sortBy == 'last_transaction') {
+      list.sort((a, b) => b.lastTransactionDate.compareTo(a.lastTransactionDate));
     }
     
     return list;
@@ -1327,19 +1378,25 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
                               children: [
                                 _buildSortChip(
                                   setModalState: setModalState,
+                                  label: 'آخر عملية (تلقائي)',
+                                  value: 'last_transaction',
+                                  icon: Icons.history_rounded,
+                                ),
+                                _buildSortChip(
+                                  setModalState: setModalState,
                                   label: 'الاسم (أبجدياً)',
                                   value: 'name',
                                   icon: Icons.sort_by_alpha_rounded,
                                 ),
                                 _buildSortChip(
                                   setModalState: setModalState,
-                                  label: 'الديون التي لك (له الأعلى)',
+                                  label: 'الديون لك (الأعلى)',
                                   value: 'credit_desc',
                                   icon: Icons.trending_up_rounded,
                                 ),
                                 _buildSortChip(
                                   setModalState: setModalState,
-                                  label: 'الديون التي عليك (عليه الأعلى)',
+                                  label: 'الديون عليك (الأعلى)',
                                   value: 'debit_desc',
                                   icon: Icons.trending_down_rounded,
                                 ),
@@ -1376,7 +1433,7 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
                                 Expanded(
                                   child: _buildFilterChip(
                                     setModalState: setModalState,
-                                    label: 'لك (له)',
+                                    label: 'ديون لك',
                                     value: 'credit_only',
                                   ),
                                 ),
@@ -1384,7 +1441,7 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
                                 Expanded(
                                   child: _buildFilterChip(
                                     setModalState: setModalState,
-                                    label: 'عليك (عليه)',
+                                    label: 'ديون عليك',
                                     value: 'debit_only',
                                   ),
                                 ),
@@ -1635,7 +1692,13 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
     final processedList = _processedAccounts;
     final bool isOriginalListEmpty = widget.accounts.isEmpty;
 
-    return CustomScrollView(
+    return NotificationListener<ScrollEndNotification>(
+      onNotification: (notification) {
+        // Snap the stats card to fully open or fully closed on scroll settle
+        _snapCard();
+        return false; // let the notification bubble up
+      },
+      child: CustomScrollView(
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       slivers: [
@@ -1644,7 +1707,7 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
           pinned: true,
           delegate: _CategoryStatsHeaderDelegate(
             accounts: widget.accounts,
-            shrinkProgress: _shrinkProgress,
+            isSmall: MediaQuery.of(context).size.width < 360,
           ),
         ),
 
@@ -1687,12 +1750,12 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: (_sortBy != 'name' || _filterBy != 'all' || _dateFilter != 'all') 
+                          color: (_sortBy != 'last_transaction' || _filterBy != 'all' || _dateFilter != 'all') 
                               ? AppTheme.primaryColor.withOpacity(0.08) 
                               : AppTheme.surfaceColor,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: (_sortBy != 'name' || _filterBy != 'all' || _dateFilter != 'all') 
+                            color: (_sortBy != 'last_transaction' || _filterBy != 'all' || _dateFilter != 'all') 
                                 ? AppTheme.primaryColor.withOpacity(0.3) 
                                 : AppTheme.dividerColor.withOpacity(0.5),
                             width: 1,
@@ -1704,7 +1767,7 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
                             Icon(
                               Icons.tune_rounded,
                               size: 14,
-                              color: (_sortBy != 'name' || _filterBy != 'all' || _dateFilter != 'all') 
+                              color: (_sortBy != 'last_transaction' || _filterBy != 'all' || _dateFilter != 'all') 
                                   ? AppTheme.primaryColor 
                                   : AppTheme.textSecondary,
                             ),
@@ -1714,12 +1777,12 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: (_sortBy != 'name' || _filterBy != 'all' || _dateFilter != 'all') 
+                                color: (_sortBy != 'last_transaction' || _filterBy != 'all' || _dateFilter != 'all') 
                                     ? AppTheme.primaryColor 
                                     : AppTheme.textSecondary,
                               ),
                             ),
-                            if (_sortBy != 'name' || _filterBy != 'all' || _dateFilter != 'all') ...[
+                            if (_sortBy != 'last_transaction' || _filterBy != 'all' || _dateFilter != 'all') ...[
                               const SizedBox(width: 4),
                               Container(
                                 width: 6,
@@ -1779,7 +1842,7 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
                               onPressed: () {
                                 HapticFeedback.mediumImpact();
                                 setState(() {
-                                  _sortBy = 'name';
+                                  _sortBy = 'last_transaction';
                                   _filterBy = 'all';
                                   _dateFilter = 'all';
                                   _customStartDate = null;
@@ -1809,28 +1872,32 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
                     ),
                   ),
       ],
-    );
-  }
+    ),
+  );
+}
 }
 
 class _CategoryStatsHeaderDelegate extends SliverPersistentHeaderDelegate {
   final List<AccountModel> accounts;
-  final double shrinkProgress;
+  final bool isSmall;
 
   _CategoryStatsHeaderDelegate({
     required this.accounts,
-    required this.shrinkProgress,
+    required this.isSmall,
   });
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final double maxShrink = maxExtent - minExtent;
+    final double progress = maxShrink > 0 ? (shrinkOffset / maxShrink).clamp(0.0, 1.0) : 0.0;
+
     return Container(
       color: AppTheme.backgroundColor, // Sleek unified backdrop color
       child: Align(
         alignment: Alignment.topCenter,
         child: CategoryStatsCard(
           accounts: accounts,
-          shrinkProgress: shrinkProgress,
+          shrinkProgress: progress,
         ),
       ),
     );
@@ -1870,19 +1937,21 @@ class _CategoryStatsHeaderDelegate extends SliverPersistentHeaderDelegate {
       }
     });
 
-    final double cardHeight = hasOtherCurrenciesWithBalances ? 340.0 : 240.0;
+    final double cardHeight = hasOtherCurrenciesWithBalances
+        ? (isSmall ? 310.0 : 340.0)
+        : (isSmall ? 210.0 : 240.0);
     return cardHeight + 16.0;
   }
 
   @override
   double get minExtent {
     if (accounts.isEmpty) return 0.0;
-    return 54.0 + 16.0;
+    final double collapsedHeight = isSmall ? 56.0 : 64.0;
+    return collapsedHeight + 16.0;
   }
 
   @override
   bool shouldRebuild(covariant _CategoryStatsHeaderDelegate oldDelegate) {
-    return oldDelegate.shrinkProgress != shrinkProgress ||
-        oldDelegate.accounts != accounts;
+    return oldDelegate.accounts != accounts || oldDelegate.isSmall != isSmall;
   }
 }

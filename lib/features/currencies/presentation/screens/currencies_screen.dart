@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:debit_credit_app/core/models/currency.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
-import 'package:world_countries/world_countries.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/main_navigation.dart';
 
@@ -18,41 +17,12 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
   bool _isLoading = true;
   Map<String, Map<String, int>> _usageByName = <String, Map<String, int>>{};
   Set<String> _favoriteCurrencyNames = {};
-  Iterable<FiatCurrency>? _allFiatCurrencies;
   String? _defaultCurrencyName;
 
   @override
   void initState() {
     super.initState();
     _loadCurrencies();
-  }
-
-  Iterable<FiatCurrency> _getAllFiatCurrencies() {
-    if (_allFiatCurrencies != null) {
-      return _allFiatCurrencies!;
-    }
-    // Use CurrencyPickerExtension.currencies to get the full list once.
-    final picker = CurrencyPicker(onSelect: (_) {});
-    _allFiatCurrencies = picker.currencies.toList(growable: false);
-    return _allFiatCurrencies!;
-  }
-
-  FiatCurrency? _findFiatByDisplayName(String displayName) {
-    final typedLocale = context.maybeLocale;
-    final all = _getAllFiatCurrencies();
-
-    for (final c in all) {
-      if (typedLocale != null) {
-        final common = c.translations.firstWhere((e) => e.language == typedLocale.language, orElse: () => TranslatedName(typedLocale.language, name: '')).name;
-        if (common != null && common == displayName) {
-          return c;
-        }
-      }
-      if (c.internationalName == displayName) {
-        return c;
-      }
-    }
-    return null;
   }
 
   Future<void> _loadCurrencies() async {
@@ -306,18 +276,10 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
                                 final int totalUsage =
                                     accountsCount + balancesCount + expensesCount;
 
-                                final fiat = _findFiatByDisplayName(currency.name);
-                                final String? code = fiat?.code;
-                                String? symbol;
-                                if (fiat != null) {
-                                  if (fiat.disambiguateSymbol != null &&
-                                      fiat.disambiguateSymbol!.isNotEmpty) {
-                                    symbol = fiat.disambiguateSymbol;
-                                  } else if (fiat.alternateSymbols != null &&
-                                      fiat.alternateSymbols!.isNotEmpty) {
-                                    symbol = fiat.alternateSymbols!.first;
-                                  }
-                                }
+                                final String? code = CurrencyModel.codeFor(currency.name);
+                                final String? symbol = CurrencyModel.symbolFor(currency.name) != currency.name
+                                    ? CurrencyModel.symbolFor(currency.name)
+                                    : null;
 
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 12),
@@ -504,291 +466,42 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
     await DatabaseHelper().setFavoriteCurrencies(updated);
   }
 
-  void _addCurrency() => _showCurrencyDialog();
-  void _editCurrency(CurrencyModel currency) => _showCurrencyDialog(currency: currency);
+  Future<void> _addCurrency() async {
+    final existingNames = _currencies.map((c) => c.name).toList();
+    final PredefinedCurrency? chosen = await showDialog<PredefinedCurrency>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => _PredefinedCurrencyPickerDialog(
+        existingNames: existingNames,
+      ),
+    );
 
-  void _showCurrencyDialog({CurrencyModel? currency}) {
-    final isEditing = currency != null;
-    final nameController = TextEditingController(text: currency?.name ?? '');
-    final formKey = GlobalKey<FormState>();
-
-    Future<void> pickCurrency() async {
+    if (chosen != null && mounted) {
       try {
-        FiatCurrency? chosen;
-
-        await showDialog(
-          context: context,
-          barrierDismissible: true,
-          builder: (dialogContext) {
-            return Dialog(
-              insetPadding: const EdgeInsets.all(16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 380, maxHeight: 520),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: AppTheme.cardShadow,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            topRight: Radius.circular(16),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.payments_outlined,
-                                color: AppTheme.primaryColor,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                'اختيار العملة',
-                                style: TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                HapticFeedback.lightImpact();
-                                Navigator.of(dialogContext).pop();
-                              },
-                              icon: const Icon(
-                                Icons.close_rounded,
-                                color: AppTheme.textSecondary,
-                                size: 18,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1, color: AppTheme.dividerColor),
-                      Flexible(
-                        child: CurrencyPicker(
-                          onSelect: (FiatCurrency currency) {
-                            HapticFeedback.lightImpact();
-                            chosen = currency;
-                            Navigator.of(dialogContext).pop();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
+        final newCurrency = CurrencyModel(
+          name: chosen.name,
         );
-
-        if (chosen != null && mounted) {
-          final typedLocale = context.maybeLocale;
-          String displayName;
-          if (typedLocale != null) {
-            displayName = chosen!.translations
-                    .firstWhere(
-                      (e) => e.language == typedLocale.language,
-                      orElse: () => TranslatedName(typedLocale.language, name: ''),
-                    )
-                    .name ??
-                chosen!.internationalName;
-          } else {
-            displayName = chosen!.internationalName;
-          }
-          nameController.text = displayName;
+        await DatabaseHelper().insertCurrency(newCurrency);
+        _loadCurrencies();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('تم إضافة العملة "${chosen.name}" بنجاح'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('خطأ في اختيار العملة: $e'),
+              content: Text('خطأ في إضافة العملة: $e'),
               backgroundColor: AppTheme.errorColor,
             ),
           );
         }
       }
     }
-
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      isEditing ? Icons.edit_rounded : Icons.add_circle_outline_rounded,
-                      color: AppTheme.primaryColor,
-                      size: 32,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      isEditing ? 'تعديل العملة' : 'إضافة عملة جديدة',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: nameController,
-                        readOnly: true,
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          pickCurrency();
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'اسم العملة',
-                          hintText: 'العملة',
-                          prefixIcon: const Icon(Icons.translate_rounded),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppTheme.primaryColor),
-                          ),
-                        ),
-                        validator: (value) => (value == null || value.trim().isEmpty)
-                            ? 'يرجى اختيار اسم العملة'
-                            : null,
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextButton(
-                              onPressed: () {
-                                HapticFeedback.lightImpact();
-                                Navigator.pop(context);
-                              },
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text('إلغاء'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                HapticFeedback.mediumImpact();
-                                if (formKey.currentState!.validate()) {
-                                  try {
-                                    final newCurrency = CurrencyModel(
-                                      id: currency?.id,
-                                      name: nameController.text.trim(),
-                                    );
-                                    if (isEditing) {
-                                      await DatabaseHelper().updateCurrency(newCurrency);
-                                    } else {
-                                      await DatabaseHelper().insertCurrency(newCurrency);
-                                    }
-                                    Navigator.pop(context);
-                                    _loadCurrencies();
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(isEditing
-                                              ? 'تم تعديل العملة بنجاح'
-                                              : 'تم إضافة العملة بنجاح'),
-                                          backgroundColor: AppTheme.successColor,
-                                        ),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text('خطأ: $e'),
-                                          backgroundColor: AppTheme.errorColor,
-                                        ),
-                                      );
-                                    }
-                                  }
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                backgroundColor: AppTheme.primaryColor,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: Text(isEditing ? 'تعديل' : 'إضافة'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   void _deleteCurrency(CurrencyModel currency) {
@@ -858,6 +571,308 @@ class _CurrenciesScreenState extends State<CurrenciesScreen> {
             child: const Text('حذف'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PredefinedCurrencyPickerDialog extends StatefulWidget {
+  final List<String> existingNames;
+
+  const _PredefinedCurrencyPickerDialog({
+    required this.existingNames,
+  });
+
+  @override
+  State<_PredefinedCurrencyPickerDialog> createState() =>
+      _PredefinedCurrencyPickerDialogState();
+}
+
+class _PredefinedCurrencyPickerDialogState
+    extends State<_PredefinedCurrencyPickerDialog> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  List<PredefinedCurrency> _filtered = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filtered = predefinedCurrencies;
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.trim().toLowerCase();
+    setState(() {
+      _searchQuery = _searchController.text;
+      if (query.isEmpty) {
+        _filtered = predefinedCurrencies;
+      } else {
+        _filtered = predefinedCurrencies.where((c) {
+          return c.name.toLowerCase().contains(query) ||
+              c.code.toLowerCase().contains(query);
+        }).toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 380, maxHeight: 520),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: AppTheme.cardShadow,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.add_circle_outline_rounded,
+                        color: AppTheme.primaryColor,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'إضافة عملة جديدة',
+                        style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          fontFamily: 'ArbFONTSIBMPlexArabicText',
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: AppTheme.textSecondary,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: AppTheme.dividerColor.withOpacity(0.5)),
+
+              // Search Input
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'البحث عن عملة...',
+                    hintStyle: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontSize: 13,
+                      fontFamily: 'ArbFONTSIBMPlexArabicText',
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: AppTheme.textSecondary,
+                      size: 20,
+                    ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: AppTheme.surfaceColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppTheme.dividerColor.withOpacity(0.3),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppTheme.dividerColor.withOpacity(0.3),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 1.5,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Predefined Currencies List
+              Flexible(
+                child: _filtered.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 32,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.money_off_rounded,
+                              size: 48,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'لا توجد عملات مطابقة',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                                fontFamily: 'ArbFONTSIBMPlexArabicText',
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.only(bottom: 8),
+                        itemCount: _filtered.length,
+                        itemBuilder: (context, index) {
+                          final c = _filtered[index];
+                          final bool isAdded = widget.existingNames.contains(c.name);
+
+                          return ListTile(
+                            leading: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: isAdded
+                                    ? AppTheme.successColor.withOpacity(0.08)
+                                    : AppTheme.primaryColor.withOpacity(0.08),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  c.symbol,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: isAdded
+                                        ? AppTheme.successColor
+                                        : AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              c.name,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: isAdded
+                                    ? AppTheme.textSecondary
+                                    : AppTheme.textPrimary,
+                                fontFamily: 'ArbFONTSIBMPlexArabicText',
+                              ),
+                            ),
+                            subtitle: Text(
+                              c.code,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                            trailing: isAdded
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.successColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text(
+                                      'مضافة',
+                                      style: TextStyle(
+                                        color: AppTheme.successColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                      ),
+                                    ),
+                                  )
+                                : null,
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              if (isAdded) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('العملة "${c.name}" مضافة بالفعل'),
+                                    backgroundColor: AppTheme.warningColor,
+                                  ),
+                                );
+                              } else {
+                                Navigator.of(context).pop(c);
+                              }
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

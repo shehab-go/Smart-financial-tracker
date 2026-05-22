@@ -30,6 +30,10 @@ class DatabaseHelper {
     if (t == 'debit') return 'debit';
     if (t == 'له') return 'credit';
     if (t == 'عليه') return 'debit';
+    if (t == 'لك') return 'credit';
+    if (t == 'عليك') return 'debit';
+    if (t == 'ديون لك') return 'credit';
+    if (t == 'ديون عليك') return 'debit';
     return t;
   }
 
@@ -804,7 +808,8 @@ class DatabaseHelper {
       SELECT a.*, 
              COUNT(t.id)                  AS transactionCount,
              SUM(CASE WHEN t.type = "debit"  THEN t.amount ELSE 0 END) AS totalDebit,
-             SUM(CASE WHEN t.type = "credit" THEN t.amount ELSE 0 END) AS totalCredit
+             SUM(CASE WHEN t.type = "credit" THEN t.amount ELSE 0 END) AS totalCredit,
+             MAX(t.date)                  AS lastTransactionDate
       FROM accounts a
       LEFT JOIN transactions t ON t.accountId = a.id
       WHERE a.category = ?
@@ -821,7 +826,8 @@ class DatabaseHelper {
       SELECT a.*,
              COALESCE(s.transactionCount, 0) AS transactionCount,
              COALESCE(s.totalDebit, 0) AS totalDebit,
-             COALESCE(s.totalCredit, 0) AS totalCredit
+             COALESCE(s.totalCredit, 0) AS totalCredit,
+             (SELECT MAX(date) FROM transactions WHERE accountId = a.id) AS lastTransactionDate
       FROM accounts a
       LEFT JOIN account_currency_stats s
         ON s.accountId = a.id AND s.currencyName = a.currencyName
@@ -840,7 +846,8 @@ class DatabaseHelper {
       SELECT a.*,
              COALESCE(s.transactionCount, 0) AS transactionCount,
              COALESCE(s.totalDebit, 0) AS totalDebit,
-             COALESCE(s.totalCredit, 0) AS totalCredit
+             COALESCE(s.totalCredit, 0) AS totalCredit,
+             (SELECT MAX(date) FROM transactions WHERE accountId = a.id) AS lastTransactionDate
       FROM accounts a
       LEFT JOIN account_currency_stats s
         ON s.accountId = a.id AND s.currencyName = ?
@@ -858,7 +865,8 @@ class DatabaseHelper {
       SELECT a.*,
              COALESCE(s.transactionCount, 0) AS transactionCount,
              COALESCE(s.totalDebit, 0) AS totalDebit,
-             COALESCE(s.totalCredit, 0) AS totalCredit
+             COALESCE(s.totalCredit, 0) AS totalCredit,
+             (SELECT MAX(date) FROM transactions WHERE accountId = a.id) AS lastTransactionDate
       FROM accounts a
       LEFT JOIN account_currency_stats s
         ON s.accountId = a.id AND s.currencyName = a.currencyName
@@ -879,7 +887,8 @@ class DatabaseHelper {
       SELECT a.*,
              COALESCE(s.transactionCount, 0) AS transactionCount,
              COALESCE(s.totalDebit, 0) AS totalDebit,
-             COALESCE(s.totalCredit, 0) AS totalCredit
+             COALESCE(s.totalCredit, 0) AS totalCredit,
+             (SELECT MAX(date) FROM transactions WHERE accountId = a.id) AS lastTransactionDate
       FROM accounts a
       LEFT JOIN account_currency_stats s
         ON s.accountId = a.id AND s.currencyName = ?

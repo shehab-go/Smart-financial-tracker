@@ -21,8 +21,9 @@ class CategoryStatsCard extends StatefulWidget {
 
 class _CategoryStatsCardState extends State<CategoryStatsCard> {
   int _touchedIndex = -1;
+  String? _selectedCurrency;
 
-  Widget _buildCollapsedLayout(double totalCredit, double totalDebit, String primaryCurrency) {
+  Widget _buildCollapsedLayout(double totalCredit, double totalDebit, String activeCurrency) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -52,27 +53,43 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
             ),
           ],
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'له: ${NumberFormat('#,##0').format(totalCredit)}',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.successColor,
-              ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppTheme.backgroundColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.dividerColor.withOpacity(0.5),
+              width: 0.5,
             ),
-            const SizedBox(width: 8),
-            Text(
-              'عليه: ${NumberFormat('#,##0').format(totalDebit)}',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.errorColor,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'لك: ${NumberFormat('#,##0').format(totalCredit)}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.successColor,
+                ),
               ),
-            ),
-          ],
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                height: 12,
+                width: 1,
+                color: AppTheme.dividerColor,
+              ),
+              Text(
+                'عليك: ${NumberFormat('#,##0').format(totalDebit)}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.errorColor,
+                ),
+              ),
+            ],
+          ),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -81,7 +98,7 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            primaryCurrency,
+            activeCurrency,
             style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
@@ -99,26 +116,36 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
       return const SizedBox.shrink();
     }
 
+    // ── Responsive breakpoints ───────────────────────────────────────────────
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isSmall = screenWidth < 360; // e.g. Galaxy A, older budget phones
+
     // Group accounts by currency to calculate correct totals
     final Map<String, List<AccountModel>> currencyGroups = {};
     for (var account in widget.accounts) {
       currencyGroups.putIfAbsent(account.currencyName, () => []).add(account);
     }
 
-    // Determine primary currency (the one with most accounts)
-    String primaryCurrency = currencyGroups.keys.first;
-    int maxCount = 0;
-    currencyGroups.forEach((currency, list) {
-      if (list.length > maxCount) {
-        maxCount = list.length;
-        primaryCurrency = currency;
-      }
-    });
+    // Determine active currency (interactive selection or fallback to primary currency)
+    String activeCurrency;
+    if (_selectedCurrency != null && currencyGroups.containsKey(_selectedCurrency)) {
+      activeCurrency = _selectedCurrency!;
+    } else {
+      String primaryCurrency = currencyGroups.keys.first;
+      int maxCount = 0;
+      currencyGroups.forEach((currency, list) {
+        if (list.length > maxCount) {
+          maxCount = list.length;
+          primaryCurrency = currency;
+        }
+      });
+      activeCurrency = primaryCurrency;
+    }
 
-    // Calculate totals for primary currency
+    // Calculate totals for active currency
     double totalCredit = 0;
     double totalDebit = 0;
-    for (var account in currencyGroups[primaryCurrency]!) {
+    for (var account in currencyGroups[activeCurrency]!) {
       totalCredit += account.totalCredit;
       totalDebit += account.totalDebit;
     }
@@ -132,7 +159,7 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
     // Filter other currencies that have non-zero balances
     final List<MapEntry<String, List<AccountModel>>> otherCurrenciesWithBalances = [];
     currencyGroups.entries
-        .where((entry) => entry.key != primaryCurrency)
+        .where((entry) => entry.key != activeCurrency)
         .forEach((entry) {
       double cred = 0;
       double deb = 0;
@@ -150,46 +177,55 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
     // Linear interpolation helper
     double lerp(double a, double b, double t) => a + (b - a) * t;
 
-    final double collapsedHeight = 54.0;
-    final double expandedHeight = hasOtherCurrencies ? 340.0 : 240.0;
+    final double t = widget.shrinkProgress.clamp(0.0, 1.0);
+    final double collapsedHeight = isSmall ? 56.0 : 64.0;
+    // Responsive expanded height: shrink by 30px on small screens
+    final double expandedHeight = hasOtherCurrencies
+        ? (isSmall ? 310.0 : 340.0)
+        : (isSmall ? 210.0 : 240.0);
 
-    final double currentHeight = lerp(expandedHeight, collapsedHeight, widget.shrinkProgress);
-    final double paddingVal = lerp(18.0, 10.0, widget.shrinkProgress);
+    final double aHeight = lerp(expandedHeight, collapsedHeight, t);
+    final double aPad    = lerp(isSmall ? 12.0 : 18.0, 10.0, t);
+    final double aExpOp  = (1.0 - (t * 2.0)).clamp(0.0, 1.0);
+    final double aColOp  = ((t - 0.5) * 2.0).clamp(0.0, 1.0);
+    final double aScale  = lerp(1.0, 0.97, t);
 
-    // Split fade opacities to completely prevent layout overlapping / text ghosting:
-    // Expanded layout fades from 1.0 to 0.0 during the first 50% of the scroll progress (0.0 -> 0.5)
-    final double expandedOpacity = (1.0 - (widget.shrinkProgress * 2.0)).clamp(0.0, 1.0);
-    // Collapsed layout fades from 0.0 to 1.0 during the second 50% of the scroll progress (0.5 -> 1.0)
-    final double collapsedOpacity = ((widget.shrinkProgress - 0.5) * 2.0).clamp(0.0, 1.0);
+    return Transform.scale(
+      scale: aScale,
+      child: Container(
+        height: aHeight,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.all(aPad),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppTheme.dividerColor.withOpacity(0.6), width: 1),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: Stack(
+          clipBehavior: Clip.antiAlias,
+          children: [
+              // Collapsed Layout (fades in)
+              if (aColOp > 0.0)
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: aColOp,
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: _buildCollapsedLayout(totalCredit, totalDebit, activeCurrency),
+                    ),
+                  ),
+                ),
 
-    return Container(
-      height: currentHeight,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: EdgeInsets.all(paddingVal),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.dividerColor.withOpacity(0.6), width: 1),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      child: Stack(
-        clipBehavior: Clip.antiAlias,
-        children: [
-          // Collapsed Layout (fades in)
-          if (collapsedOpacity > 0.0)
-            Opacity(
-              opacity: collapsedOpacity,
-              child: _buildCollapsedLayout(totalCredit, totalDebit, primaryCurrency),
-            ),
-
-          // Expanded Layout (fades out)
-          if (expandedOpacity > 0.0)
-            Opacity(
-              opacity: expandedOpacity,
-              child: SingleChildScrollView(
-                physics: const NeverScrollableScrollPhysics(),
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width - 68, // Account for margins & paddings
+              // Expanded Layout (fades out)
+              if (aExpOp > 0.0)
+                Opacity(
+                  opacity: aExpOp,
+                  child: SingleChildScrollView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    child: SizedBox(
+                      // 32 = left+right margins (16×2), aPad×2 = left+right card padding
+                      width: screenWidth - 32 - (aPad * 2),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -211,7 +247,7 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                                   size: 18,
                                 ),
                               ),
-                              const SizedBox(width: 10),
+                              SizedBox(width: isSmall ? 8 : 16),
                               const Text(
                                 'التحليلات والمؤشرات المالية',
                                 style: TextStyle(
@@ -236,7 +272,7 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                               ],
                             ),
                             child: Text(
-                              primaryCurrency,
+                              activeCurrency,
                               style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -246,10 +282,11 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: isSmall ? 12 : 20),
 
                       // Bento Grid Asymmetric Layout
-                      Row(
+                      IntrinsicHeight(
+                      child: Row(
                         children: [
                           // Left Bento: Stats Indicators
                           Expanded(
@@ -258,24 +295,26 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Credit Stat ( له )
-                                _buildBentoStatCard(
-                                  title: 'إجمالي الديون لك (له)',
-                                  amount: totalCredit,
-                                  percentage: creditPercent,
-                                  color: AppTheme.creditColor,
-                                  icon: Icons.trending_up_rounded,
-                                  isCredit: true,
-                                ),
-                                const SizedBox(height: 12),
+                                 _buildBentoStatCard(
+                                   title: 'إجمالي الديون لك',
+                                   amount: totalCredit,
+                                   percentage: creditPercent,
+                                   color: AppTheme.creditColor,
+                                   icon: Icons.trending_up_rounded,
+                                   isCredit: true,
+                                   isSmall: isSmall,
+                                 ),
+                                 SizedBox(height: isSmall ? 6 : 12),
                                 // Debit Stat ( عليه )
-                                _buildBentoStatCard(
-                                  title: 'إجمالي الديون عليك (عليه)',
-                                  amount: totalDebit,
-                                  percentage: debitPercent,
-                                  color: AppTheme.debitColor,
-                                  icon: Icons.trending_down_rounded,
-                                  isCredit: false,
-                                ),
+                                 _buildBentoStatCard(
+                                   title: 'إجمالي الديون عليك',
+                                   amount: totalDebit,
+                                   percentage: debitPercent,
+                                   color: AppTheme.debitColor,
+                                   icon: Icons.trending_down_rounded,
+                                   isCredit: false,
+                                   isSmall: isSmall,
+                                 ),
                               ],
                             ),
                           ),
@@ -286,8 +325,9 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                           Expanded(
                             flex: 4,
                             child: Container(
-                              height: 136,
-                              padding: const EdgeInsets.all(8),
+                              // Responsive chart height
+                              height: isSmall ? 110.0 : 136.0,
+                              padding: EdgeInsets.all(isSmall ? 4 : 8),
                               decoration: BoxDecoration(
                                 color: AppTheme.surfaceColor,
                                 borderRadius: BorderRadius.circular(18),
@@ -393,6 +433,7 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                           ),
                         ],
                       ),
+                      ), // closes IntrinsicHeight
 
                       // Other Currencies List
                       if (hasOtherCurrencies) ...[
@@ -423,61 +464,70 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                                 cred += a.totalCredit;
                                 deb += a.totalDebit;
                               }
-                              return Container(
-                                margin: const EdgeInsets.only(left: 8),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.surfaceColor,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: AppTheme.dividerColor.withOpacity(0.5),
-                                    width: 1,
+                              return GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setState(() {
+                                    _selectedCurrency = entry.key;
+                                  });
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.only(left: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.surfaceColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppTheme.dividerColor.withOpacity(0.5),
+                                      width: 1,
+                                    ),
                                   ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      '${entry.key}: ',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.textPrimary,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '${entry.key}: ',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.textPrimary,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      'له ${NumberFormat('#,##0').format(cred)}',
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        color: AppTheme.successColor,
-                                        fontWeight: FontWeight.bold,
+                                      Text(
+                                        'لك ${NumberFormat('#,##0').format(cred)}',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: AppTheme.successColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                    const Text(
-                                      ' | ',
-                                      style: TextStyle(fontSize: 10, color: AppTheme.textTertiary),
-                                    ),
-                                    Text(
-                                      'عليه ${NumberFormat('#,##0').format(deb)}',
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        color: AppTheme.errorColor,
-                                        fontWeight: FontWeight.bold,
+                                      const Text(
+                                        ' | ',
+                                        style: TextStyle(fontSize: 10, color: AppTheme.textTertiary),
                                       ),
-                                    ),
-                                  ],
+                                      Text(
+                                        'عليك ${NumberFormat('#,##0').format(deb)}',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: AppTheme.errorColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               );
                             }).toList(),
                           ),
                         ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
+                        ],
+                     ],
+                   ),
+                 ),
+               ),
+             ),
+          ],
+        ),
       ),
     );
   }
@@ -489,9 +539,10 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
     required Color color,
     required IconData icon,
     required bool isCredit,
+    bool isSmall = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(isSmall ? 8 : 12),
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(16),
@@ -504,7 +555,7 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
         children: [
           // Stat Icon Wrap
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(isSmall ? 5 : 8),
             decoration: BoxDecoration(
               color: color.withOpacity(0.08),
               borderRadius: BorderRadius.circular(12),
@@ -512,10 +563,10 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
             child: Icon(
               icon,
               color: color,
-              size: 16,
+              size: isSmall ? 13 : 16,
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: isSmall ? 6 : 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
