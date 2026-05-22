@@ -101,6 +101,27 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             : ReorderableListView.builder(
                                 buildDefaultDragHandles: false,
                                 padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 88),
+                                proxyDecorator: (Widget child, int index, Animation<double> animation) {
+                                  return AnimatedBuilder(
+                                    animation: animation,
+                                    builder: (BuildContext context, Widget? child) {
+                                      final double animValue = Curves.easeInOut.transform(animation.value);
+                                      final double scale = 1.0 + (animValue * 0.02);
+                                      return Transform.scale(
+                                        scale: scale,
+                                        child: Opacity(
+                                          opacity: 0.9,
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            elevation: 0,
+                                            child: child,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: child,
+                                  );
+                                },
                                 itemCount: state.categories.length,
                                 onReorder: (oldIndex, newIndex) async {
                                   HapticFeedback.mediumImpact();
