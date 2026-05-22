@@ -130,6 +130,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   final TextEditingController _phoneController = TextEditingController();
   final FocusNode _nameFocusNode = FocusNode();
   List<String> _existingNames = [];
+  AccountModel? _selectedAccount;
 
   final DatabaseHelper _db = DatabaseHelper();
 
@@ -354,7 +355,16 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
     updateReady();
     _amountController.addListener(updateReady);
-    _accountNameController.addListener(updateReady);
+    _accountNameController.addListener(() {
+      updateReady();
+      if (_selectedAccount != null &&
+          _accountNameController.text.trim().toLowerCase() !=
+              _selectedAccount!.name.trim().toLowerCase()) {
+        setState(() {
+          _selectedAccount = null;
+        });
+      }
+    });
   }
 
   Future<void> _loadCurrencyQuickPickData() async {
@@ -492,6 +502,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     int accountId = widget.accountId ?? -1;
+    AccountModel? existingAccount;
     
     try {
       final db = _db;
@@ -610,21 +621,45 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         }
 
         if (_isNewAccount) {
-          final account = AccountModel(
-            name: _accountNameController.text.trim(),
-            category: widget.category,
-            currencyName: selectedCurrency,
-            phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-            createdDate: DateTime.now(),
-          );
-          accountId = await db.insertAccount(account);
+          final name = _accountNameController.text.trim();
+          if (_selectedAccount != null &&
+              _selectedAccount!.name.trim().toLowerCase() == name.toLowerCase()) {
+            existingAccount = _selectedAccount;
+          } else {
+            final existingAccounts = await db.getAccounts();
+            try {
+              existingAccount = existingAccounts.firstWhere((a) =>
+                  a.name.trim().toLowerCase() == name.toLowerCase() &&
+                  a.category == widget.category);
+            } catch (_) {
+              try {
+                existingAccount = existingAccounts.firstWhere((a) =>
+                    a.name.trim().toLowerCase() == name.toLowerCase());
+              } catch (_) {
+                existingAccount = null;
+              }
+            }
+          }
+
+          if (existingAccount != null) {
+            accountId = existingAccount.id!;
+          } else {
+            final account = AccountModel(
+              name: name,
+              category: widget.category,
+              currencyName: selectedCurrency,
+              phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+              createdDate: DateTime.now(),
+            );
+            accountId = await db.insertAccount(account);
+          }
         }
 
         final transaction = TransactionModel(
           accountId: accountId,
           amount: totalAmount,
           type: _selectedType,
-          category: widget.category,
+          category: _isNewAccount && existingAccount != null ? existingAccount.category : widget.category,
           currencyName: selectedCurrency,
           date: _selectedDate,
           description: _detailsController.text.trim(),
@@ -770,10 +805,39 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                 return option.toLowerCase().contains(textEditingValue.text.trim().toLowerCase());
                               });
                             },
-                            onSelected: (String selection) {
+                            onSelected: (String selection) async {
                               setState(() {
                                 _accountNameController.text = selection;
                               });
+                              try {
+                                final accounts = await _db.getAccounts();
+                                AccountModel? matched;
+                                try {
+                                  matched = accounts.firstWhere((a) =>
+                                      a.name.trim().toLowerCase() == selection.trim().toLowerCase() &&
+                                      a.category == widget.category);
+                                } catch (_) {
+                                  try {
+                                    matched = accounts.firstWhere((a) =>
+                                        a.name.trim().toLowerCase() == selection.trim().toLowerCase());
+                                  } catch (_) {
+                                    matched = null;
+                                  }
+                                }
+                                final actualMatched = matched;
+                                if (actualMatched != null) {
+                                  setState(() {
+                                    _selectedAccount = actualMatched;
+                                    final phone = actualMatched.phone;
+                                    if (phone != null && phone.isNotEmpty) {
+                                      _phoneController.text = phone;
+                                    }
+                                    if (actualMatched.currencyName.isNotEmpty) {
+                                      _selectedCurrency = actualMatched.currencyName;
+                                    }
+                                  });
+                                }
+                              } catch (_) {}
                             },
                             fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
                               return TextFormField(
