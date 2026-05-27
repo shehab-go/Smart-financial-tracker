@@ -81,6 +81,53 @@ class DatabaseHelper {
       GROUP BY t.accountId, t.currencyName
     ''');
 
+    // Repair bug where categories were inserted with NULL type
+    await db.execute('DELETE FROM categories WHERE type IS NULL');
+
+    // Migrate old flat expense categories to be under "فئات اضافية - غير مصنف"
+    final metaKeyUncategorized = 'uncategorized_migration_v1';
+    final uncatRows = await db.query('app_meta', where: 'key = ?', whereArgs: [metaKeyUncategorized]);
+    if (uncatRows.isEmpty || uncatRows.first['value'] != 'true') {
+      final String groupName = 'فئات اضافية - غير مصنف';
+      
+      // 1. Ensure the parent category exists
+      final existingParent = await db.query('categories', where: 'name = ? AND type = ?', whereArgs: [groupName, 'expense']);
+      if (existingParent.isEmpty) {
+        await db.insert('categories', {
+          'name': groupName,
+          'sortOrder': 999,
+          'parentName': null,
+          'iconCodePoint': 0xe14ea, 
+          'colorValue': 0xFF9E9E9E, 
+          'type': 'expense',
+        });
+      }
+
+      // 2. Get all root expense categories
+      final rootCategories = await db.query(
+        'categories', 
+        where: '(parentName IS NULL OR parentName = "") AND type = ? AND name != ?',
+        whereArgs: ['expense', groupName]
+      );
+
+      for (var cat in rootCategories) {
+        final catName = cat['name'] as String;
+        // 3. Check if this root category has any children
+        final children = await db.query('categories', where: 'parentName = ?', whereArgs: [catName]);
+        if (children.isEmpty) {
+          // 4. Update it to be a child of 'فئات اضافية - غير مصنف'
+          await db.update(
+            'categories', 
+            {'parentName': groupName}, 
+            where: 'name = ? AND type = ?', 
+            whereArgs: [catName, 'expense']
+          );
+        }
+      }
+      
+      await db.insert('app_meta', {'key': metaKeyUncategorized, 'value': 'true'}, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
     await db.insert(
       'app_meta',
       {'key': _metaKeyTxTypeNormalizedV1, 'value': 'true'},
@@ -88,6 +135,34 @@ class DatabaseHelper {
     );
   }
 
+
+  Future<void> _ensureCategoriesSeeded(Database db) async {
+    final metaKey = 'categories_v18_seeded';
+    final rows = await db.query('app_meta', where: 'key = ?', whereArgs: [metaKey]);
+    if (rows.isNotEmpty && rows.first['value'] == 'true') return;
+
+    final defaultCategories = CategoryModel.getDefaultCategories();
+    for (int i = 0; i < defaultCategories.length; i++) {
+      final category = defaultCategories[i];
+      final Map<String, dynamic> data = {
+        'name': category.name,
+        'sortOrder': i,
+        'parentName': category.parentName,
+        'iconCodePoint': category.iconCodePoint,
+        'colorValue': category.colorValue,
+        'type': category.type ?? 'expense',
+      };
+      
+      // Update if exists to add icons/colors/type, or insert if new
+      final existing = await db.query('categories', where: 'name = ?', whereArgs: [category.name]);
+      if (existing.isNotEmpty) {
+        await db.update('categories', data, where: 'name = ?', whereArgs: [category.name]);
+      } else {
+        await db.insert('categories', data);
+      }
+    }
+    await db.insert('app_meta', {'key': metaKey, 'value': 'true'}, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
   Future<Database> get database async {
     // Ensure we don't return a closed database instance
     if (_database == null || !(_database!.isOpen)) {
@@ -100,11 +175,12 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'finance_app.db');
     return await openDatabase(
       path,
-      version: 17,
+      version: 18,
       onCreate: _createDatabase,
       onUpgrade: MigrationHelper.migrate,
       onOpen: (db) async {
         await _runPostOpenMaintenance(db);
+        await _ensureCategoriesSeeded(db);
       },
     );
   }
@@ -129,7 +205,11 @@ class DatabaseHelper {
       CREATE TABLE categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE,
-        sortOrder INTEGER DEFAULT 0
+        sortOrder INTEGER DEFAULT 0,
+        parentName TEXT,
+        iconCodePoint INTEGER,
+        colorValue INTEGER,
+        type TEXT
       )
     ''');
 
@@ -436,6 +516,10 @@ class DatabaseHelper {
       id: category.id,
       name: category.name,
       sortOrder: maxOrder + 1,
+      parentName: category.parentName,
+      iconCodePoint: category.iconCodePoint,
+      colorValue: category.colorValue,
+      type: category.type,
     );
     return await db.insert('categories', categoryWithOrder.toMap());
   }

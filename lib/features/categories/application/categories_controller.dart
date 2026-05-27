@@ -3,6 +3,7 @@ import 'package:debit_credit_app/core/models/category.dart';
 import 'package:debit_credit_app/features/categories/application/categories_state.dart';
 import 'package:debit_credit_app/features/categories/domain/categories_repository.dart';
 import 'package:debit_credit_app/core/events/category_events.dart';
+import 'package:debit_credit_app/core/db/database_helper.dart';
 
 class CategoriesController extends ChangeNotifier {
   final CategoriesRepository _repository;
@@ -18,10 +19,19 @@ class CategoriesController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final categories = await _repository.fetchCategories();
+      final dbHelper = DatabaseHelper();
+      final db = await dbHelper.database;
+      // Repair corrupted categories that were inserted with NULL type previously
+      await db.execute('DELETE FROM categories WHERE type IS NULL');
+
+      final allCategories = await _repository.fetchCategories();
+      final generalCats = allCategories.where((c) => c.type == 'general').toList();
+      final expenseCats = allCategories.where((c) => c.type == 'expense').toList();
+
       _state = _state.copyWith(
         isLoading: false,
-        categories: categories,
+        generalCategories: generalCats,
+        expenseCategories: expenseCats,
       );
     } catch (e) {
       _state = _state.copyWith(
@@ -91,23 +101,42 @@ class CategoriesController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> reorderCategories(int oldIndex, int newIndex) async {
+  Future<void> reorderCategories(int oldIndex, int newIndex, String type) async {
     if (oldIndex < newIndex) {
       newIndex -= 1;
     }
     
-    final List<CategoryModel> updatedList = List.from(_state.categories);
+    final bool isGeneral = type == 'general';
+    final List<CategoryModel> updatedList = List.from(isGeneral ? _state.generalCategories : _state.expenseCategories);
     final CategoryModel category = updatedList.removeAt(oldIndex);
     updatedList.insert(newIndex, category);
 
     // Update state locally first for smooth animations
-    _state = _state.copyWith(categories: updatedList);
+    if (isGeneral) {
+      _state = _state.copyWith(generalCategories: updatedList);
+    } else {
+      _state = _state.copyWith(expenseCategories: updatedList);
+    }
     notifyListeners();
 
     try {
       await _repository.updateCategoriesOrder(updatedList);
       
       // Emit category reordered event
+      CategoryEventBus().emit(CategoryEvent(
+        type: CategoryEventType.reordered,
+      ));
+    } catch (e) {
+      _state = _state.copyWith(error: e.toString());
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> updateCategoriesSortOrder(List<CategoryModel> orderedCategories) async {
+    try {
+      await _repository.updateCategoriesOrder(orderedCategories);
+      await loadCategories();
       CategoryEventBus().emit(CategoryEvent(
         type: CategoryEventType.reordered,
       ));

@@ -7,6 +7,8 @@ import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/features/expenses/domain/expense_repository.dart';
 import 'package:debit_credit_app/features/currencies/presentation/widgets/local_currency_picker.dart';
+import 'package:debit_credit_app/features/categories/presentation/screens/categories_screen.dart';
+import '../widgets/category_picker_sheet.dart';
 
 class _ExpenseBalanceAllocationInput {
   int? balanceId;
@@ -37,7 +39,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   bool _isLoading = false;
 
   List<CategoryModel> _categories = [];
-  String _selectedCategory = 'مصروفات';
+  String? _selectedCategory;
   String? _selectedCurrency;
 
   final DatabaseHelper _db = DatabaseHelper();
@@ -117,13 +119,71 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   Future<void> _loadData() async {
     try {
       final db = DatabaseHelper();
-      final categories = await db.getCategories();
+      final allCategories = await db.getCategories();
+      final categories = allCategories.where((c) => c.type == 'expense').toList();
 
       setState(() {
         _categories = categories;
       });
     } catch (e) {
       // Handle error silently
+    }
+  }
+
+  Future<void> _showCategorySheet() async {
+    while (true) {
+      final selected = await showModalBottomSheet<String>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => ExpenseCategoryPickerSheet(
+          categories: _categories,
+          initialCategory: _selectedCategory,
+        ),
+      );
+
+      if (selected != null) {
+        if (selected == '__MANAGE_MAIN__') {
+          // Navigate to CategoriesScreen to add a main category
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const CategoriesScreen(
+                initialTabIndex: 1,
+                autoOpenAddExpenseCategory: true,
+                autoAddForceNoParent: true,
+              ),
+            ),
+          );
+          await _loadData();
+          continue; // re-show sheet
+        } else if (selected.startsWith('__MANAGE:')) {
+          final parent = selected.substring(9);
+          final actualParent = parent == 'عام' ? null : parent;
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CategoriesScreen(
+                initialTabIndex: 1,
+                autoOpenAddExpenseCategory: true,
+                autoAddParentName: actualParent,
+              ),
+            ),
+          );
+          await _loadData();
+          continue; // re-show sheet
+        } else {
+          // Normal selection
+          if (mounted) {
+            setState(() {
+              _selectedCategory = selected;
+            });
+          }
+          break;
+        }
+      } else {
+        break; // user dismissed sheet
+      }
     }
   }
 
@@ -189,6 +249,21 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         const SnackBar(
           content: Text(
             'يرجى اختيار العملة',
+            style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
+          ),
+          backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedCategory == null || _selectedCategory!.isEmpty) {
+      HapticFeedback.vibrate();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'يرجى اختيار الفئة',
             style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
           ),
           backgroundColor: AppTheme.errorColor,
@@ -300,7 +375,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         name: _nameController.text.trim(),
         amount: totalAmount,
         detail: _detailController.text.trim(),
-        category: _selectedCategory,
+        category: _selectedCategory!,
         currency: _selectedCurrency!,
         createdDate: widget.expense?.createdDate ?? DateTime.now(),
         updatedDate: widget.expense != null ? DateTime.now() : null,
@@ -558,54 +633,59 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                           maxLines: 3,
                         ),
                         const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          value: _selectedCategory,
-                          decoration: InputDecoration(
-                            labelText: 'الفئة *',
-                            labelStyle: const TextStyle(
-                              fontSize: 13, 
-                              fontWeight: FontWeight.bold, 
-                              color: AppTheme.textSecondary,
-                              fontFamily: 'ArbFONTSIBMPlexArabicText',
+                        Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: InkWell(
+                            onTap: () async {
+                              HapticFeedback.lightImpact();
+                              FocusScope.of(context).unfocus();
+                              await _showCategorySheet();
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: InputDecorator(
+                              decoration: InputDecoration(
+                                labelText: 'الفئة *',
+                                labelStyle: const TextStyle(
+                                  fontSize: 13, 
+                                  fontWeight: FontWeight.bold, 
+                                  color: AppTheme.textSecondary,
+                                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                ),
+                                filled: true,
+                                fillColor: AppTheme.surfaceColor,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      _selectedCategory ?? 'اختر الفئة',
+                                      style: TextStyle(
+                                        fontSize: 14, 
+                                        color: _selectedCategory == null ? AppTheme.textSecondary : AppTheme.textPrimary, 
+                                        fontWeight: FontWeight.bold, 
+                                        fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                      ),
+                                    ),
+                                  ),
+                                  const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
+                                ],
+                              ),
                             ),
-                            filled: true,
-                            fillColor: AppTheme.surfaceColor,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           ),
-                          style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontFamily: 'ArbFONTSIBMPlexArabicText'),
-                          dropdownColor: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          items: _categories.map((category) {
-                            return DropdownMenuItem<String>(
-                              value: category.name,
-                              child: Text(category.name),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                _selectedCategory = value;
-                              });
-                            }
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'يرجى اختيار الفئة';
-                            }
-                            return null;
-                          },
                         ),
                         const SizedBox(height: 16),
                         if (!_hasExistingAllocations) ...[

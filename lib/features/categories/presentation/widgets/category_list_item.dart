@@ -19,6 +19,15 @@ class CategoryListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color iconColor = category.colorValue != null 
+        ? Color(category.colorValue!) 
+        : AppTheme.primaryColor;
+    final IconData iconData = category.iconCodePoint != null 
+        ? IconData(category.iconCodePoint!, fontFamily: 'MaterialIcons') 
+        : Icons.category_rounded;
+
+    final String displayName = category.name;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -36,19 +45,19 @@ class CategoryListItem extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withOpacity(0.08),
+            color: iconColor.withOpacity(0.12),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Center(
+          child: Center(
             child: Icon(
-              Icons.category_rounded,
-              color: AppTheme.primaryColor,
+              iconData,
+              color: iconColor,
               size: 20,
             ),
           ),
         ),
         title: Text(
-          category.name,
+          displayName,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,

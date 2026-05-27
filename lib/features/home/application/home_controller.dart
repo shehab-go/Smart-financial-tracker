@@ -45,11 +45,12 @@ class HomeController {
 
     final swCategories = Stopwatch()..start();
     final categories = await _repo.fetchCategories();
+    final generalCategories = categories.where((c) => c.type == 'general').toList();
     _debugPerf('HomeController.load.fetchCategories', swCategories);
 
     final List<CategoryModel> updatedCategories = [
       CategoryModel(id: -1, name: 'الكل'),
-      ...categories,
+      ...generalCategories,
     ];
 
     final String effectiveCurrency;

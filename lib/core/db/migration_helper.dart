@@ -13,7 +13,7 @@ import 'database_helper.dart';
 /// - Detailed logging is provided for debugging and monitoring
 class MigrationHelper {
   /// Current database schema version
-  static const int currentVersion = 17;
+  static const int currentVersion = 18;
   
   // Constants for default values and common strings
   static const String defaultCurrencyName = 'محلي';
@@ -109,6 +109,10 @@ class MigrationHelper {
       if (oldVersion < 17) {
         print('[MigrationHelper] Applying migration to version 17');
         await _migrateToV17(db);
+      }
+      if (oldVersion < 18) {
+        print('[MigrationHelper] Applying migration to version 18');
+        await _migrateToV18(db);
       }
       
       print('[MigrationHelper] Database migration completed successfully');
@@ -988,6 +992,29 @@ class MigrationHelper {
       print('[MigrationHelper] Migration to v17 completed successfully');
     } catch (e) {
       print('[MigrationHelper] ERROR in _migrateToV17: $e');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 18: Update categories to support grouped advanced categories
+  static Future<void> _migrateToV18(Database db) async {
+    try {
+      await _addColumnIfNotExists(db, 'categories', 'parentName', 'TEXT');
+      await _addColumnIfNotExists(db, 'categories', 'iconCodePoint', 'INTEGER');
+      await _addColumnIfNotExists(db, 'categories', 'colorValue', 'INTEGER');
+      await _addColumnIfNotExists(db, 'categories', 'type', 'TEXT');
+
+      // Update old defaults just to mark them general/expense
+      await db.update('categories', {'type': 'general'}, where: 'name IN (?, ?, ?, ?)', whereArgs: ['عام', 'مورد', 'عميل', 'أخرى']);
+      await db.update('categories', {'type': 'expense'}, where: 'name IN (?, ?, ?)', whereArgs: ['مصروفات', 'إيجار', 'فواتير']);
+
+      // Instead of relying on category.dart in migration (which can cause circular deps), we will let the app handle inserting defaults 
+      // But actually, it's safer to just insert the new defaults if they don't exist.
+      // We'll leave the new seeding to the category selection screen or let the DB helper insert them.
+      
+      print('[MigrationHelper] Migration to v18 completed successfully');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV18: ');
       rethrow;
     }
   }

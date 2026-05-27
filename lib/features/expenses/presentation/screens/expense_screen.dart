@@ -898,6 +898,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                 ],
               ),
         floatingActionButton: FloatingActionButton(
+          heroTag: 'fab_expense',
           onPressed: _showAddExpenseDialog,
           backgroundColor: AppTheme.primaryColor,
           elevation: 4,

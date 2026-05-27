@@ -9,26 +9,62 @@ import 'package:debit_credit_app/features/categories/presentation/widgets/catego
 import 'package:debit_credit_app/features/categories/presentation/dialogs/category_dialog.dart';
 
 class CategoriesScreen extends StatefulWidget {
-  const CategoriesScreen({super.key});
+  final int initialTabIndex;
+  final bool autoOpenAddExpenseCategory;
+  final bool autoAddForceNoParent;
+  final String? autoAddParentName;
+
+  const CategoriesScreen({
+    super.key,
+    this.initialTabIndex = 0,
+    this.autoOpenAddExpenseCategory = false,
+    this.autoAddForceNoParent = false,
+    this.autoAddParentName,
+  });
 
   @override
   State<CategoriesScreen> createState() => _CategoriesScreenState();
 }
 
-class _CategoriesScreenState extends State<CategoriesScreen> {
+class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerProviderStateMixin {
   late final CategoriesController _controller;
+  late final TabController _tabController;
   bool _hasChanges = false;
+  
+  String? _selectedGeneralParent;
+  String? _selectedExpenseParent;
+  final GlobalKey _generalChipKey = GlobalKey();
+  final GlobalKey _expenseChipKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTabIndex);
     _controller = CategoriesController();
     _controller.addListener(_onStateChanged);
     _controller.loadCategories();
+    
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) HapticFeedback.selectionClick();
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.autoOpenAddExpenseCategory) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (!mounted) return;
+          _showCategoryDialog(
+            defaultType: 'expense',
+            defaultParentName: widget.autoAddParentName,
+            forceNoParent: widget.autoAddForceNoParent,
+          );
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
+    _tabController.dispose();
     _controller.removeListener(_onStateChanged);
     _controller.dispose();
     super.dispose();
@@ -87,70 +123,64 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 },
               ),
             ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(60),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicator: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: AppTheme.primaryColor,
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: AppTheme.textSecondary,
+                  labelStyle: const TextStyle(
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12.5,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
+                  ),
+                  tabs: const [
+                    Tab(text: 'فئات الحسابات'),
+                    Tab(text: 'فئات المصروفات'),
+                  ],
+                ),
+              ),
+            ),
           ),
           body: SafeArea(
             top: false,
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : Column(
+                : TabBarView(
+                    controller: _tabController,
                     children: [
-                      const CategoryHeader(),
-                      Expanded(
-                        child: state.categories.isEmpty
-                            ? const CategoryEmptyState()
-                            : ReorderableListView.builder(
-                                buildDefaultDragHandles: false,
-                                padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 88),
-                                proxyDecorator: (Widget child, int index, Animation<double> animation) {
-                                  return AnimatedBuilder(
-                                    animation: animation,
-                                    builder: (BuildContext context, Widget? child) {
-                                      final double animValue = Curves.easeInOut.transform(animation.value);
-                                      final double scale = 1.0 + (animValue * 0.02);
-                                      return Transform.scale(
-                                        scale: scale,
-                                        child: Opacity(
-                                          opacity: 0.9,
-                                          child: Material(
-                                            color: Colors.transparent,
-                                            elevation: 0,
-                                            child: child,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: child,
-                                  );
-                                },
-                                itemCount: state.categories.length,
-                                onReorder: (oldIndex, newIndex) async {
-                                  HapticFeedback.mediumImpact();
-                                  try {
-                                    await _controller.reorderCategories(oldIndex, newIndex);
-                                    _hasChanges = true;
-                                  } catch (e) {
-                                    _showErrorMessage('خطأ أثناء إعادة الترتيب: $e');
-                                  }
-                                },
-                                itemBuilder: (context, index) {
-                                  final category = state.categories[index];
-                                  return CategoryListItem(
-                                    key: ValueKey(category.id ?? index),
-                                    category: category,
-                                    index: index,
-                                    onEdit: () => _editCategory(category),
-                                    onDelete: () => _deleteCategory(category),
-                                  );
-                                },
-                              ),
-                      ),
+                      // Accounts tab
+                      _buildCategoryList(state.generalCategories, 'general'),
+                      // Expenses tab
+                      _buildCategoryList(state.expenseCategories, 'expense'),
                     ],
                   ),
           ),
           floatingActionButton: FloatingActionButton(
+            heroTag: 'fab_categories',
             onPressed: () {
               HapticFeedback.mediumImpact();
-              _addCategory();
+              final defaultType = _tabController.index == 0 ? 'general' : 'expense';
+              String? activeParent = _tabController.index == 0 ? _selectedGeneralParent : _selectedExpenseParent;
+              _showCategoryDialog(defaultType: defaultType, defaultParentName: activeParent);
             },
             backgroundColor: Colors.white,
             foregroundColor: AppTheme.primaryColor,
@@ -172,29 +202,300 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     );
   }
 
+  Widget _buildCategoryList(List<CategoryModel> categories, String type) {
+    // 1. Get Main Categories (categories with no parent)
+    final rootCategories = categories.where((c) => c.parentName == null || c.parentName!.isEmpty).map((c) => c.name).toSet();
+    
+    // Also include any parentNames that exist in subcategories just in case
+    final explicitParentNames = categories.map((c) => c.parentName).where((p) => p != null && p.isNotEmpty).cast<String>().toSet();
+    
+    final parentNames = {...rootCategories, ...explicitParentNames}.toList();
+    parentNames.sort();
+
+    // 2. Determine selected parent
+    String? selectedParent = type == 'general' ? _selectedGeneralParent : _selectedExpenseParent;
+    
+    if (selectedParent == null && parentNames.isNotEmpty) {
+      selectedParent = parentNames.first;
+    } else if (selectedParent != null && !parentNames.contains(selectedParent) && parentNames.isNotEmpty) {
+      selectedParent = parentNames.first;
+    } else if (parentNames.isEmpty) {
+      selectedParent = null;
+    }
+    
+    // 3. Filter list to show subcategories and the parent itself
+    List<CategoryModel> filteredCategories = [];
+    if (selectedParent != null) {
+      filteredCategories = categories.where((c) => 
+        c.parentName == selectedParent || 
+        (c.name == selectedParent && (c.parentName == null || c.parentName!.isEmpty))
+      ).toList();
+    } else {
+      // If no parents exist at all, just show everything (fallback)
+      filteredCategories = categories;
+    }
+
+    if (type == 'general') {
+      return categories.isEmpty
+          ? const CategoryEmptyState()
+          : ReorderableListView.builder(
+              buildDefaultDragHandles: false,
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 88),
+              proxyDecorator: (Widget child, int index, Animation<double> animation) {
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (BuildContext context, Widget? child) {
+                    final double animValue = Curves.easeInOut.transform(animation.value);
+                    final double scale = 1.0 + (animValue * 0.02);
+                    return Transform.scale(
+                      scale: scale,
+                      child: Opacity(
+                        opacity: 0.9,
+                        child: Material(
+                          color: Colors.transparent,
+                          elevation: 0,
+                          child: child,
+                        ),
+                      ),
+                    );
+                  },
+                  child: child,
+                );
+              },
+              itemCount: categories.length,
+              onReorder: (oldIndex, newIndex) async {
+                HapticFeedback.mediumImpact();
+                try {
+                  await _controller.reorderCategories(oldIndex, newIndex, type);
+                  _hasChanges = true;
+                } catch (e) {
+                  _showErrorMessage('خطأ أثناء إعادة الترتيب: $e');
+                }
+              },
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                return CategoryListItem(
+                  key: ValueKey(category.id ?? index),
+                  category: category,
+                  index: index,
+                  onEdit: () => _editCategory(category),
+                  onDelete: () => _deleteCategory(category),
+                );
+              },
+            );
+    }
+
+    return Column(
+      children: [
+        // Horizontal scroll for parents
+        Container(
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(parentNames.length + 1, (index) {
+                if (index == parentNames.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0, top: 12, bottom: 12),
+                    child: ActionChip(
+                      label: const Icon(Icons.add_circle_outline_rounded, size: 20, color: AppTheme.primaryColor),
+                      backgroundColor: Colors.white,
+                      side: BorderSide(color: AppTheme.primaryColor.withOpacity(0.5), width: 1),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        _showCategoryDialog(defaultType: type, forceNoParent: true);
+                      },
+                    ),
+                  );
+                }
+                final parent = parentNames[index];
+                final isSelected = parent == selectedParent;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0, top: 12, bottom: 12),
+                  child: ChoiceChip(
+                    key: isSelected ? (type == 'general' ? _generalChipKey : _expenseChipKey) : null,
+                    label: Text(parent, style: TextStyle(
+                      color: isSelected ? Colors.white : AppTheme.textPrimary,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontFamily: 'ArbFONTSIBMPlexArabicText',
+                    )),
+                    selected: isSelected,
+                    selectedColor: AppTheme.primaryColor,
+                    backgroundColor: Colors.white,
+                    side: BorderSide(
+                      color: isSelected ? AppTheme.primaryColor : AppTheme.dividerColor,
+                      width: 1,
+                    ),
+                    showCheckmark: false,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    onSelected: (selected) {
+                      if (selected) {
+                        HapticFeedback.lightImpact();
+                        setState(() {
+                          if (type == 'general') {
+                            _selectedGeneralParent = parent;
+                          } else {
+                            _selectedExpenseParent = parent;
+                          }
+                        });
+                      }
+                    },
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
+        
+        // List of categories for the selected parent
+        Expanded(
+          child: filteredCategories.isEmpty
+              ? const CategoryEmptyState()
+              : ReorderableListView.builder(
+                  buildDefaultDragHandles: false,
+                  padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 88),
+                  proxyDecorator: (Widget child, int index, Animation<double> animation) {
+                    return AnimatedBuilder(
+                      animation: animation,
+                      builder: (BuildContext context, Widget? child) {
+                        final double animValue = Curves.easeInOut.transform(animation.value);
+                        final double scale = 1.0 + (animValue * 0.02);
+                        return Transform.scale(
+                          scale: scale,
+                          child: Opacity(
+                            opacity: 0.9,
+                            child: Material(
+                              color: Colors.transparent,
+                              elevation: 0,
+                              child: child,
+                            ),
+                          ),
+                        );
+                      },
+                      child: child,
+                    );
+                  },
+                  itemCount: filteredCategories.length,
+                  onReorder: (oldIndex, newIndex) async {
+                    HapticFeedback.mediumImpact();
+                    try {
+                      await _controller.reorderCategories(oldIndex, newIndex, type);
+                      _hasChanges = true;
+                    } catch (e) {
+                      _showErrorMessage('خطأ أثناء إعادة الترتيب: $e');
+                    }
+                  },
+                  itemBuilder: (context, index) {
+                    final category = filteredCategories[index];
+                    return CategoryListItem(
+                      key: ValueKey(category.id ?? index),
+                      category: category,
+                      index: index,
+                      onEdit: () => _editCategory(category),
+                      onDelete: () => _deleteCategory(category),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
   void _addCategory() => _showCategoryDialog();
 
   void _editCategory(CategoryModel category) => _showCategoryDialog(category: category);
 
-  Future<void> _showCategoryDialog({CategoryModel? category}) async {
-    final result = await showDialog<CategoryModel>(
+  Future<void> _showCategoryDialog({CategoryModel? category, String? defaultType, String? defaultParentName, bool forceNoParent = false}) async {
+    final result = await showDialog<dynamic>(
       context: context,
-      builder: (context) => CategoryDialog(category: category),
+      builder: (context) => CategoryDialog(
+        category: category,
+        defaultType: defaultType,
+        defaultParentName: defaultParentName,
+        forceNoParent: forceNoParent,
+      ),
     );
 
     if (result != null && mounted) {
       try {
-        if (category != null) {
-          await _controller.updateCategory(result);
+        if (result is List<CategoryModel>) {
+          final mainCat = result[0];
+          final subCat = result[1];
+          await _controller.addCategory(mainCat);
+          await _controller.addCategory(subCat);
           _hasChanges = true;
-          _showSuccessMessage('تم تعديل الفئة بنجاح');
-        } else {
-          await _controller.addCategory(result);
-          _hasChanges = true;
+
+          setState(() {
+            if (mainCat.type == 'general') {
+              _selectedGeneralParent = mainCat.name;
+            } else {
+              _selectedExpenseParent = mainCat.name;
+            }
+          });
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final key = mainCat.type == 'general' ? _generalChipKey : _expenseChipKey;
+            if (key.currentContext != null) {
+              Scrollable.ensureVisible(
+                key.currentContext!,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOutCubic,
+                alignment: 0.5,
+              );
+            }
+          });
+          
           _showSuccessMessage('تم إضافة الفئة بنجاح');
+        } else if (result is CategoryModel) {
+          if (category != null) {
+            await _controller.updateCategory(result);
+            _hasChanges = true;
+            _showSuccessMessage('تم تعديل الفئة بنجاح');
+          } else {
+            await _controller.addCategory(result);
+            _hasChanges = true;
+            
+            if (result.parentName != null && result.parentName!.isNotEmpty) {
+              setState(() {
+                if (result.type == 'general') {
+                  _selectedGeneralParent = result.parentName;
+                } else {
+                  _selectedExpenseParent = result.parentName;
+                }
+              });
+            } else if (result.parentName == null || result.parentName!.isEmpty) {
+              setState(() {
+                if (result.type == 'general') {
+                  _selectedGeneralParent = result.name;
+                } else {
+                  _selectedExpenseParent = result.name;
+                }
+              });
+              
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final key = result.type == 'general' ? _generalChipKey : _expenseChipKey;
+                if (key.currentContext != null) {
+                  Scrollable.ensureVisible(
+                    key.currentContext!,
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeOutCubic,
+                    alignment: 0.5,
+                  );
+                }
+              });
+            }
+            
+            _showSuccessMessage('تم إضافة الفئة بنجاح');
+          }
         }
       } catch (e) {
-        _showErrorMessage('خطأ: $e');
+        if (e.toString().contains('UNIQUE constraint failed')) {
+          _showErrorMessage('عذراً، هذا الاسم موجود مسبقاً. يرجى اختيار اسم آخر.');
+        } else {
+          _showErrorMessage('خطأ: $e');
+        }
       }
     }
   }

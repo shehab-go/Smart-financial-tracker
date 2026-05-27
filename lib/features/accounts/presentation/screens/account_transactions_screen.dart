@@ -573,12 +573,600 @@ class AccountTransactionsScreen extends StatefulWidget {
 }
 
 class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
+
+  String _formatDate(DateTime date) {
+    return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildDatePickerTheme(BuildContext context, Widget? child) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: AppTheme.primaryColor,
+            textStyle: const TextStyle(
+              fontFamily: 'Cairo',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+      child: Localizations.override(
+        context: context,
+        locale: const Locale('ar'),
+        child: child!,
+      ),
+    );
+  }
+
+  Future<void> _selectCustomDateRange(BuildContext context, StateSetter setModalState) async {
+    _customStartDate ??= DateTime.now();
+    _customEndDate ??= DateTime.now();
+
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDateRange: DateTimeRange(start: _customStartDate!, end: _customEndDate!),
+      locale: const Locale('ar'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            appBarTheme: const AppBarTheme(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              iconTheme: IconThemeData(color: Colors.white),
+              actionsIconTheme: IconThemeData(color: Colors.white),
+              titleTextStyle: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          child: Localizations.override(
+            context: context,
+            locale: const Locale('ar'),
+            child: child!,
+          ),
+        );
+      },
+    );
+
+    if (picked != null) {
+      setModalState(() {
+        _customStartDate = picked.start;
+        _customEndDate = picked.end;
+        _dateFilter = 'custom';
+      });
+      setState(() {
+        _customStartDate = picked.start;
+        _customEndDate = picked.end;
+        _dateFilter = 'custom';
+        _recalculateTotals();
+      });
+    }
+  }
+
+  Widget _buildSortChip({
+    required StateSetter setModalState,
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
+    final isSelected = _sortBy == value;
+    return ChoiceChip(
+      showCheckmark: false,
+      avatar: Icon(
+        icon,
+        size: 16,
+        color: isSelected ? Colors.white : AppTheme.textSecondary,
+      ),
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected) {
+          HapticFeedback.selectionClick();
+          setModalState(() {
+            _sortBy = value;
+          });
+          setState(() {
+            _sortBy = value;
+            _recalculateTotals();
+          });
+        }
+      },
+      selectedColor: AppTheme.primaryColor,
+      backgroundColor: AppTheme.surfaceColor,
+      labelStyle: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: isSelected ? Colors.white : AppTheme.textPrimary,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isSelected ? AppTheme.primaryColor : AppTheme.dividerColor.withOpacity(0.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateFilterChip({
+    required StateSetter setModalState,
+    required String label,
+    required String value,
+  }) {
+    final isSelected = _dateFilter == value;
+    return ChoiceChip(
+      showCheckmark: false,
+      label: Center(
+        child: Text(label),
+      ),
+      selected: isSelected,
+      onSelected: (selected) async {
+        HapticFeedback.selectionClick();
+        if (value == 'custom') {
+          await _selectCustomDateRange(context, setModalState);
+        } else if (selected) {
+          setModalState(() {
+            _dateFilter = value;
+          });
+          setState(() {
+            _dateFilter = value;
+            _recalculateTotals();
+          });
+        }
+      },
+      selectedColor: AppTheme.primaryColor,
+      backgroundColor: AppTheme.surfaceColor,
+      labelStyle: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: isSelected ? Colors.white : AppTheme.textPrimary,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isSelected ? AppTheme.primaryColor : AppTheme.dividerColor.withOpacity(0.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required StateSetter setModalState,
+    required String label,
+    required String value,
+  }) {
+    final isSelected = _filterBy == value;
+    return ChoiceChip(
+      showCheckmark: false,
+      label: Center(
+        child: Text(label),
+      ),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected) {
+          HapticFeedback.selectionClick();
+          setModalState(() {
+            _filterBy = value;
+          });
+          setState(() {
+            _filterBy = value;
+            _recalculateTotals();
+          });
+        }
+      },
+      selectedColor: AppTheme.primaryColor,
+      backgroundColor: AppTheme.surfaceColor,
+      labelStyle: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: isSelected ? Colors.white : AppTheme.textPrimary,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isSelected ? AppTheme.primaryColor : AppTheme.dividerColor.withOpacity(0.5),
+        ),
+      ),
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppTheme.dividerColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withOpacity(0.06),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.tune_rounded,
+                                color: AppTheme.primaryColor,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'تصفية وترتيب',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: AppTheme.textTertiary),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'الترتيب حسب',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _buildSortChip(
+                                  setModalState: setModalState,
+                                  label: 'الأحدث',
+                                  value: 'desc',
+                                  icon: Icons.history_rounded,
+                                ),
+                                _buildSortChip(
+                                  setModalState: setModalState,
+                                  label: 'الأقدم',
+                                  value: 'asc',
+                                  icon: Icons.history_toggle_off_rounded,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            const Text(
+                              'تصفية حسب الحالة',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildFilterChip(
+                                    setModalState: setModalState,
+                                    label: 'الكل',
+                                    value: 'all',
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildFilterChip(
+                                    setModalState: setModalState,
+                                    label: 'ديون لك',
+                                    value: 'credit_only',
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildFilterChip(
+                                    setModalState: setModalState,
+                                    label: 'ديون عليك',
+                                    value: 'debit_only',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            const Text(
+                              'تصفية حسب التاريخ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _buildDateFilterChip(
+                                  setModalState: setModalState,
+                                  label: 'الكل',
+                                  value: 'all',
+                                ),
+                                _buildDateFilterChip(
+                                  setModalState: setModalState,
+                                  label: 'اليوم',
+                                  value: 'today',
+                                ),
+                                _buildDateFilterChip(
+                                  setModalState: setModalState,
+                                  label: 'آخر 7 أيام',
+                                  value: 'week',
+                                ),
+                                _buildDateFilterChip(
+                                  setModalState: setModalState,
+                                  label: 'آخر 30 يوم',
+                                  value: 'month',
+                                ),
+                                _buildDateFilterChip(
+                                  setModalState: setModalState,
+                                  label: 'مخصص 📅',
+                                  value: 'custom',
+                                ),
+                              ],
+                            ),
+                            if (_dateFilter == 'custom') ...[
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () async {
+                                        final DateTime? picked = await showDatePicker(
+                                          context: context,
+                                          initialDate: _customStartDate ?? DateTime.now(),
+                                          firstDate: DateTime(2020),
+                                          lastDate: _customEndDate ?? DateTime.now().add(const Duration(days: 365)),
+                                          locale: const Locale('ar'),
+                                          builder: (context, child) => _buildDatePickerTheme(context, child),
+                                        );
+                                        if (picked != null) {
+                                          setModalState(() {
+                                            _customStartDate = picked;
+                                          });
+                                          setState(() {
+                                            _customStartDate = picked;
+                                            _recalculateTotals();
+                                          });
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.surfaceColor,
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(
+                                            color: _customStartDate != null 
+                                                ? AppTheme.primaryColor.withOpacity(0.3) 
+                                                : AppTheme.dividerColor.withOpacity(0.5),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'من تاريخ',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: AppTheme.textSecondary,
+                                                fontWeight: FontWeight.bold,
+                                                fontFamily: 'Cairo',
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                const Icon(Icons.calendar_today_rounded, size: 14, color: AppTheme.primaryColor),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  _customStartDate != null ? _formatDate(_customStartDate!) : 'اختر تاريخ',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontFamily: 'Cairo',
+                                                    color: _customStartDate != null ? AppTheme.textPrimary : AppTheme.textTertiary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () async {
+                                        final DateTime? picked = await showDatePicker(
+                                          context: context,
+                                          initialDate: _customEndDate ?? DateTime.now(),
+                                          firstDate: _customStartDate ?? DateTime(2020),
+                                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                                          locale: const Locale('ar'),
+                                          builder: (context, child) => _buildDatePickerTheme(context, child),
+                                        );
+                                        if (picked != null) {
+                                          setModalState(() {
+                                            _customEndDate = picked;
+                                          });
+                                          setState(() {
+                                            _customEndDate = picked;
+                                            _recalculateTotals();
+                                          });
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.surfaceColor,
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(
+                                            color: _customEndDate != null 
+                                                ? AppTheme.primaryColor.withOpacity(0.3) 
+                                                : AppTheme.dividerColor.withOpacity(0.5),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'إلى تاريخ',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: AppTheme.textSecondary,
+                                                fontWeight: FontWeight.bold,
+                                                fontFamily: 'Cairo',
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                const Icon(Icons.event_rounded, size: 14, color: AppTheme.primaryColor),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  _customEndDate != null ? _formatDate(_customEndDate!) : 'اختر تاريخ',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontFamily: 'Cairo',
+                                                    color: _customEndDate != null ? AppTheme.textPrimary : AppTheme.textTertiary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Center(
+                                child: TextButton.icon(
+                                  onPressed: () => _selectCustomDateRange(context, setModalState),
+                                  icon: const Icon(Icons.date_range_rounded, size: 14),
+                                  label: const Text(
+                                    'تعديل النطاق بالكامل',
+                                    style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 11),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppTheme.primaryColor,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    backgroundColor: AppTheme.primaryColor.withOpacity(0.06),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          'تطبيق التصفية',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   late AccountModel _currentAccount;
   bool _accountUpdated = false;
   final ScrollController _scrollController = ScrollController();
   Timer? _highlightTimer;
   int? _currentHighlightId;
   String _selectedCurrencyFilter = 'all';
+
+  String _filterBy = 'all'; // 'all', 'credit_only', 'debit_only'
+  String _dateFilter = 'all'; // 'all', 'today', 'week', 'month', 'custom'
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
+  String _sortBy = 'desc'; // 'desc', 'asc'
+
   List<String> _availableCurrencies = const <String>[];
   String _localCurrencyName = 'محلي';
 
@@ -656,17 +1244,57 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   }
 
   List<TransactionModel> get _filteredTransactions {
-    if (_selectedCurrencyFilter == 'all') return _transactions;
-    final filter = _selectedCurrencyFilter.trim();
-    return _transactions
-        .where((t) {
-          final tCur = t.currencyName.trim();
-          if (filter == _localCurrencyName) {
-            return tCur == 'محلي' || tCur == _localCurrencyName;
-          }
-          return tCur == filter;
-        })
-        .toList();
+    List<TransactionModel> list = _transactions;
+
+    if (_selectedCurrencyFilter != 'all') {
+      final filter = _selectedCurrencyFilter.trim();
+      list = list.where((t) {
+        final tCur = t.currencyName.trim();
+        if (filter == _localCurrencyName) {
+          return tCur == 'محلي' || tCur == _localCurrencyName;
+        }
+        return tCur == filter;
+      }).toList();
+    }
+
+    if (_filterBy == 'credit_only') {
+      list = list.where((t) => t.type == 'credit').toList();
+    } else if (_filterBy == 'debit_only') {
+      list = list.where((t) => t.type == 'debit').toList();
+    }
+
+    final now = DateTime.now();
+    if (_dateFilter == 'today') {
+      list = list.where((t) {
+        final date = t.date;
+        return date.year == now.year && date.month == now.month && date.day == now.day;
+      }).toList();
+    } else if (_dateFilter == 'week') {
+      final weekAgo = now.subtract(const Duration(days: 7));
+      list = list.where((t) => t.date.isAfter(weekAgo)).toList();
+    } else if (_dateFilter == 'month') {
+      final monthAgo = now.subtract(const Duration(days: 30));
+      list = list.where((t) => t.date.isAfter(monthAgo)).toList();
+    } else if (_dateFilter == 'custom' && _customStartDate != null && _customEndDate != null) {
+      final start = DateTime(_customStartDate!.year, _customStartDate!.month, _customStartDate!.day);
+      final end = DateTime(_customEndDate!.year, _customEndDate!.month, _customEndDate!.day, 23, 59, 59);
+      list = list.where((t) {
+        final date = t.date;
+        return date.isAfter(start) && date.isBefore(end);
+      }).toList();
+    }
+
+    list.sort((a, b) {
+      final dateA = a.date;
+      final dateB = b.date;
+      if (_sortBy == 'asc') {
+        return dateA.compareTo(dateB);
+      } else {
+        return dateB.compareTo(dateA);
+      }
+    });
+
+    return list;
   }
 
   void _recalculateTotals() {
@@ -2043,11 +2671,91 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                             decoration: const BoxDecoration(),
-                            child: const Row(
+                            child: Column(
                               children: [
-                                Expanded(flex: 4, child: Text('تفاصيل', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary))),
-                                Expanded(flex: 2, child: Center(child: Text('لك', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)))),
-                                Expanded(flex: 2, child: Center(child: Text('عليك', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)))),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 3,
+                                          height: 14,
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primaryColor,
+                                            borderRadius: BorderRadius.circular(2),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'قائمة المعاملات',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () => _showFilterBottomSheet(context),
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: (_sortBy != 'desc' || _filterBy != 'all' || _dateFilter != 'all') 
+                                                ? AppTheme.primaryColor.withOpacity(0.08) 
+                                                : AppTheme.surfaceColor,
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: (_sortBy != 'desc' || _filterBy != 'all' || _dateFilter != 'all') 
+                                                  ? AppTheme.primaryColor.withOpacity(0.3) 
+                                                  : AppTheme.dividerColor.withOpacity(0.5),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.tune_rounded,
+                                                size: 14,
+                                                color: (_sortBy != 'desc' || _filterBy != 'all' || _dateFilter != 'all') 
+                                                    ? AppTheme.primaryColor 
+                                                    : AppTheme.textSecondary,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'تصفية',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: (_sortBy != 'desc' || _filterBy != 'all' || _dateFilter != 'all') 
+                                                      ? AppTheme.primaryColor 
+                                                      : AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                              if (_sortBy != 'desc' || _filterBy != 'all' || _dateFilter != 'all') ...[
+                                                const SizedBox(width: 4),
+                                                Container(
+                                                  width: 6,
+                                                  height: 6,
+                                                  decoration: const BoxDecoration(
+                                                    color: AppTheme.primaryColor,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
                               ],
                             ),
                           ),
