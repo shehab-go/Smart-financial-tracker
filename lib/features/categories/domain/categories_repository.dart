@@ -38,4 +38,9 @@ class CategoriesRepository {
       }
     });
   }
+
+  Future<void> repairCategories() async {
+    final db = await _db.database;
+    await db.execute("UPDATE categories SET type = 'general' WHERE type IS NULL");
+  }
 }

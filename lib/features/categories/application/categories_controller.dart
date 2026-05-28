@@ -19,10 +19,8 @@ class CategoriesController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final dbHelper = DatabaseHelper();
-      final db = await dbHelper.database;
       // Repair corrupted categories that were inserted with NULL type previously
-      await db.execute('DELETE FROM categories WHERE type IS NULL');
+      await _repository.repairCategories();
 
       final allCategories = await _repository.fetchCategories();
       final generalCats = allCategories.where((c) => c.type == 'general').toList();

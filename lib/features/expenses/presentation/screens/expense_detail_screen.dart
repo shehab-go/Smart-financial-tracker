@@ -427,18 +427,31 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
   }
   
   Widget _buildCategoryDropdown() {
+    final hasSelected = _categories.any((c) => c.name == _selectedCategory);
+    final dropdownItems = _categories.map((category) {
+      return DropdownMenuItem<String>(
+        value: category.name,
+        child: Text(category.name),
+      );
+    }).toList();
+
+    if (_selectedCategory != null && !hasSelected) {
+      dropdownItems.insert(
+        0,
+        DropdownMenuItem<String>(
+          value: _selectedCategory,
+          child: Text(_selectedCategory!),
+        ),
+      );
+    }
+
     return DropdownButtonFormField<String>(
       value: _selectedCategory,
       decoration: const InputDecoration(
         border: OutlineInputBorder(),
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
-      items: _categories.map((category) {
-        return DropdownMenuItem<String>(
-          value: category.name,
-          child: Text(category.name),
-        );
-      }).toList(),
+      items: dropdownItems,
       onChanged: (value) {
         setState(() {
           _selectedCategory = value;
@@ -454,18 +467,31 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
   }
   
   Widget _buildCurrencyDropdown() {
+    final hasSelected = _currencies.any((c) => c.name == _selectedCurrency);
+    final dropdownItems = _currencies.map((currency) {
+      return DropdownMenuItem<String>(
+        value: currency.name,
+        child: Text(currency.name),
+      );
+    }).toList();
+
+    if (_selectedCurrency != null && !hasSelected) {
+      dropdownItems.insert(
+        0,
+        DropdownMenuItem<String>(
+          value: _selectedCurrency,
+          child: Text(_selectedCurrency!),
+        ),
+      );
+    }
+
     return DropdownButtonFormField<String>(
       value: _selectedCurrency,
       decoration: const InputDecoration(
         border: OutlineInputBorder(),
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
-      items: _currencies.map((currency) {
-        return DropdownMenuItem<String>(
-          value: currency.name,
-          child: Text(currency.name),
-        );
-      }).toList(),
+      items: dropdownItems,
       onChanged: (value) {
         setState(() {
           _selectedCurrency = value;

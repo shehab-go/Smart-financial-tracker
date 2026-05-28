@@ -81,8 +81,8 @@ class DatabaseHelper {
       GROUP BY t.accountId, t.currencyName
     ''');
 
-    // Repair bug where categories were inserted with NULL type
-    await db.execute('DELETE FROM categories WHERE type IS NULL');
+    // Repair bug where categories were inserted with NULL type by updating them to 'general'
+    await db.execute("UPDATE categories SET type = 'general' WHERE type IS NULL");
 
     // Migrate old flat expense categories to be under "فئات اضافية - غير مصنف"
     final metaKeyUncategorized = 'uncategorized_migration_v1';
@@ -482,9 +482,7 @@ class DatabaseHelper {
     final defaultCategories = CategoryModel.getDefaultCategories();
     for (int i = 0; i < defaultCategories.length; i++) {
       final category = defaultCategories[i];
-      final categoryWithOrder = CategoryModel(
-        id: category.id,
-        name: category.name,
+      final categoryWithOrder = category.copyWith(
         sortOrder: i,
       );
       await db.insert('categories', categoryWithOrder.toMap());

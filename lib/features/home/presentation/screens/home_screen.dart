@@ -430,6 +430,7 @@ class HomeScreenState extends State<HomeScreen> {
             ),
       floatingActionButton: _state.categories.isNotEmpty
           ? FloatingActionButton(
+              heroTag: 'fab_home',
               onPressed: () => _navigateToCreateAccount(_state.categories[_selectedCategoryIndex].name),
               backgroundColor: AppTheme.primaryColor,
               elevation: 2,
@@ -1035,6 +1036,7 @@ class CategoryAccountsTab extends StatefulWidget {
 
 class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
   late ScrollController _scrollController;
+  bool _isSnapping = false;
 
   // Local filter states
   String _sortBy = 'last_transaction'; // 'last_transaction', 'name', 'credit_desc', 'debit_desc', 'recent'
@@ -1104,18 +1106,35 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
   /// after the user lifts their finger, so it never stays mid-animation.
   void _snapCard() {
     if (!_scrollController.hasClients) return;
+    if (_isSnapping) return;
     final double maxScroll = _maxScrollDistance;
     if (maxScroll <= 0.0) return;
 
     final double offset = _scrollController.offset;
-    if (offset <= 0.0 || offset >= maxScroll) return;
+    
+    // Clamp the max scroll distance to the maximum scrollable extent of the list
+    // to prevent infinite loops if the list is too short to scroll to maxScroll.
+    final double maxScrollExtent = _scrollController.position.maxScrollExtent;
+    final double effectiveMaxScroll = maxScroll.clamp(0.0, maxScrollExtent);
+    
+    if (effectiveMaxScroll <= 0.0) return;
+    if (offset <= 0.0 || offset >= effectiveMaxScroll) return;
 
-    final double targetOffset = offset >= (maxScroll / 2) ? maxScroll : 0.0;
+    final double targetOffset = offset >= (effectiveMaxScroll / 2) ? effectiveMaxScroll : 0.0;
+    
+    // Avoid triggering animation if already extremely close to targetOffset
+    if ((offset - targetOffset).abs() < 0.1) return;
+
+    _isSnapping = true;
     _scrollController.animateTo(
       targetOffset,
       duration: const Duration(milliseconds: 380),
       curve: Curves.easeInOutCubic,
-    );
+    ).then((_) {
+      _isSnapping = false;
+    }).catchError((_) {
+      _isSnapping = false;
+    });
   }
 
   List<AccountModel> get _processedAccounts {

@@ -6,9 +6,9 @@ import 'package:debit_credit_app/features/categories/application/categories_cont
 
 class MockCategoriesRepository extends CategoriesRepository {
   List<CategoryModel> categories = [
-    CategoryModel(id: 1, name: 'Category 1', sortOrder: 0),
-    CategoryModel(id: 2, name: 'Category 2', sortOrder: 1),
-    CategoryModel(id: 3, name: 'Category 3', sortOrder: 2),
+    CategoryModel(id: 1, name: 'Category 1', sortOrder: 0, type: 'general'),
+    CategoryModel(id: 2, name: 'Category 2', sortOrder: 1, type: 'general'),
+    CategoryModel(id: 3, name: 'Category 3', sortOrder: 2, type: 'general'),
   ];
   
   bool updateOrderCalled = false;
@@ -25,6 +25,11 @@ class MockCategoriesRepository extends CategoriesRepository {
     updatedOrderList = categoriesList;
     categories = categoriesList;
   }
+
+  @override
+  Future<void> repairCategories() async {
+    // No-op for testing reordering behavior
+  }
 }
 
 void main() {
@@ -39,21 +44,21 @@ void main() {
 
     test('loadCategories loads list sorted by sortOrder', () async {
       await controller.loadCategories();
-      expect(controller.state.categories.length, 3);
-      expect(controller.state.categories[0].name, 'Category 1');
-      expect(controller.state.categories[1].name, 'Category 2');
-      expect(controller.state.categories[2].name, 'Category 3');
+      expect(controller.state.generalCategories.length, 3);
+      expect(controller.state.generalCategories[0].name, 'Category 1');
+      expect(controller.state.generalCategories[1].name, 'Category 2');
+      expect(controller.state.generalCategories[2].name, 'Category 3');
     });
 
     test('reorderCategories moves item down (oldIndex < newIndex)', () async {
       await controller.loadCategories();
       
       // Move 'Category 1' (index 0) to after 'Category 2' (newIndex will be 2)
-      await controller.reorderCategories(0, 2);
+      await controller.reorderCategories(0, 2, 'general');
 
-      expect(controller.state.categories[0].name, 'Category 2');
-      expect(controller.state.categories[1].name, 'Category 1');
-      expect(controller.state.categories[2].name, 'Category 3');
+      expect(controller.state.generalCategories[0].name, 'Category 2');
+      expect(controller.state.generalCategories[1].name, 'Category 1');
+      expect(controller.state.generalCategories[2].name, 'Category 3');
 
       expect(repository.updateOrderCalled, true);
       expect(repository.updatedOrderList![0].name, 'Category 2');
@@ -65,11 +70,11 @@ void main() {
       await controller.loadCategories();
       
       // Move 'Category 3' (index 2) to index 0. (newIndex = 0, oldIndex = 2)
-      await controller.reorderCategories(2, 0);
+      await controller.reorderCategories(2, 0, 'general');
 
-      expect(controller.state.categories[0].name, 'Category 3');
-      expect(controller.state.categories[1].name, 'Category 1');
-      expect(controller.state.categories[2].name, 'Category 2');
+      expect(controller.state.generalCategories[0].name, 'Category 3');
+      expect(controller.state.generalCategories[1].name, 'Category 1');
+      expect(controller.state.generalCategories[2].name, 'Category 2');
 
       expect(repository.updateOrderCalled, true);
     });
@@ -82,7 +87,7 @@ void main() {
         emittedEvent = event;
       });
 
-      await controller.reorderCategories(0, 2);
+      await controller.reorderCategories(0, 2, 'general');
 
       await Future.delayed(Duration.zero);
 
