@@ -1859,8 +1859,10 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
 
     return NotificationListener<ScrollEndNotification>(
       onNotification: (notification) {
-        // Snap the stats card to fully open or fully closed on scroll settle
-        _snapCard();
+        if (notification.depth == 0) {
+          // Snap the stats card to fully open or fully closed on scroll settle
+          _snapCard();
+        }
         return false; // let the notification bubble up
       },
       child: CustomScrollView(

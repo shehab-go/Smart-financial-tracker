@@ -106,7 +106,7 @@ class DatabaseHelper {
       // 2. Get all root expense categories
       final rootCategories = await db.query(
         'categories', 
-        where: '(parentName IS NULL OR parentName = "") AND type = ? AND name != ?',
+        where: "(parentName IS NULL OR parentName = '') AND type = ? AND name != ?",
         whereArgs: ['expense', groupName]
       );
 
