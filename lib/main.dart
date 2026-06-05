@@ -17,7 +17,7 @@ void main() async {
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark, // Dark status bar icons on light background
     statusBarBrightness: Brightness.light, // For iOS: Dark status bar icons
-    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.white,
     systemNavigationBarIconBrightness: Brightness.dark, // Dark navigation icons
   ));
   
