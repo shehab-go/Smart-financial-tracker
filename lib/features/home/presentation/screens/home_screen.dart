@@ -1037,6 +1037,7 @@ class CategoryAccountsTab extends StatefulWidget {
 class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
   late ScrollController _scrollController;
   bool _isSnapping = false;
+  bool _isProgrammaticScroll = false;
 
   // Local filter states
   String _sortBy = 'last_transaction'; // 'last_transaction', 'name', 'credit_desc', 'debit_desc', 'recent'
@@ -1126,14 +1127,16 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
     if ((offset - targetOffset).abs() < 0.1) return;
 
     _isSnapping = true;
+    _isProgrammaticScroll = true;
     _scrollController.animateTo(
       targetOffset,
       duration: const Duration(milliseconds: 380),
       curve: Curves.easeInOutCubic,
-    ).then((_) {
+    ).whenComplete(() {
       _isSnapping = false;
-    }).catchError((_) {
-      _isSnapping = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _isProgrammaticScroll = false;
+      });
     });
   }
 
@@ -1859,7 +1862,7 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
 
     return NotificationListener<ScrollEndNotification>(
       onNotification: (notification) {
-        if (notification.depth == 0) {
+        if (notification.depth == 0 && !_isProgrammaticScroll) {
           // Snap the stats card to fully open or fully closed on scroll settle
           _snapCard();
         }
