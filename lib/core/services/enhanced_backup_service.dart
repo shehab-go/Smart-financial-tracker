@@ -402,13 +402,21 @@ class EnhancedBackupService {
   /// List all backups with metadata
   Future<List<File>> listBackups() async {
     final dir = await _getBackupDir();
-    final files = dir
-        .listSync()
+    final backupFileList = await dir.list().toList();
+    final files = backupFileList
         .whereType<File>()
         .where((f) => f.path.endsWith('.db'))
         .toList();
-    files.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
-    return files;
+        
+    final fileWithTimes = await Future.wait(
+      files.map((file) async {
+        final time = await file.lastModified();
+        return (file, time);
+      }),
+    );
+    
+    fileWithTimes.sort((a, b) => b.$2.compareTo(a.$2));
+    return fileWithTimes.map((item) => item.$1).toList();
   }
 
   /// Get enhanced backup list with metadata
@@ -416,19 +424,27 @@ class EnhancedBackupService {
     final files = await listBackups();
     final metadata = await _loadBackupMetadata();
     
-    return files.map((file) {
-      final fileName = p.basename(file.path);
+    final fileDataList = await Future.wait(
+      files.map((file) async {
+        final lastModified = await file.lastModified();
+        final length = await file.length();
+        return (file: file, lastModified: lastModified, length: length);
+      }),
+    );
+    
+    return fileDataList.map((data) {
+      final fileName = p.basename(data.file.path);
       final meta = metadata.cast<BackupMetadata?>().firstWhere(
         (m) => m?.fileName == fileName,
         orElse: () => null,
       );
       
       return {
-        'file': file,
+        'file': data.file,
         'metadata': meta,
         'fileName': fileName,
-        'lastModified': file.lastModifiedSync(),
-        'sizeKB': (file.lengthSync() / 1024).toStringAsFixed(1),
+        'lastModified': data.lastModified,
+        'sizeKB': (data.length / 1024).toStringAsFixed(1),
       };
     }).toList();
   }

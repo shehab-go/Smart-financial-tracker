@@ -858,8 +858,8 @@ class ReportService {
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_+|_+$'), '');
 
-    final existingIndexes = dir
-        .listSync()
+    final reportFileList = await dir.list().toList();
+    final existingIndexes = reportFileList
         .whereType<File>()
         .where((f) => p.extension(f.path) == '.pdf')
         .map((f) => p.basenameWithoutExtension(f.path))

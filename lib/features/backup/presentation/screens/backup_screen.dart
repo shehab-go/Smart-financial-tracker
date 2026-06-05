@@ -16,7 +16,7 @@ class BackupScreen extends StatefulWidget {
 }
 
 class _BackupScreenState extends State<BackupScreen> {
-  late Future<List<File>> _backupsFuture;
+  late Future<List<BackupFileItem>> _backupsFuture;
   String? _dirPath;
 
   @override
@@ -47,7 +47,7 @@ class _BackupScreenState extends State<BackupScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(title: const Text('إدارة النسخ الاحتياطية')),
-        body: FutureBuilder<List<File>>(
+        body: FutureBuilder<List<BackupFileItem>>(
           future: _backupsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -75,9 +75,10 @@ class _BackupScreenState extends State<BackupScreen> {
                     itemCount: backups.length,
                     separatorBuilder: (_, __) => const Divider(height: 0),
                     itemBuilder: (context, index) {
-                      final file = backups[index];
-                      final modified = file.lastModifiedSync();
-                      final sizeKB = (file.lengthSync() / 1024).toStringAsFixed(1);
+                      final item = backups[index];
+                      final file = item.file;
+                      final modified = item.lastModified;
+                      final sizeKB = (item.sizeInBytes / 1024).toStringAsFixed(1);
 
                       return ListTile(
                         leading: const Icon(Icons.archive),

@@ -50,8 +50,8 @@ class BackupService {
     final dbPath = await _getDbPath();
     final backupDir = await _getBackupDir();
 
-    final existing = backupDir
-        .listSync()
+    final backupFileList = await backupDir.list().toList();
+    final existing = backupFileList
         .whereType<File>()
         .where((f) => f.path.endsWith('.db'))
         .map((f) => p.basenameWithoutExtension(f.path))
@@ -74,15 +74,24 @@ class BackupService {
     return backupFile;
   }
 
-  Future<List<File>> listBackups() async {
+  Future<List<BackupFileItem>> listBackups() async {
     final dir = await _getBackupDir();
-    final files = dir
-        .listSync()
+    final backupFileList = await dir.list().toList();
+    final files = backupFileList
         .whereType<File>()
         .where((f) => f.path.endsWith('.db'))
         .toList();
-    files.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
-    return files;
+        
+    final items = await Future.wait(
+      files.map((file) async {
+        final time = await file.lastModified();
+        final size = await file.length();
+        return BackupFileItem(file, time, size);
+      }),
+    );
+    
+    items.sort((a, b) => b.lastModified.compareTo(a.lastModified));
+    return items;
   }
 
   Future<void> restoreBackup(File backup) async {
@@ -94,4 +103,12 @@ class BackupService {
   Future<void> shareBackup(File backup) async {
     await Share.shareXFiles([XFile(backup.path)]);
   }
+}
+
+class BackupFileItem {
+  final File file;
+  final DateTime lastModified;
+  final int sizeInBytes;
+
+  BackupFileItem(this.file, this.lastModified, this.sizeInBytes);
 }
