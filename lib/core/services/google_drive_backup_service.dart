@@ -381,6 +381,7 @@ class _GoogleAuthClient extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
     request.headers.addAll(_headers);
+    request.headers['accept-encoding'] = 'identity';
     return _client.send(request);
   }
 }

@@ -185,6 +185,13 @@ class EnhancedBackupService {
     final dbPath = await _getDbPath();
     final backupDir = await _getBackupDir();
 
+    // Run VACUUM to optimize the database size before backing up
+    try {
+      await DatabaseHelper().vacuum();
+    } catch (e) {
+      debugPrint('Warning: Database VACUUM failed: $e');
+    }
+
     // Generate backup filename
     final now = DateTime.now();
     final dateStr = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';

@@ -24,6 +24,11 @@ class AutoBackupManager {
   bool _isRunning = false;
 
   Future<File> _copyDatabaseToTemp() async {
+    // Run VACUUM to optimize the database size before backing up
+    try {
+      await DatabaseHelper().vacuum();
+    } catch (_) {}
+
     final dbPath = p.join(await getDatabasesPath(), 'finance_app.db');
     final tmpDir = await getTemporaryDirectory();
     final dst = File(p.join(tmpDir.path, 'finance_app_upload.db'));

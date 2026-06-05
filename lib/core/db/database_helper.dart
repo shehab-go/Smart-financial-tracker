@@ -1693,6 +1693,11 @@ class DatabaseHelper {
     );
   }
 
+  Future<void> vacuum() async {
+    final db = await database;
+    await db.execute('VACUUM');
+  }
+
   Future<void> close() async {
     final db = await database;
     db.close();
