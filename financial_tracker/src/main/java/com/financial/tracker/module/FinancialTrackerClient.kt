@@ -43,6 +43,14 @@ object FinancialTrackerClient {
         return com.financial.tracker.module.data.DatabaseClient.getDatabase(context).getAll()
     }
 
+    suspend fun updateTransaction(context: android.content.Context, transaction: FinancialTransaction) {
+        com.financial.tracker.module.data.DatabaseClient.getDatabase(context).updateTransaction(transaction)
+    }
+
+    suspend fun markAsSettled(context: android.content.Context, refId: String, settlementRef: String? = null) {
+        com.financial.tracker.module.data.DatabaseClient.getDatabase(context).markAsSettled(refId, settlementRef)
+    }
+
     /**
      * Get all notifications that failed to parse (Error Analytics).
      */

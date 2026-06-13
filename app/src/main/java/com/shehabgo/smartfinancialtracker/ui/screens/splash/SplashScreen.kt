@@ -14,17 +14,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shehabgo.smartfinancialtracker.ui.theme.AppColors
+import com.shehabgo.smartfinancialtracker.ui.theme.AppShapes
+import com.shehabgo.smartfinancialtracker.ui.theme.AppSpacing
 import kotlinx.coroutines.delay
 import kotlin.math.*
 
@@ -33,8 +34,8 @@ fun SplashScreen(
     onNavigate: (String) -> Unit,
     isOnboardingDone: Boolean
 ) {
-    val Brand   = Color(0xFFBD001B)
-    val BgColor = Color(0xFFF6FAFF)
+    val Brand   = AppColors.Primary
+    val BgColor = AppColors.Background
 
     // ── مراحل الظهور ─────────────────────────────────────────
     var phase1 by remember { mutableStateOf(false) } // حلقات الانفجار
@@ -155,7 +156,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgColor)
+            .background(AppColors.Background)
             .graphicsLayer {
                 scaleX = exitScale; scaleY = exitScale; alpha = exitAlpha
             },
@@ -360,7 +361,7 @@ fun SplashScreen(
                             lineHeight   = 38.sp,
                             letterSpacing = 0.sp
                         ),
-                        color     = Color(0xFF141D23),
+                        color     = AppColors.TextPrimary,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -382,7 +383,7 @@ fun SplashScreen(
                         fontSize     = 15.sp,
                         letterSpacing = 0.3.sp
                     ),
-                    color = Color(0xFF5D5E61),
+                    color = AppColors.TextSecondary,
                     textAlign = TextAlign.Center
                 )
             }
@@ -403,7 +404,7 @@ fun SplashScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(3.dp)
-                            .background(Brand.copy(alpha = 0.12f), RoundedCornerShape(2.dp))
+                            .background(AppColors.Primary.copy(alpha = 0.12f), AppShapes.ButtonSm)
                     ) {
                         Box(
                             modifier = Modifier
@@ -439,7 +440,7 @@ fun SplashScreen(
                             fontWeight = FontWeight.Bold,
                             fontSize   = 12.sp
                         ),
-                        color = Brand.copy(alpha = 0.7f)
+                        color = AppColors.Primary.copy(alpha = 0.7f)
                     )
                 }
             }

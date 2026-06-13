@@ -87,7 +87,9 @@ fun OnboardingPagerScreen(
                 if (hasBatteryOptimizationExemption) {
                     coroutineScope.launch { pagerState.animateScrollToPage(4) }
                 } else {
-                    val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = android.net.Uri.parse("package:${context.packageName}")
+                    }
                     context.startActivity(intent)
                 }
             }
@@ -152,7 +154,9 @@ fun OnboardingPagerScreen(
                     3 -> BatteryOptimizationScreen(
                         hasPermission = hasBatteryOptimizationExemption,
                         onOpenSettings = {
-                            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                data = android.net.Uri.parse("package:${context.packageName}")
+                            }
                             context.startActivity(intent)
                         }
                     )

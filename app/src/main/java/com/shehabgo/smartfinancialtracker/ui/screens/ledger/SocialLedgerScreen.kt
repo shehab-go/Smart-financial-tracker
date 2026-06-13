@@ -1,8 +1,15 @@
 package com.shehabgo.smartfinancialtracker.ui.screens.ledger
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -17,358 +24,393 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.LayoutDirection.Rtl
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
-import com.shehabgo.smartfinancialtracker.ui.screens.dashboard.BottomNavigationBar
+import com.shehabgo.smartfinancialtracker.ui.theme.AppColors
+import com.shehabgo.smartfinancialtracker.ui.theme.AppShapes
+import com.shehabgo.smartfinancialtracker.ui.theme.AppSpacing
+import com.shehabgo.smartfinancialtracker.ui.theme.AppElevation
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.Rect
+import com.financial.tracker.module.data.FinancialTransaction
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SocialLedgerScreen(
     onNavigateToDashboard: () -> Unit = {},
-    onNavigateToAdmin: () -> Unit = {}
+    onNavigateToAdmin: () -> Unit = {},
+    viewModel: LedgerViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
-    var showPrompt by remember { mutableStateOf(true) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val transactions by viewModel.transactions.collectAsState()
+    val totalOwedToMe by viewModel.totalOwedToMe.collectAsState()
+    val totalOwedByMe by viewModel.totalOwedByMe.collectAsState()
+    val unclassifiedQueue by viewModel.unclassifiedQueue.collectAsState()
+    
+    androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+        viewModel.loadTransactions(context)
+    }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), CircleShape)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Person,
-                                contentDescription = "Profile",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Text(
-                            text = "CapitalCore",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /*TODO*/ }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Notifications,
-                            contentDescription = "Notifications",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    IconButton(onClick = { /*TODO*/ }, modifier = Modifier.padding(end = 8.dp)) {
-                        Icon(
-                            imageVector = Icons.Rounded.Search,
-                            contentDescription = "Search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-                ),
-                modifier = Modifier.shadow(1.dp)
-            )
-        },
-        bottomBar = {
-            Box(
+    // Drop Zone state
+    var dropZoneRect by remember { mutableStateOf(Rect.Zero) }
+    var isHoveringDropZone by remember { mutableStateOf(false) }
+
+    CompositionLocalProvider(LocalLayoutDirection provides Rtl) {
+        Scaffold(
+            containerColor = AppColors.Background
+        ) { innerPadding ->
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(20.dp, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), spotColor = Color.Black.copy(alpha = 0.05f))
-                    .background(Color.White.copy(alpha = 0.95f), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = AppSpacing.ScreenH)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .height(64.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    BottomNavItem(icon = Icons.Rounded.Dashboard, label = "Dashboard", isSelected = false, onClick = onNavigateToDashboard)
-                    BottomNavItem(icon = Icons.Rounded.AccountBalanceWallet, label = "Wallets", isSelected = false, onClick = { })
-                    BottomNavItem(icon = Icons.Rounded.AccountBalance, label = "Ledger", isSelected = true, onClick = { })
-                    BottomNavItem(icon = Icons.Rounded.AdminPanelSettings, label = "Admin", isSelected = false, onClick = onNavigateToAdmin)
-                }
-            }
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-        ) {
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
-            // Debt Equilibrium Index
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Receivable
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .shadow(4.dp, RoundedCornerShape(12.dp), spotColor = Color(0xFF4AA348).copy(alpha = 0.1f))
-                        .background(Color.White, RoundedCornerShape(12.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
-                        .padding(24.dp)
-                ) {
-                    Column {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                            Text("مستحقات (لي)", style = MaterialTheme.typography.labelLarge, color = Color(0xFF2E7D32))
-                            Icon(imageVector = Icons.Rounded.ArrowDownward, contentDescription = null, tint = Color(0xFF2E7D32), modifier = Modifier.size(20.dp))
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("12,450.00 ر.س", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                        Text("من 8 أشخاص", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Box(modifier = Modifier.fillMaxWidth().height(6.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))) {
-                            Box(modifier = Modifier.fillMaxWidth(0.75f).fillMaxHeight().background(Color(0xFF2E7D32), RoundedCornerShape(4.dp)))
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "لي عند الناس",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.dp.value.sp),
-                            color = Color.White,
-                            modifier = Modifier.background(Color(0xFF2E7D32), RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 4.dp)
-                        )
+                // ── العنوان الرئيسي (Ledger Header) ────────────────────────
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "السجل الاجتماعي",
+                        style = MaterialTheme.typography.headlineLarge.copy(fontSize = 28.sp, fontWeight = FontWeight.Bold),
+                        color = AppColors.TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(imageVector = Icons.Rounded.SyncAlt, contentDescription = null, modifier = Modifier.size(16.dp), tint = AppColors.TextSecondary)
+                        Text(text = "مزامنة لحظية لديونك والتزاماتك", style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp), color = AppColors.TextSecondary)
                     }
                 }
 
-                // Payable
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .shadow(4.dp, RoundedCornerShape(12.dp), spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                        .background(Color.White, RoundedCornerShape(12.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
-                        .padding(24.dp)
-                ) {
-                    Column {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                            Text("التزامات (علي)", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                            Icon(imageVector = Icons.Rounded.ArrowUpward, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("4,200.00 ر.س", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                        Text("لـ 3 أشخاص", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Box(modifier = Modifier.fillMaxWidth().height(6.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))) {
-                            Box(modifier = Modifier.fillMaxWidth(0.25f).fillMaxHeight().background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp)))
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "عَليّ للناس",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.dp.value.sp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.background(MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-            }
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.height(24.dp))
+                // ── نافذة التصنيف الذكي (Dynamic Intent Prompt - Queue) ───────────────
+                AnimatedVisibility(visible = unclassifiedQueue.isNotEmpty(), enter = fadeIn(), exit = fadeOut()) {
+                    val tx = unclassifiedQueue.firstOrNull()
+                    tx?.let { 
+                        val isIncome = tx.transactionType == "Transfer In"
+                        var showCategories by remember { mutableStateOf(false) }
 
-            // Intent-Aware Prompt
-            if (showPrompt) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(16.dp, RoundedCornerShape(16.dp), spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
-                        .background(Color.White, RoundedCornerShape(16.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
-                        .padding(20.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.Top
-                    ) {
+                        // Reset state if transaction changes
+                        LaunchedEffect(tx.referenceId) { showCategories = false }
+
                         Box(
                             modifier = Modifier
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-                                .padding(12.dp)
+                                .fillMaxWidth()
+                                .padding(bottom = 24.dp)
+                                .shadow(8.dp, AppShapes.CardLg, spotColor = AppColors.Warning.copy(alpha = 0.2f))
+                                .background(AppColors.Warning.copy(alpha = 0.05f), AppShapes.CardLg)
+                                .border(1.dp, AppColors.Warning.copy(alpha = 0.3f), AppShapes.CardLg)
+                                .padding(20.dp)
                         ) {
-                            Icon(imageVector = Icons.Rounded.PsychologyAlt, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "اكتشاف معاملة جديدة",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = buildAnnotatedString {
-                                    append("تحويل Jeeb بقيمة ")
-                                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
-                                        append("500 ر.س")
-                                    }
-                                    append(" إلى ")
-                                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)) {
-                                        append("سلطان أحمد")
-                                    }
-                                    append(".")
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "هل هذه الحوالة سلف أم سداد؟",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Button(
-                                    onClick = { showPrompt = false },
-                                    modifier = Modifier.weight(1f).height(48.dp),
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("إقراض (سلف)", style = MaterialTheme.typography.labelLarge)
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Icon(imageVector = Icons.Rounded.TipsAndUpdates, contentDescription = null, tint = AppColors.Warning, modifier = Modifier.size(24.dp))
+                                        Text(
+                                            text = "عملية غير مصنفة!",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = AppColors.Warning
+                                        )
+                                    }
+                                    if (unclassifiedQueue.size > 1) {
+                                        Box(modifier = Modifier.background(AppColors.Warning.copy(alpha = 0.15f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                            Text(text = "طابور: ${unclassifiedQueue.size}", style = MaterialTheme.typography.labelSmall, color = AppColors.Warning)
+                                        }
+                                    }
                                 }
-                                Button(
-                                    onClick = { showPrompt = false },
-                                    modifier = Modifier.weight(1f).height(48.dp),
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface)
-                                ) {
-                                    Text("سداد دين", style = MaterialTheme.typography.labelLarge)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "تم التقاط حوالة ${if(isIncome) "واردة من" else "صادرة إلى"} (${tx.counterpart}) بقيمة ${tx.amount} ر.ي. كيف تود تصنيفها؟",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = AppColors.TextPrimary
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                AnimatedVisibility(visible = !showCategories) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                        if (isIncome) {
+                                            Button(onClick = { viewModel.classifyTransaction(context, tx, isDebt = true, category = "Debt") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)) { Text("سجلها كدين لي (سلف)", color = Color.White) }
+                                            Button(onClick = { showCategories = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = AppColors.Success)) { Text("تسجيل كدخل / إيراد", color = Color.White) }
+                                            OutlinedButton(onClick = { viewModel.classifyTransaction(context, tx, isDebt = false, category = "Debt Repayment") }, modifier = Modifier.fillMaxWidth()) { Text("استرداد دين (سددني)") }
+                                        } else {
+                                            Button(onClick = { viewModel.classifyTransaction(context, tx, isDebt = true, category = "Debt") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)) { Text("سجلها كدين عليه (سلف)", color = Color.White) }
+                                            Button(onClick = { showCategories = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = AppColors.Error)) { Text("تسجيل كمصروف", color = Color.White) }
+                                            OutlinedButton(onClick = { viewModel.classifyTransaction(context, tx, isDebt = false, category = "Debt Repayment") }, modifier = Modifier.fillMaxWidth()) { Text("سداد دين علي") }
+                                        }
+                                    }
+                                }
+
+                                AnimatedVisibility(visible = showCategories) {
+                                    Column {
+                                        Text(text = if (isIncome) "اختر تصنيف الدخل:" else "اختر تصنيف المصروف:", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = AppColors.TextSecondary)
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        
+                                        val categories = if (isIncome) listOf("راتب 💰", "أعمال حرة 💻", "هدية 🎁", "أخرى 📝") else listOf("طعام 🍔", "مواصلات 🚕", "فواتير 🧾", "تسوق 🛍️", "أخرى 📝")
+                                        
+                                        val chunkedCategories = categories.chunked(2)
+                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            chunkedCategories.forEach { rowItems ->
+                                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                                    rowItems.forEach { cat ->
+                                                        OutlinedButton(
+                                                            onClick = { viewModel.classifyTransaction(context, tx, isDebt = false, category = cat) },
+                                                            modifier = Modifier.weight(1f),
+                                                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp)
+                                                        ) {
+                                                            Text(text = cat, fontSize = 13.sp, maxLines = 1, textAlign = TextAlign.Center)
+                                                        }
+                                                    }
+                                                    if (rowItems.size < 2) {
+                                                        repeat(2 - rowItems.size) { Spacer(modifier = Modifier.weight(1f)) }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        TextButton(onClick = { showCategories = false }, modifier = Modifier.fillMaxWidth()) {
+                                            Text("رجوع للخلف", color = AppColors.TextSecondary)
+                                        }
+                                    }
                                 }
                             }
                         }
-                        IconButton(onClick = { showPrompt = false }, modifier = Modifier.size(24.dp)) {
-                            Icon(imageVector = Icons.Rounded.Close, contentDescription = "Close", tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(16.dp))
+                    }
+                }
+
+                // ── مؤشر توازن الديون (Debt Equilibrium Index Cards) ───────────
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // كارت مستحقات (لي) - Premium Green Gradient
+                    val owedToMeProgress by animateFloatAsState(targetValue = if (totalOwedToMe > 0) 1f else 0f)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .shadow(12.dp, AppShapes.CardLg, spotColor = AppColors.Success.copy(alpha = 0.4f))
+                            .background(
+                                brush = androidx.compose.ui.graphics.Brush.linearGradient(colors = listOf(AppColors.Success, AppColors.Success.copy(alpha = 0.8f))),
+                                shape = AppShapes.CardLg
+                            )
+                            .padding(20.dp)
+                    ) {
+                        Column {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = "مستحقات (لي)", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = Color.White.copy(alpha = 0.9f))
+                                Box(modifier = Modifier.background(Color.White.copy(alpha = 0.2f), CircleShape).padding(6.dp)) {
+                                    Icon(imageVector = Icons.Rounded.ArrowDownward, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(text = String.format("%,.0f", totalOwedToMe), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black, fontSize = 26.sp), color = Color.White)
+                                Text(text = "ر.ي", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold), color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(bottom = 4.dp))
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Box(modifier = Modifier.fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.3f), CircleShape)) {
+                                Box(modifier = Modifier.fillMaxWidth(owedToMeProgress).fillMaxHeight().background(Color.White, CircleShape))
+                            }
+                        }
+                    }
+
+                    // كارت التزامات (علي) - Premium Red Gradient
+                    val owedByMeProgress by animateFloatAsState(targetValue = if (totalOwedByMe > 0) 1f else 0f)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .shadow(12.dp, AppShapes.CardLg, spotColor = AppColors.Primary.copy(alpha = 0.4f))
+                            .background(
+                                brush = androidx.compose.ui.graphics.Brush.linearGradient(colors = listOf(AppColors.PrimaryLight, AppColors.Primary)),
+                                shape = AppShapes.CardLg
+                            )
+                            .padding(20.dp)
+                    ) {
+                        Column {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = "التزامات (علي)", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = Color.White.copy(alpha = 0.9f))
+                                Box(modifier = Modifier.background(Color.White.copy(alpha = 0.2f), CircleShape).padding(6.dp)) {
+                                    Icon(imageVector = Icons.Rounded.ArrowUpward, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(text = String.format("%,.0f", totalOwedByMe), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black, fontSize = 26.sp), color = Color.White)
+                                Text(text = "ر.ي", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold), color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(bottom = 4.dp))
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Box(modifier = Modifier.fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.3f), CircleShape)) {
+                                Box(modifier = Modifier.fillMaxWidth(owedByMeProgress).fillMaxHeight().background(Color.White, CircleShape))
+                            }
                         }
                     }
                 }
+
                 Spacer(modifier = Modifier.height(24.dp))
-            }
 
-            // Timeline / Ledger
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                Text("سجل المعاملات الموحد", style = MaterialTheme.typography.headlineMedium.copy(fontSize = 20.dp.value.sp), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.clickable { /*TODO*/ }) {
-                    Text("فلترة", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                    Icon(imageVector = Icons.Rounded.FilterList, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text("اليوم، 24 أكتوبر", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(horizontal = 4.dp))
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Item 1
-            LedgerItem(
-                name = "سعود فهد",
-                subtitle = "دين نقدي يدوي",
-                amount = "+1,200 ر.س",
-                amountSub = "مستحق لي",
-                amountColor = Color(0xFF2E7D32),
-                icon = Icons.Rounded.AttachMoney,
-                iconBg = Color(0xFF2E7D32).copy(alpha = 0.1f),
-                iconColor = Color(0xFF2E7D32)
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Item 2
-            LedgerItem(
-                name = "نورة الشمري",
-                subtitle = "حوالة Jeeb",
-                amount = "-350 ر.س",
-                amountSub = "عليّ سدادها",
-                amountColor = MaterialTheme.colorScheme.primary,
-                icon = Icons.Rounded.Person,
-                iconBg = MaterialTheme.colorScheme.surfaceVariant,
-                iconColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-            Text("أمس، 23 أكتوبر", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(horizontal = 4.dp))
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Item 3
-            LedgerItem(
-                name = "أحمد منصور",
-                subtitle = "قطية عشاء - نقد",
-                amount = "+85 ر.س",
-                amountSub = "تم الاستلام",
-                amountColor = Color(0xFF2E7D32),
-                icon = Icons.Rounded.Payments,
-                iconBg = MaterialTheme.colorScheme.secondaryContainer,
-                iconColor = MaterialTheme.colorScheme.secondary,
-                isSettled = true
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Settlement Visualization
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(imageVector = Icons.Rounded.Handshake, contentDescription = null, tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(36.dp))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("تسوية سريعة", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        "اسحب معاملة من السجل هنا لإغلاقها أو مطابقتها مع تحويل بنكي",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.width(200.dp)
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(96.dp)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-                            .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("أفلت المعاملة هنا للتسوية", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+                // ── رأس قائمة سجل الحساب الموحد (Timeline Header) ───────────────
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "الديون النشطة", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.clickable { /*TODO Filter*/ }) {
+                        Text(text = "أرشيف التسويات", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = AppColors.Primary)
+                        Icon(imageVector = Icons.Rounded.History, contentDescription = null, tint = AppColors.Primary, modifier = Modifier.size(16.dp))
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(100.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Show only unsettled debts
+                val displayTransactions = transactions.filter { it.isDebt && !it.isSettled }
+
+                if (displayTransactions.isEmpty()) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(modifier = Modifier.size(80.dp).background(AppColors.Primary.copy(alpha = 0.05f), CircleShape), contentAlignment = Alignment.Center) {
+                            Icon(imageVector = Icons.Rounded.AllInclusive, contentDescription = null, tint = AppColors.Primary.copy(alpha = 0.5f), modifier = Modifier.size(40.dp))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(text = "السجل نظيف تماماً", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "لا توجد أي ديون نشطة حالياً. استمتع براحة البال!", style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary, textAlign = TextAlign.Center, modifier = Modifier.width(260.dp))
+                    }
+                } else {
+                    displayTransactions.forEach { tx ->
+                        val isIncome = tx.transactionType == "Transfer In"
+                        
+                        val coroutineScope = rememberCoroutineScope()
+                        val offsetX = remember { Animatable(0f) }
+                        val offsetY = remember { Animatable(0f) }
+                        var isDragging by remember { mutableStateOf(false) }
+
+                        Box(
+                            modifier = Modifier
+                                .offset { IntOffset(offsetX.value.roundToInt(), offsetY.value.roundToInt()) }
+                                .onGloballyPositioned { coordinates ->
+                                    if (isDragging) {
+                                        val itemBounds = coordinates.boundsInRoot()
+                                        isHoveringDropZone = itemBounds.overlaps(dropZoneRect)
+                                    }
+                                }
+                                .pointerInput(Unit) {
+                                    detectDragGestures(
+                                        onDragStart = { 
+                                            isDragging = true 
+                                        },
+                                        onDragEnd = { 
+                                            isDragging = false
+                                            if (isHoveringDropZone) {
+                                                viewModel.settleTransaction(context, tx)
+                                                // It will disappear since it becomes settled
+                                                isHoveringDropZone = false
+                                            } else {
+                                                coroutineScope.launch {
+                                                    offsetX.animateTo(0f, spring())
+                                                    offsetY.animateTo(0f, spring())
+                                                }
+                                            }
+                                        },
+                                        onDragCancel = { 
+                                            isDragging = false
+                                            isHoveringDropZone = false
+                                            coroutineScope.launch {
+                                                offsetX.animateTo(0f, spring())
+                                                offsetY.animateTo(0f, spring())
+                                            }
+                                        },
+                                        onDrag = { change, dragAmount -> 
+                                            change.consume()
+                                            coroutineScope.launch {
+                                                offsetX.snapTo(offsetX.value + dragAmount.x)
+                                                offsetY.snapTo(offsetY.value + dragAmount.y)
+                                            }
+                                        }
+                                    )
+                                },
+                            // Bring dragged item to front
+                            contentAlignment = Alignment.Center
+                        ) {
+                            LedgerItem(
+                                name = tx.counterpart.ifEmpty { "غير محدد" },
+                                subtitle = if (isIncome) "دين وارد (سلف لي)" else "دين صادر (سلف مني)",
+                                amount = "${if(isIncome) "+" else "-"}${tx.amount} ر.ي",
+                                amountSub = "غير مسوى (اسحب للتسوية)",
+                                amountColor = if (isIncome) AppColors.Success else AppColors.Primary,
+                                icon = if (isIncome) Icons.Rounded.CallReceived else Icons.Rounded.CallMade,
+                                iconBg = if (isIncome) AppColors.Success.copy(alpha = 0.1f) else AppColors.PrimaryContainer,
+                                iconColor = if (isIncome) AppColors.Success else AppColors.Primary,
+                                isSettled = false
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // ── لوحة التسوية السريعة بالسحب والإسقاط (Settlement Visualizer) ──
+                val dropZoneBg = if (isHoveringDropZone) AppColors.Primary.copy(alpha = 0.15f) else AppColors.Primary.copy(alpha = 0.03f)
+                val dropZoneStrokeColor = if (isHoveringDropZone) AppColors.Primary else AppColors.Primary.copy(alpha = 0.3f)
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(8.dp, AppShapes.CardLg, spotColor = AppColors.Primary.copy(alpha = 0.1f))
+                        .background(Color.White, AppShapes.CardLg)
+                        .padding(24.dp)
+                        .onGloballyPositioned { coordinates ->
+                            dropZoneRect = coordinates.boundsInRoot()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(modifier = Modifier.background(AppColors.SurfaceVariant, CircleShape).padding(12.dp)) {
+                            Icon(imageVector = Icons.Rounded.SyncAlt, contentDescription = null, tint = AppColors.Primary, modifier = Modifier.size(28.dp))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(text = "التسوية السريعة", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(text = "اسحب الدين من القائمة أعلاه وأسقطه هنا لتسويته وإغلاقه نهائياً", style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary, textAlign = TextAlign.Center, modifier = Modifier.width(240.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        val stroke = Stroke(width = 4f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(90.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(dropZoneBg)
+                                .drawBehind {
+                                    drawRoundRect(color = dropZoneStrokeColor, style = stroke, cornerRadius = CornerRadius(16.dp.toPx()))
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(imageVector = Icons.Rounded.Download, contentDescription = null, tint = AppColors.Primary.copy(alpha = if(isHoveringDropZone) 1f else 0.7f), modifier = Modifier.size(20.dp))
+                                Text(text = "أفلت المعاملة هنا", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = AppColors.Primary.copy(alpha = if(isHoveringDropZone) 1f else 0.8f))
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(180.dp))
+            }
         }
     }
 }
@@ -380,16 +422,18 @@ fun LedgerItem(
     amount: String,
     amountSub: String,
     amountColor: Color,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     iconBg: Color,
     iconColor: Color,
-    isSettled: Boolean = false
+    isSettled: Boolean = false,
+    hasIndicator: Boolean = false
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(12.dp))
-            .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
+            .shadow(AppElevation.xs, AppShapes.Card, spotColor = Color.Black.copy(alpha = 0.02f))
+            .background(AppColors.Surface, AppShapes.Card)
+            .border(1.dp, AppColors.Border, AppShapes.Card)
             .padding(16.dp)
     ) {
         Row(
@@ -397,71 +441,33 @@ fun LedgerItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Box(
-                    modifier = Modifier.size(48.dp).background(iconBg, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(imageVector = icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(24.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Box(modifier = Modifier.size(44.dp).background(iconBg, CircleShape), contentAlignment = Alignment.Center) {
+                    Icon(imageVector = icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(22.dp))
                 }
                 Column {
-                    Text(name, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                    Text(text = name, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
+                    Spacer(modifier = Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        if (!isSettled && amountColor == MaterialTheme.colorScheme.primary) {
-                            Box(modifier = Modifier.size(8.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), CircleShape))
-                        }
-                        Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (hasIndicator) { Box(modifier = Modifier.size(6.dp).background(AppColors.Primary, CircleShape)) }
+                        Text(text = subtitle, style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp), color = AppColors.TextSecondary)
                     }
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column(horizontalAlignment = Alignment.Start) {
-                    Text(amount, style = MaterialTheme.typography.labelLarge, color = amountColor, fontWeight = FontWeight.Bold)
-                    Text(amountSub, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(text = amount, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = amountColor)
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(text = amountSub, style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp), color = AppColors.TextHint)
                 }
                 if (isSettled) {
-                    Icon(imageVector = Icons.Rounded.CheckCircle, contentDescription = null, tint = Color(0xFF2E7D32), modifier = Modifier.size(24.dp))
+                    Icon(imageVector = Icons.Rounded.CheckCircle, contentDescription = null, tint = AppColors.Success, modifier = Modifier.size(22.dp))
                 } else {
-                    Icon(imageVector = Icons.Rounded.DragIndicator, contentDescription = null, tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(24.dp))
+                    Icon(imageVector = Icons.Rounded.DragIndicator, contentDescription = null, tint = AppColors.TextHint, modifier = Modifier.size(22.dp))
                 }
             }
         }
     }
 }
 
-@Composable
-fun BottomNavItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val contentColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-    val bgColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
 
-    Column(
-        modifier = Modifier
-            .clip(RoundedCornerShape(24.dp))
-            .background(bgColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = contentColor,
-            modifier = Modifier.size(24.dp)
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = contentColor,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
-    }
-}

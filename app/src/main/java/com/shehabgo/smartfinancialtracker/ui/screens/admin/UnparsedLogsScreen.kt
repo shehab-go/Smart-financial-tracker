@@ -24,18 +24,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import com.shehabgo.smartfinancialtracker.ui.screens.dashboard.BottomNavigationBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UnparsedLogsScreen(
     onNavigateToDashboard: () -> Unit = {},
-    onNavigateToLedger: () -> Unit = {}
+    onNavigateToLedger: () -> Unit = {},
+    viewModel: UnparsedLogsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
-    var isReprocessing by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val logs by viewModel.logs.collectAsState()
+    val isReprocessing by viewModel.isReprocessing.collectAsState()
+    
     var reprocessProgress by remember { mutableStateOf(0f) }
     var reprocessCompleted by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
+    androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+        viewModel.loadLogs(context)
+    }
 
     Scaffold(
         topBar = {
@@ -91,29 +98,6 @@ fun UnparsedLogsScreen(
                 modifier = Modifier.shadow(1.dp)
             )
         },
-        bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(20.dp, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), spotColor = Color.Black.copy(alpha = 0.05f))
-                    .background(Color.White.copy(alpha = 0.95f), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .height(64.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    BottomNavItem(icon = Icons.Rounded.Dashboard, label = "Dashboard", isSelected = false, onClick = onNavigateToDashboard)
-                    BottomNavItem(icon = Icons.Rounded.AccountBalanceWallet, label = "Wallets", isSelected = false, onClick = { })
-                    BottomNavItem(icon = Icons.Rounded.AccountBalance, label = "Ledger", isSelected = false, onClick = onNavigateToLedger)
-                    BottomNavItem(icon = Icons.Rounded.AdminPanelSettings, label = "Admin", isSelected = true, onClick = { })
-                }
-            }
-        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -147,40 +131,38 @@ fun UnparsedLogsScreen(
                             Icon(imageVector = Icons.Rounded.Report, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Text("إشعارات غير معالجة", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                         }
-                        Text(
-                            text = "١٤ سجل مفقود",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.error,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 4.dp)
-                        )
+                        if (logs.isNotEmpty()) {
+                            Text(
+                                text = "${logs.size} سجلات",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 4.dp)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    LogItem(
-                        icon = Icons.Rounded.Sms,
-                        title = "Bank Muscat: SMS_REF_9921",
-                        subtitle = "نص غير مفهوم: \"تحويل داخلي معلق بموجب...\"",
-                        time = "١٢:٤٥ م",
-                        status = "فشل المطابقة"
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    LogItem(
-                        icon = Icons.Rounded.AlternateEmail,
-                        title = "Al-Rajhi: EML_4402_STMT",
-                        subtitle = "تنسيق PDF غير مدعوم في النسخة الحالية",
-                        time = "أمس",
-                        status = "فشل الاستخراج"
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    LogItem(
-                        icon = Icons.Rounded.AccountBalance,
-                        title = "QNB: API_WEBHOOK_ERR",
-                        subtitle = "حمولة JSON تحتوي على حقول مجهولة",
-                        time = "٠٢ مايو",
-                        status = "خطأ منطقي"
-                    )
+                    if (logs.isEmpty()) {
+                        Text(
+                            text = "جميع الإشعارات معالجة ومطابقة بنجاح.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(vertical = 16.dp)
+                        )
+                    } else {
+                        logs.take(5).forEach { log ->
+                            LogItem(
+                                icon = Icons.Rounded.Report,
+                                title = log.packageName,
+                                subtitle = log.text.take(40) + "...",
+                                time = java.text.SimpleDateFormat("dd/MM HH:mm", java.util.Locale.US).format(java.util.Date(log.timestamp)),
+                                status = "غير معالج"
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
@@ -293,7 +275,7 @@ fun UnparsedLogsScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = if (isReprocessing) "١٤ سجل قيد المعالجة" else if (reprocessCompleted) "تم تحويل ١٢ من أصل ١٤ سجل بنجاح" else "١٤ سجل في الانتظار",
+                        text = if (isReprocessing) "${logs.size} سجل قيد المعالجة" else if (reprocessCompleted) "تم تحويل السجلات" else "${logs.size} سجل في الانتظار",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth(),
@@ -305,17 +287,19 @@ fun UnparsedLogsScreen(
                     Button(
                         onClick = {
                             if (!isReprocessing && !reprocessCompleted) {
-                                isReprocessing = true
                                 coroutineScope.launch {
                                     for (i in 1..100) {
                                         reprocessProgress = i / 100f
-                                        delay(30)
+                                        delay(15)
                                     }
-                                    isReprocessing = false
+                                }
+                                viewModel.reprocessLogs(context) {
                                     reprocessCompleted = true
-                                    delay(3000)
-                                    reprocessCompleted = false
-                                    reprocessProgress = 0f
+                                    coroutineScope.launch {
+                                        delay(3000)
+                                        reprocessCompleted = false
+                                        reprocessProgress = 0f
+                                    }
                                 }
                             }
                         },
@@ -351,7 +335,7 @@ fun UnparsedLogsScreen(
                             Text("معدل تحويل السجلات الخام إلى معاملات مالية", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("٩٨.٤٪", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Text(if (logs.isEmpty()) "١٠٠٪" else "٠٪", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             Text("دقة التشغيل الآلي", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -364,18 +348,9 @@ fun UnparsedLogsScreen(
                         verticalAlignment = Alignment.Bottom,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        ChartBar(heightFraction = 0.6f, color = MaterialTheme.colorScheme.surfaceVariant)
-                        ChartBar(heightFraction = 0.65f, color = MaterialTheme.colorScheme.surfaceVariant)
-                        ChartBar(heightFraction = 0.75f, color = MaterialTheme.colorScheme.surfaceVariant)
-                        ChartBar(heightFraction = 0.7f, color = MaterialTheme.colorScheme.surfaceVariant)
-                        ChartBar(heightFraction = 0.85f, color = MaterialTheme.colorScheme.surfaceVariant)
-                        ChartBar(heightFraction = 0.9f, color = MaterialTheme.colorScheme.surfaceVariant)
-                        ChartBar(heightFraction = 0.95f, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
-                        ChartBar(heightFraction = 0.8f, color = MaterialTheme.colorScheme.surfaceVariant)
-                        ChartBar(heightFraction = 0.85f, color = MaterialTheme.colorScheme.surfaceVariant)
-                        ChartBar(heightFraction = 0.75f, color = MaterialTheme.colorScheme.surfaceVariant)
-                        ChartBar(heightFraction = 0.9f, color = MaterialTheme.colorScheme.surfaceVariant)
-                        ChartBar(heightFraction = 0.98f, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                        repeat(12) {
+                            ChartBar(heightFraction = if (logs.isEmpty()) 1f else 0.1f, color = if (logs.isEmpty()) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceVariant)
+                        }
                     }
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.surfaceVariant))
                 }
@@ -451,36 +426,4 @@ fun RowScope.ChartBar(heightFraction: Float, color: Color) {
     )
 }
 
-@Composable
-fun BottomNavItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val contentColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-    val bgColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
 
-    Column(
-        modifier = Modifier
-            .clip(RoundedCornerShape(24.dp))
-            .background(bgColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = contentColor,
-            modifier = Modifier.size(24.dp)
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = contentColor,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
-    }
-}

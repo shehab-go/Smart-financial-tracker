@@ -51,6 +51,7 @@ class FinancialNotificationListener : NotificationListenerService() {
             if (existing == null) {
                 dao.insertTransaction(transaction)
                 FinancialTrackerClient.sendEventToUI(transaction)
+                triggerHapticFeedback()
             }
         } else {
             // Error Analytics: Log the unparsed notification
@@ -61,6 +62,20 @@ class FinancialNotificationListener : NotificationListenerService() {
                 timestamp = System.currentTimeMillis()
             )
             dao.insertUnparsedNotification(unparsed)
+        }
+    }
+
+    private fun triggerHapticFeedback() {
+        try {
+            val vibrator = applicationContext.getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator.vibrate(android.os.VibrationEffect.createOneShot(30, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(30)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

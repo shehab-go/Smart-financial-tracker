@@ -4,7 +4,7 @@ import android.content.Context
 import com.google.gson.Gson
 import java.io.InputStreamReader
 
-internal object WalletConfigManager {
+object WalletConfigManager {
     private val configs = mutableMapOf<String, WalletConfig>()
 
     fun init(context: Context) {
@@ -32,7 +32,7 @@ internal object WalletConfigManager {
         return configs.containsKey(packageName)
     }
 
-    fun getConfigForPackage(packageName: String): WalletConfig? {
+    internal fun getConfigForPackage(packageName: String): WalletConfig? {
         return configs[packageName]
     }
 }

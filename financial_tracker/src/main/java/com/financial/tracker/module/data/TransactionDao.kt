@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "financial_tracker.db", null, 3) {
+internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "financial_tracker.db", null, 6) {
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
@@ -19,7 +19,12 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
                     "currency TEXT NOT NULL, " +
                     "counterpart TEXT NOT NULL, " +
                     "referenceId TEXT UNIQUE NOT NULL, " +
-                    "timestamp INTEGER NOT NULL)"
+                    "timestamp INTEGER NOT NULL, " +
+                    "isDebt INTEGER DEFAULT 0, " +
+                    "isSettled INTEGER DEFAULT 0, " +
+                    "settlementRefId TEXT, " +
+                    "isClassified INTEGER DEFAULT 0, " +
+                    "category TEXT)"
         )
         
         db.execSQL(
@@ -33,7 +38,7 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        if (oldVersion < 3) {
+        if (oldVersion < 5) {
             db.execSQL(
                 "CREATE TABLE IF NOT EXISTS unparsed_notifications (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -42,10 +47,12 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
                         "text TEXT NOT NULL, " +
                         "timestamp INTEGER NOT NULL)"
             )
-            // Existing transactions might not be encrypted in older versions. 
-            // In a strict production upgrade, we'd migrate them. For v1.1.0 we just clear to start fresh with security.
             db.execSQL("DROP TABLE IF EXISTS transactions")
             onCreate(db)
+            return
+        }
+        if (oldVersion < 6) {
+            db.execSQL("ALTER TABLE transactions ADD COLUMN category TEXT")
         }
     }
 
@@ -61,6 +68,11 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
             // Hash reference ID for secure deduplication
             put("referenceId", AESEncryptionHelper.hashReferenceId(transaction.referenceId))
             put("timestamp", transaction.timestamp)
+            put("isDebt", if (transaction.isDebt) 1 else 0)
+            put("isSettled", if (transaction.isSettled) 1 else 0)
+            put("settlementRefId", transaction.settlementRefId)
+            put("isClassified", if (transaction.isClassified) 1 else 0)
+            put("category", transaction.category)
         }
         db.insert("transactions", null, values)
     }
@@ -81,7 +93,12 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
                 counterpart = AESEncryptionHelper.decrypt(cursor.getString(cursor.getColumnIndexOrThrow("counterpart"))),
                 // Return original refId to the caller since we only stored hash
                 referenceId = refId,
-                timestamp = cursor.getLong(cursor.getColumnIndexOrThrow("timestamp"))
+                timestamp = cursor.getLong(cursor.getColumnIndexOrThrow("timestamp")),
+                isDebt = cursor.getInt(cursor.getColumnIndexOrThrow("isDebt")) == 1,
+                isSettled = cursor.getInt(cursor.getColumnIndexOrThrow("isSettled")) == 1,
+                settlementRefId = cursor.getString(cursor.getColumnIndexOrThrow("settlementRefId")),
+                isClassified = cursor.getInt(cursor.getColumnIndexOrThrow("isClassified")) == 1,
+                category = cursor.getColumnIndex("category").takeIf { it >= 0 }?.let { cursor.getString(it) }
             )
         }
         cursor.close()
@@ -105,13 +122,41 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
                     counterpart = AESEncryptionHelper.decrypt(cursor.getString(cursor.getColumnIndexOrThrow("counterpart"))),
                     // In a normal fetch we can't unhash the refId, so we just return the hash as a placeholder for UI
                     referenceId = cursor.getString(cursor.getColumnIndexOrThrow("referenceId")),
-                    timestamp = cursor.getLong(cursor.getColumnIndexOrThrow("timestamp"))
+                    timestamp = cursor.getLong(cursor.getColumnIndexOrThrow("timestamp")),
+                    isDebt = cursor.getInt(cursor.getColumnIndexOrThrow("isDebt")) == 1,
+                    isSettled = cursor.getInt(cursor.getColumnIndexOrThrow("isSettled")) == 1,
+                    settlementRefId = cursor.getString(cursor.getColumnIndexOrThrow("settlementRefId")),
+                    isClassified = cursor.getInt(cursor.getColumnIndexOrThrow("isClassified")) == 1,
+                    category = cursor.getColumnIndex("category").takeIf { it >= 0 }?.let { cursor.getString(it) }
                 )
                 list.add(t)
             } while (cursor.moveToNext())
         }
         cursor.close()
         list
+    }
+
+    suspend fun updateTransaction(transaction: FinancialTransaction) = withContext(Dispatchers.IO) {
+        val db = writableDatabase
+        // transaction.referenceId from the UI is already the hashed value retrieved from getAll()
+        val values = ContentValues().apply {
+            put("isDebt", if (transaction.isDebt) 1 else 0)
+            put("isSettled", if (transaction.isSettled) 1 else 0)
+            put("settlementRefId", transaction.settlementRefId)
+            put("isClassified", if (transaction.isClassified) 1 else 0)
+            put("category", transaction.category)
+        }
+        db.update("transactions", values, "referenceId = ?", arrayOf(transaction.referenceId))
+    }
+
+    suspend fun markAsSettled(refId: String, settlementRef: String? = null) = withContext(Dispatchers.IO) {
+        val db = writableDatabase
+        // refId from the UI is already the hashed value
+        val values = ContentValues().apply {
+            put("isSettled", 1)
+            if (settlementRef != null) put("settlementRefId", settlementRef)
+        }
+        db.update("transactions", values, "referenceId = ?", arrayOf(refId))
     }
 
     suspend fun insertUnparsedNotification(notification: UnparsedNotification) = withContext(Dispatchers.IO) {

@@ -20,5 +20,10 @@ data class FinancialTransaction(
     val currency: String,
     val counterpart: String,
     val referenceId: String,
-    val timestamp: Long
+    val timestamp: Long,
+    val isDebt: Boolean = false,
+    val isSettled: Boolean = false,
+    val settlementRefId: String? = null,
+    val isClassified: Boolean = false,
+    val category: String? = null
 )

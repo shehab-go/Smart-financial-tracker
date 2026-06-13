@@ -1,24 +1,22 @@
 package com.shehabgo.smartfinancialtracker.ui.screens.onboarding
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shehabgo.smartfinancialtracker.ui.theme.AppColors
+import com.shehabgo.smartfinancialtracker.ui.theme.AppShapes
+import com.shehabgo.smartfinancialtracker.ui.theme.AppSpacing
+import com.shehabgo.smartfinancialtracker.ui.theme.AppElevation
 
 @Composable
 fun OnboardingScaffold(
@@ -32,40 +30,38 @@ fun OnboardingScaffold(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF6FAFF))
-            .padding(vertical = 32.dp),
+            .background(AppColors.Background)
+            .padding(vertical = AppSpacing.xxl),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Top Bar
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = AppSpacing.ScreenH),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Text(
+                text  = "المتتبع المالي الذكي",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontSize   = 20.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = AppColors.Primary
+            )
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "المتتبع المالي الذكي",
-                    style = MaterialTheme.typography.headlineMedium.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
-                    color = Color(0xFFBD001B) // primary
-                )
-
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
             ) {
                 for (i in 1..totalSteps) {
                     val isActive = i == step
-                    val width = if (isActive) 24.dp else 12.dp
-                    val color = if (isActive) Color(0xFFBD001B) else Color(0xFFD2DBE4)
                     Box(
                         modifier = Modifier
                             .height(6.dp)
-                            .width(width)
-                            .background(color, RoundedCornerShape(3.dp))
+                            .width(if (isActive) 24.dp else 12.dp)
+                            .background(
+                                if (isActive) AppColors.Primary else AppColors.BorderStrong,
+                                AppShapes.ButtonPill
+                            )
                     )
                 }
             }
@@ -87,38 +83,45 @@ fun OnboardingScaffold(
 
         // Primary Action
         Button(
-            onClick = onButtonClick,
-            enabled = isButtonEnabled,
+            onClick  = onButtonClick,
+            enabled  = isButtonEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .height(56.dp)
-                .shadow(if (isButtonEnabled) 12.dp else 0.dp, RoundedCornerShape(12.dp), spotColor = Color(0xFFBD001B).copy(alpha = 0.3f)),
-            shape = RoundedCornerShape(12.dp),
+                .padding(horizontal = AppSpacing.ScreenH)
+                .height(AppSpacing.ButtonHeightLg)
+                .shadow(
+                    elevation  = if (isButtonEnabled) AppElevation.lg else AppElevation.none,
+                    shape      = AppShapes.Button,
+                    spotColor  = AppColors.Primary.copy(alpha = 0.3f)
+                ),
+            shape  = AppShapes.Button,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFBD001B),
-                contentColor = Color.White,
-                disabledContainerColor = Color(0xFFE0E9F2),
-                disabledContentColor = Color(0xFFA0AAB5)
+                containerColor         = AppColors.Primary,
+                contentColor           = AppColors.OnPrimary,
+                disabledContainerColor = AppColors.Border,
+                disabledContentColor   = AppColors.TextHint
             )
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = buttonText,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    text  = buttonText,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 18.sp
+                    )
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(AppSpacing.base))
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(AppSpacing.Icon)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(AppSpacing.base))
     }
 }
