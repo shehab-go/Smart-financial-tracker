@@ -2114,17 +2114,32 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
     final data = _filteredTransactions;
     if (data.isEmpty) return [];
 
-    return data.map((transaction) => 
-      TransactionTile(
+    double currentBalance = 0;
+    List<double> runningBalances = List.filled(data.length, 0.0);
+    
+    for (int i = data.length - 1; i >= 0; i--) {
+      final t = data[i];
+      if (t.type == 'credit') {
+        currentBalance += t.amount;
+      } else {
+        currentBalance -= t.amount;
+      }
+      runningBalances[i] = currentBalance;
+    }
+
+    return List.generate(data.length, (index) {
+      final transaction = data[index];
+      return TransactionTile(
         transaction: transaction,
+        runningBalance: runningBalances[index],
         selected: _selectedIds.contains(transaction.id),
         highlighted: _currentHighlightId != null && transaction.id == _currentHighlightId,
         onTap: _selectionMode
               ? () => _toggleSelection(transaction)
               : () => _showTransactionDetailDialog(transaction),
         onLongPress: () => _toggleSelection(transaction),
-      )
-    ).toList();
+      );
+    });
   }
 
   @override

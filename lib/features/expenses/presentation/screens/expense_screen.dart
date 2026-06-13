@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'dart:async';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:debit_credit_app/core/models/expense.dart';
 import 'package:debit_credit_app/core/models/expense_account.dart';
 import 'package:debit_credit_app/core/models/category.dart';
@@ -46,6 +48,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   List<ExpenseModel> _filteredExpenses = [];
   List<ExpenseAccountModel> _filteredAccounts = [];
   bool _isDrawerOpen = false;
+  bool _isDashboardExpanded = true;
   Timer? _highlightTimer;
   int? _currentHighlightId;
 
@@ -188,18 +191,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   Future<void> _generateExpenseReportForCurrentCategory() async {
     if (_selectedCategoryFilter == null || _selectedCategoryFilter!.isEmpty) {
-      if (!mounted) return;
-      HapticFeedback.vibrate();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'يرجى اختيار فئة للمصروفات أولاً',
-            style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
-          ),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
-      return;
+      // Fallback to generating report for all accounts instead of showing an error
+      return _generateExpenseReportForAllAccounts();
     }
 
     final categoryName = _selectedCategoryFilter!;
@@ -401,86 +394,73 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     required ValueChanged<T?> onChanged,
   }) {
     final bool hasFilter = value != null;
-    return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: hasFilter ? AppTheme.primaryColor.withOpacity(0.08) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: hasFilter ? AppTheme.primaryColor : AppTheme.dividerColor.withOpacity(0.4),
-          width: 1,
+
+    String displayStr = hintText;
+    if (hasFilter) {
+      final selectedItem = items.firstWhere(
+        (item) => item.value == value,
+        orElse: () => items.first,
+      );
+      if (selectedItem.child is Row) {
+        displayStr = 'إضافة فئة';
+      } else if (selectedItem.child is Text) {
+        displayStr = (selectedItem.child as Text).data ?? hintText;
+      } else if (value.toString() == '__add_new_category__') {
+        displayStr = 'إضافة فئة';
+      } else {
+        displayStr = value.toString();
+      }
+    }
+
+    return PopupMenuButton<T?>(
+      initialValue: value,
+      onSelected: onChanged,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: Colors.white,
+      position: PopupMenuPosition.under,
+      itemBuilder: (context) {
+        return items.map((item) {
+          return PopupMenuItem<T?>(
+            value: item.value,
+            child: item.child,
+          );
+        }).toList();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 38,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: hasFilter ? AppTheme.primaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: hasFilter ? AppTheme.primaryColor : AppTheme.dividerColor.withOpacity(0.5),
+            width: 1,
+          ),
+          boxShadow: hasFilter 
+              ? [BoxShadow(color: AppTheme.primaryColor.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))]
+              : AppTheme.cardShadow,
         ),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          hint: Text(
-            hintText,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: hasFilter ? AppTheme.primaryColor : AppTheme.textSecondary,
-              fontFamily: 'ArbFONTSIBMPlexArabicText',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              displayStr,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: hasFilter ? Colors.white : AppTheme.textPrimary,
+                fontFamily: 'ArbFONTSIBMPlexArabicText',
+              ),
             ),
-          ),
-          icon: Icon(
-            Icons.arrow_drop_down_rounded,
-            color: hasFilter ? AppTheme.primaryColor : AppTheme.textSecondary,
-            size: 18,
-          ),
-          isExpanded: false,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimary,
-            fontFamily: 'ArbFONTSIBMPlexArabicText',
-          ),
-          dropdownColor: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          items: items,
-          selectedItemBuilder: (BuildContext context) {
-            return items.map<Widget>((DropdownMenuItem<T> item) {
-              if (item.value == null) {
-                return Center(
-                  child: Text(
-                    hintText,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: hasFilter ? AppTheme.primaryColor : AppTheme.textSecondary,
-                      fontFamily: 'ArbFONTSIBMPlexArabicText',
-                    ),
-                  ),
-                );
-              }
-              
-              String displayStr = '';
-              if (item.child is Text) {
-                displayStr = (item.child as Text).data ?? '';
-              } else if (item.value != null) {
-                if (item.value.toString() == '__add_new_category__') {
-                  displayStr = 'إضافة فئة';
-                } else {
-                  displayStr = item.value.toString();
-                }
-              }
-              
-              return Center(
-                child: Text(
-                  displayStr,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: hasFilter ? AppTheme.primaryColor : AppTheme.textPrimary,
-                    fontFamily: 'ArbFONTSIBMPlexArabicText',
-                  ),
-                ),
-              );
-            }).toList();
-          },
-          onChanged: onChanged,
+            const SizedBox(width: 6),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: hasFilter ? Colors.white : AppTheme.textSecondary,
+              size: 18,
+            ),
+          ],
         ),
       ),
     );
@@ -488,45 +468,51 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   Widget _buildDateFilterChip() {
     final bool hasFilter = _selectedDateRange != null;
-    return InkWell(
-      onTap: _pickDateRange,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: hasFilter ? AppTheme.primaryColor.withOpacity(0.08) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: hasFilter ? AppTheme.primaryColor : AppTheme.dividerColor.withOpacity(0.4),
-            width: 1,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _pickDateRange,
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 38,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: hasFilter ? AppTheme.primaryColor : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: hasFilter ? AppTheme.primaryColor : AppTheme.dividerColor.withOpacity(0.5),
+              width: 1,
+            ),
+            boxShadow: hasFilter 
+                ? [BoxShadow(color: AppTheme.primaryColor.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))]
+                : AppTheme.cardShadow,
           ),
-          boxShadow: AppTheme.cardShadow,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.calendar_month_rounded,
-              size: 14,
-              color: hasFilter ? AppTheme.primaryColor : AppTheme.textSecondary,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              _selectedDateRange == null
-                  ? 'التاريخ'
-                  : '${DateFormat('MM/dd').format(_selectedDateRange!.start)} - ${DateFormat('MM/dd').format(_selectedDateRange!.end)}',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: hasFilter ? AppTheme.primaryColor : AppTheme.textSecondary,
-                fontFamily: 'ArbFONTSIBMPlexArabicText',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.calendar_month_rounded,
+                size: 16,
+                color: hasFilter ? Colors.white : AppTheme.textSecondary,
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                _selectedDateRange == null
+                    ? 'التاريخ'
+                    : '${DateFormat('MM/dd').format(_selectedDateRange!.start)} - ${DateFormat('MM/dd').format(_selectedDateRange!.end)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: hasFilter ? Colors.white : AppTheme.textSecondary,
+                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -594,88 +580,24 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         },
         body: _state.isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  // Bento Stats Container
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: AppTheme.cardShadow,
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppTheme.errorColor.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.arrow_outward_rounded,
-                                color: AppTheme.errorColor,
-                                size: 24,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'إجمالي المصروفات',
-                                  style: TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _filteredExpenses.isNotEmpty
-                                      ? _currencyFormat.format(_filteredTotalExpenses)
-                                      : '0',
-                                  style: const TextStyle(
-                                    color: AppTheme.errorColor,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: AppTheme.errorColor.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '${_filteredExpenses.length} مصروف',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.errorColor,
-                                  fontFamily: 'ArbFONTSIBMPlexArabicText',
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+            : CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Unified Dashboard Card
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _ExpenseDashboardHeaderDelegate(
+                      state: this,
                     ),
                   ),
 
                   // Capsule Filters Scroll Row
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Row(
                       children: [
+                        const SizedBox(width: 16),
                         Stack(
                           alignment: Alignment.center,
                           children: [
@@ -714,6 +636,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.only(left: 16),
                             child: Row(
                               children: [
                                 // Category capsule dropdown
@@ -839,11 +762,13 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                       ],
                     ),
                   ),
+                  ), // closes SliverToBoxAdapter
 
                   // Accounts list Bento Slate Cards
-                  Expanded(
-                    child: _filteredAccounts.isEmpty
-                        ? Center(
+                  _filteredAccounts.isEmpty
+                      ? SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Center(
                             child: Padding(
                               padding: const EdgeInsets.all(24.0),
                               child: Column(
@@ -884,17 +809,20 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                                 ],
                               ),
                             ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.only(top: 8, bottom: 88),
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: _filteredAccounts.length,
-                            itemBuilder: (context, index) {
-                              final account = _filteredAccounts[index];
-                              return _buildExpenseAccountCard(account);
-                            },
                           ),
-                  ),
+                        )
+                      : SliverPadding(
+                          padding: const EdgeInsets.only(top: 8, bottom: 88),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final account = _filteredAccounts[index];
+                                return _buildExpenseAccountCard(account);
+                              },
+                              childCount: _filteredAccounts.length,
+                            ),
+                          ),
+                        ),
                 ],
               ),
         floatingActionButton: FloatingActionButton(
@@ -914,73 +842,79 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   Widget _buildExpenseAccountCard(ExpenseAccountModel account) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: AppTheme.cardShadow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.dividerColor.withOpacity(0.3),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.errorColor.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () async {
-          HapticFeedback.lightImpact();
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => ExpenseAccountDetailsScreen(account: account),
-            ),
-          );
-          if (mounted) {
-            await _loadExpenses();
-          }
-        },
-        child: Row(
-          children: [
-            // Outward (Expense) Red accent side bar
-            Container(
-              width: 5,
-              height: 76,
-              color: AppTheme.errorColor,
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.errorColor.withOpacity(0.08),
-                        shape: BoxShape.circle,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            HapticFeedback.lightImpact();
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ExpenseAccountDetailsScreen(account: account),
+              ),
+            );
+            if (mounted) {
+              await _loadExpenses();
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.errorColor.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.receipt_long_rounded,
+                    color: AppTheme.errorColor,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        account.name,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                          fontFamily: 'ArbFONTSIBMPlexArabicText',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      child: const Icon(
-                        Icons.receipt_long_rounded,
-                        color: AppTheme.errorColor,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Text(
-                            account.name,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
-                              fontFamily: 'ArbFONTSIBMPlexArabicText',
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: AppTheme.surfaceColor,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               account.category.isNotEmpty ? account.category : 'مصروفات',
@@ -991,57 +925,374 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            _currencyFormat.format(account.totalAmount),
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.errorColor,
-                              fontFamily: 'ArbFONTSIBMPlexArabicText',
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppTheme.errorColor.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.sync_alt_rounded,
+                                  size: 10,
+                                  color: AppTheme.errorColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${account.expenseCount} عمليات',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.errorColor,
+                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            account.currencyName,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppTheme.textSecondary,
-                              fontFamily: 'ArbFONTSIBMPlexArabicText',
-                            ),
-                          ),
                         ],
                       ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(12),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _currencyFormat.format(account.totalAmount),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.errorColor,
+                        fontFamily: 'ArbFONTSIBMPlexArabicText',
                       ),
-                      child: Text(
-                        '${account.expenseCount} عمليات',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
-                          fontFamily: 'ArbFONTSIBMPlexArabicText',
-                        ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      account.currencyName,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'ArbFONTSIBMPlexArabicText',
                       ),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
-  }}
+  }
+
+  Widget buildExpenseDashboardCard(double shrinkProgress) {
+    // Calculate Chart Data
+    final double contentOpacity = (1.0 - (shrinkProgress * 2)).clamp(0.0, 1.0);
+    final double titleTotalOpacity = ((shrinkProgress - 0.5) * 2).clamp(0.0, 1.0);
+    final Map<String, double> categoryTotals = {};
+    for (final expense in _filteredExpenses) {
+      final category = expense.category.isNotEmpty ? expense.category : 'مصروفات';
+      categoryTotals[category] = (categoryTotals[category] ?? 0) + expense.amount;
+    }
+
+    final sortedCategories = categoryTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final List<Color> colors = [
+      AppTheme.primaryColor,
+      AppTheme.successColor,
+      AppTheme.warningColor,
+      Colors.blue,
+      Colors.purple,
+      Colors.teal,
+      Colors.orange,
+      Colors.pink,
+      Colors.indigo,
+      AppTheme.errorColor,
+    ];
+
+    List<PieChartSectionData> sections = [];
+    int colorIndex = 0;
+
+    if (_filteredTotalExpenses > 0) {
+      for (final entry in sortedCategories) {
+        final percentage = (entry.value / _filteredTotalExpenses) * 100;
+        if (percentage < 1) continue;
+
+        final color = colors[colorIndex % colors.length];
+        colorIndex++;
+
+        sections.add(
+          PieChartSectionData(
+            color: color,
+            value: entry.value,
+            title: '${percentage.toStringAsFixed(0)}%',
+            radius: 35,
+            titleStyle: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontFamily: 'ArbFONTSIBMPlexArabicText',
+            ),
+            badgeWidget: null,
+          ),
+        );
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppTheme.dividerColor.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.pie_chart_rounded,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'تحليل المصروفات',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+                ),
+              ),
+              if (shrinkProgress > 0) ...[
+                const SizedBox(width: 8),
+                Opacity(
+                  opacity: titleTotalOpacity,
+                  child: Text(
+                    _currencyFormat.format(_filteredTotalExpenses),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.errorColor,
+                      fontFamily: 'ArbFONTSIBMPlexArabicText',
+                    ),
+                  ),
+                ),
+              ],
+              const Spacer(),
+              if (_filteredExpenses.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.errorColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${_filteredExpenses.length}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.errorColor,
+                          fontFamily: 'ArbFONTSIBMPlexArabicText',
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'عمليات',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.errorColor,
+                          fontFamily: 'ArbFONTSIBMPlexArabicText',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          if (shrinkProgress < 1.0)
+            Opacity(
+              opacity: contentOpacity,
+              child: SizedBox(
+                height: 180 * (1.0 - shrinkProgress),
+                child: SingleChildScrollView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      if (sections.isNotEmpty)
+                        Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        height: 140,
+                        child: PieChart(
+                          PieChartData(
+                            sectionsSpace: 2,
+                            centerSpaceRadius: 35,
+                            sections: sections,
+                            pieTouchData: PieTouchData(
+                              touchCallback: (FlTouchEvent event, pieTouchResponse) {},
+                            ),
+                          ),
+                        ),
+                      ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'الإجمالي',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppTheme.textTertiary,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'ArbFONTSIBMPlexArabicText',
+                            ),
+                          ),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              _currencyFormat.format(_filteredTotalExpenses),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.errorColor,
+                                fontFamily: 'ArbFONTSIBMPlexArabicText',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: List.generate(
+                      sortedCategories.length > 5 ? 5 : sortedCategories.length,
+                      (index) {
+                        final entry = sortedCategories[index];
+                        final color = colors[index % colors.length];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  entry.key,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.textSecondary,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Text(
+                  'لا توجد مصروفات',
+                  style: TextStyle(
+                    color: AppTheme.textTertiary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                  ),
+                ),
+              ),
+            ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExpenseDashboardHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final _ExpenseScreenState state;
+
+  _ExpenseDashboardHeaderDelegate({required this.state});
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final double maxShrink = maxExtent - minExtent;
+    final double progress = maxShrink > 0 ? (shrinkOffset / maxShrink).clamp(0.0, 1.0) : 0.0;
+    
+    return Container(
+      color: AppTheme.backgroundColor,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: state.buildExpenseDashboardCard(progress),
+      ),
+    );
+  }
+
+  @override
+  double get maxExtent => 300.0;
+
+  @override
+  double get minExtent => 105.0;
+
+  @override
+  bool shouldRebuild(covariant _ExpenseDashboardHeaderDelegate oldDelegate) {
+    return true;
+  }
+}

@@ -5,9 +5,36 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:debit_credit_app/features/privacy/presentation/screens/app_lock_screen.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
+
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    if (task == AutoBackupManager.workmanagerTaskName) {
+      try {
+        await AutoBackupManager.instance.maybeRunAutoBackup(trigger: 'workmanager');
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: false,
+    );
+  } catch (e) {
+    debugPrint('Workmanager init failed: $e');
+  }
   
   // Initialize date formatting for Arabic locale
   await initializeDateFormatting('ar', null);
@@ -22,6 +49,7 @@ void main() async {
   ));
   
   // Set preferred orientations
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

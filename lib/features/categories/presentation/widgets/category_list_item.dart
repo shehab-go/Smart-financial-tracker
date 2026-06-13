@@ -99,25 +99,7 @@ class CategoryListItem extends StatelessWidget {
                 child: const Icon(Icons.delete_outline_rounded, color: AppTheme.errorColor, size: 18),
               ),
             ),
-            const SizedBox(width: 12),
-            ReorderableDragStartListener(
-              index: index,
-              child: MouseRegion(
-                cursor: SystemMouseCursors.grab,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.06),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.drag_indicator_rounded,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
+            // Drag handle removed for expandable list support
           ],
         ),
       ),

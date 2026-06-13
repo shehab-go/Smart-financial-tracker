@@ -31,10 +31,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
   late final TabController _tabController;
   bool _hasChanges = false;
   
-  String? _selectedGeneralParent;
-  String? _selectedExpenseParent;
-  final GlobalKey _generalChipKey = GlobalKey();
-  final GlobalKey _expenseChipKey = GlobalKey();
+  // Keys for scrolling could go here if needed, but omitted for simplicity
 
   @override
   void initState() {
@@ -179,8 +176,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
             onPressed: () {
               HapticFeedback.mediumImpact();
               final defaultType = _tabController.index == 0 ? 'general' : 'expense';
-              String? activeParent = _tabController.index == 0 ? _selectedGeneralParent : _selectedExpenseParent;
-              _showCategoryDialog(defaultType: defaultType, defaultParentName: activeParent);
+              _showCategoryDialog(defaultType: defaultType);
             },
             backgroundColor: Colors.white,
             foregroundColor: AppTheme.primaryColor,
@@ -203,203 +199,151 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
   }
 
   Widget _buildCategoryList(List<CategoryModel> categories, String type) {
-    // 1. Get Main Categories (categories with no parent)
-    final rootCategories = categories.where((c) => c.parentName == null || c.parentName!.isEmpty).map((c) => c.name).toSet();
-    
-    // Also include any parentNames that exist in subcategories just in case
-    final explicitParentNames = categories.map((c) => c.parentName).where((p) => p != null && p.isNotEmpty).cast<String>().toSet();
-    
-    final parentNames = {...rootCategories, ...explicitParentNames}.toList();
-    parentNames.sort();
-
-    // 2. Determine selected parent
-    String? selectedParent = type == 'general' ? _selectedGeneralParent : _selectedExpenseParent;
-    
-    if (selectedParent == null && parentNames.isNotEmpty) {
-      selectedParent = parentNames.first;
-    } else if (selectedParent != null && !parentNames.contains(selectedParent) && parentNames.isNotEmpty) {
-      selectedParent = parentNames.first;
-    } else if (parentNames.isEmpty) {
-      selectedParent = null;
-    }
-    
-    // 3. Filter list to show subcategories and the parent itself
-    List<CategoryModel> filteredCategories = [];
-    if (selectedParent != null) {
-      filteredCategories = categories.where((c) => 
-        c.parentName == selectedParent || 
-        (c.name == selectedParent && (c.parentName == null || c.parentName!.isEmpty))
-      ).toList();
-    } else {
-      // If no parents exist at all, just show everything (fallback)
-      filteredCategories = categories;
+    if (categories.isEmpty) {
+      return const CategoryEmptyState();
     }
 
-    if (type == 'general') {
-      return categories.isEmpty
-          ? const CategoryEmptyState()
-          : ReorderableListView.builder(
-              buildDefaultDragHandles: false,
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 88),
-              proxyDecorator: (Widget child, int index, Animation<double> animation) {
-                return AnimatedBuilder(
-                  animation: animation,
-                  builder: (BuildContext context, Widget? child) {
-                    final double animValue = Curves.easeInOut.transform(animation.value);
-                    final double scale = 1.0 + (animValue * 0.02);
-                    return Transform.scale(
-                      scale: scale,
-                      child: Opacity(
-                        opacity: 0.9,
-                        child: Material(
-                          color: Colors.transparent,
-                          elevation: 0,
-                          child: child,
-                        ),
+    final Map<String, List<CategoryModel>> childrenMap = {};
+    final Map<String, CategoryModel> parentModels = {};
+
+    for (var cat in categories) {
+      if (cat.parentName == null || cat.parentName!.isEmpty) {
+        parentModels[cat.name] = cat;
+      } else {
+        childrenMap.putIfAbsent(cat.parentName!, () => []).add(cat);
+      }
+    }
+
+    final allParentNames = {...parentModels.keys, ...childrenMap.keys}.toList();
+    allParentNames.sort();
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 88),
+      physics: const BouncingScrollPhysics(),
+      itemCount: allParentNames.length + 1,
+      itemBuilder: (context, index) {
+        if (index == allParentNames.length) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16, bottom: 24),
+              child: ActionChip(
+                label: const Text('إضافة فئة رئيسية', style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primaryColor)),
+                avatar: const Icon(Icons.add_circle_outline_rounded, size: 20, color: AppTheme.primaryColor),
+                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                side: const BorderSide(color: Colors.transparent),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _showCategoryDialog(defaultType: type, forceNoParent: true);
+                },
+              ),
+            ),
+          );
+        }
+
+        final parentName = allParentNames[index];
+        final parentModel = parentModels[parentName];
+        final children = childrenMap[parentName] ?? [];
+        final hasChildren = children.isNotEmpty;
+
+        final Color iconColor = parentModel?.colorValue != null ? Color(parentModel!.colorValue!) : AppTheme.primaryColor;
+        final IconData iconData = parentModel?.iconCodePoint != null ? IconData(parentModel!.iconCodePoint!, fontFamily: 'MaterialIcons') : Icons.folder_rounded;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: AppTheme.cardShadow,
+            border: Border.all(color: AppTheme.dividerColor.withOpacity(0.5), width: 1),
+          ),
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              collapsedIconColor: AppTheme.textSecondary,
+              iconColor: AppTheme.primaryColor,
+              tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              initiallyExpanded: type == 'expense' && index == 0,
+              leading: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(child: Icon(iconData, color: iconColor, size: 24)),
+              ),
+              title: Text(
+                parentName,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.textPrimary, fontFamily: 'ArbFONTSIBMPlexArabicText'),
+              ),
+              subtitle: type == 'general' ? null : Text(
+                hasChildren ? '${children.length} فروع' : 'لا يوجد فروع',
+                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontFamily: 'ArbFONTSIBMPlexArabicText'),
+              ),
+              childrenPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton.icon(
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('تعديل', style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', fontSize: 13, fontWeight: FontWeight.bold)),
+                        style: TextButton.styleFrom(foregroundColor: AppTheme.textSecondary),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          _editParentCategory(parentName, parentModel, children, type);
+                        },
                       ),
-                    );
-                  },
-                  child: child,
-                );
-              },
-              itemCount: categories.length,
-              onReorder: (oldIndex, newIndex) async {
-                HapticFeedback.mediumImpact();
-                try {
-                  await _controller.reorderCategories(oldIndex, newIndex, type);
-                  _hasChanges = true;
-                } catch (e) {
-                  _showErrorMessage('خطأ أثناء إعادة الترتيب: $e');
-                }
-              },
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                return CategoryListItem(
-                  key: ValueKey(category.id ?? index),
-                  category: category,
-                  index: index,
-                  onEdit: () => _editCategory(category),
-                  onDelete: () => _deleteCategory(category),
-                );
-              },
-            );
-    }
-
-    return Column(
-      children: [
-        // Horizontal scroll for parents
-        Container(
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(parentNames.length + 1, (index) {
-                if (index == parentNames.length) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0, top: 12, bottom: 12),
-                    child: ActionChip(
-                      label: const Icon(Icons.add_circle_outline_rounded, size: 20, color: AppTheme.primaryColor),
-                      backgroundColor: Colors.white,
-                      side: BorderSide(color: AppTheme.primaryColor.withOpacity(0.5), width: 1),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      const SizedBox(width: 16),
+                      TextButton.icon(
+                        icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                        label: const Text('حذف', style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', fontSize: 13, fontWeight: FontWeight.bold)),
+                        style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          _deleteParentCategory(parentName, parentModel, children);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                if (children.isNotEmpty)
+                  ...children.map((child) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: CategoryListItem(
+                          category: child,
+                          index: children.indexOf(child),
+                          onEdit: () => _editCategory(child),
+                          onDelete: () => _deleteCategory(child),
+                        ),
+                      )).toList(),
+                if (type != 'general')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('إضافة فرع', style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', fontSize: 13, fontWeight: FontWeight.bold)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryColor,
+                        side: BorderSide(color: AppTheme.primaryColor.withOpacity(0.5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        minimumSize: const Size(double.infinity, 44),
+                      ),
                       onPressed: () {
                         HapticFeedback.lightImpact();
-                        _showCategoryDialog(defaultType: type, forceNoParent: true);
+                        _showCategoryDialog(defaultType: type, defaultParentName: parentName);
                       },
                     ),
-                  );
-                }
-                final parent = parentNames[index];
-                final isSelected = parent == selectedParent;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0, top: 12, bottom: 12),
-                  child: ChoiceChip(
-                    key: isSelected ? (type == 'general' ? _generalChipKey : _expenseChipKey) : null,
-                    label: Text(parent, style: TextStyle(
-                      color: isSelected ? Colors.white : AppTheme.textPrimary,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      fontFamily: 'ArbFONTSIBMPlexArabicText',
-                    )),
-                    selected: isSelected,
-                    selectedColor: AppTheme.primaryColor,
-                    backgroundColor: Colors.white,
-                    side: BorderSide(
-                      color: isSelected ? AppTheme.primaryColor : AppTheme.dividerColor,
-                      width: 1,
-                    ),
-                    showCheckmark: false,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    onSelected: (selected) {
-                      if (selected) {
-                        HapticFeedback.lightImpact();
-                        setState(() {
-                          if (type == 'general') {
-                            _selectedGeneralParent = parent;
-                          } else {
-                            _selectedExpenseParent = parent;
-                          }
-                        });
-                      }
-                    },
                   ),
-                );
-              }),
+              ],
             ),
           ),
-        ),
-        
-        // List of categories for the selected parent
-        Expanded(
-          child: filteredCategories.isEmpty
-              ? const CategoryEmptyState()
-              : ReorderableListView.builder(
-                  buildDefaultDragHandles: false,
-                  padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 88),
-                  proxyDecorator: (Widget child, int index, Animation<double> animation) {
-                    return AnimatedBuilder(
-                      animation: animation,
-                      builder: (BuildContext context, Widget? child) {
-                        final double animValue = Curves.easeInOut.transform(animation.value);
-                        final double scale = 1.0 + (animValue * 0.02);
-                        return Transform.scale(
-                          scale: scale,
-                          child: Opacity(
-                            opacity: 0.9,
-                            child: Material(
-                              color: Colors.transparent,
-                              elevation: 0,
-                              child: child,
-                            ),
-                          ),
-                        );
-                      },
-                      child: child,
-                    );
-                  },
-                  itemCount: filteredCategories.length,
-                  onReorder: (oldIndex, newIndex) async {
-                    HapticFeedback.mediumImpact();
-                    try {
-                      await _controller.reorderCategories(oldIndex, newIndex, type);
-                      _hasChanges = true;
-                    } catch (e) {
-                      _showErrorMessage('خطأ أثناء إعادة الترتيب: $e');
-                    }
-                  },
-                  itemBuilder: (context, index) {
-                    final category = filteredCategories[index];
-                    return CategoryListItem(
-                      key: ValueKey(category.id ?? index),
-                      category: category,
-                      index: index,
-                      onEdit: () => _editCategory(category),
-                      onDelete: () => _deleteCategory(category),
-                    );
-                  },
-                ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -426,26 +370,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
           await _controller.addCategory(mainCat);
           await _controller.addCategory(subCat);
           _hasChanges = true;
-
-          setState(() {
-            if (mainCat.type == 'general') {
-              _selectedGeneralParent = mainCat.name;
-            } else {
-              _selectedExpenseParent = mainCat.name;
-            }
-          });
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            final key = mainCat.type == 'general' ? _generalChipKey : _expenseChipKey;
-            if (key.currentContext != null) {
-              Scrollable.ensureVisible(
-                key.currentContext!,
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeOutCubic,
-                alignment: 0.5,
-              );
-            }
-          });
           
           _showSuccessMessage('تم إضافة الفئة بنجاح');
         } else if (result is CategoryModel) {
@@ -456,37 +380,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
           } else {
             await _controller.addCategory(result);
             _hasChanges = true;
-            
-            if (result.parentName != null && result.parentName!.isNotEmpty) {
-              setState(() {
-                if (result.type == 'general') {
-                  _selectedGeneralParent = result.parentName;
-                } else {
-                  _selectedExpenseParent = result.parentName;
-                }
-              });
-            } else if (result.parentName == null || result.parentName!.isEmpty) {
-              setState(() {
-                if (result.type == 'general') {
-                  _selectedGeneralParent = result.name;
-                } else {
-                  _selectedExpenseParent = result.name;
-                }
-              });
-              
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                final key = result.type == 'general' ? _generalChipKey : _expenseChipKey;
-                if (key.currentContext != null) {
-                  Scrollable.ensureVisible(
-                    key.currentContext!,
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeOutCubic,
-                    alignment: 0.5,
-                  );
-                }
-              });
-            }
-            
             _showSuccessMessage('تم إضافة الفئة بنجاح');
           }
         }
@@ -579,6 +472,107 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
         ],
       ),
     );
+  }
+
+  void _deleteParentCategory(String parentName, CategoryModel? parentModel, List<CategoryModel> children) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('حذف الفئة الرئيسية', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'ArbFONTSIBMPlexArabicText', color: AppTheme.textPrimary)),
+        content: Text(
+          'هل أنت متأكد من حذف القائمة الرئيسية "$parentName"؟\n\n'
+          'سيتم حذف هذه الفئة وجميع الفروع التابعة لها (${children.length} فروع) بشكل نهائي.',
+          style: const TextStyle(fontSize: 13, fontFamily: 'ArbFONTSIBMPlexArabicText', color: AppTheme.textSecondary, height: 1.5),
+        ),
+        actionsPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+        actions: [
+          TextButton(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(context);
+            },
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              HapticFeedback.vibrate();
+              Navigator.pop(context);
+              try {
+                if (parentModel != null && parentModel.id != null) {
+                  await _controller.deleteCategory(parentModel.id!);
+                }
+                for (var child in children) {
+                  if (child.id != null) {
+                    await _controller.deleteCategory(child.id!);
+                  }
+                }
+                _hasChanges = true;
+                if (mounted) _showSuccessMessage('تم حذف الفئة والفروع بنجاح');
+              } catch (e) {
+                if (mounted) _showErrorMessage('خطأ: $e');
+              }
+            },
+            child: const Text('حذف الجميع'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editParentCategory(String oldParentName, CategoryModel? parentModel, List<CategoryModel> children, String type) async {
+    final result = await showDialog<dynamic>(
+      context: context,
+      builder: (context) => CategoryDialog(
+        category: parentModel ?? CategoryModel(name: oldParentName, type: type),
+        defaultType: type,
+        forceNoParent: true,
+      ),
+    );
+
+    if (result != null && mounted && result is CategoryModel) {
+      try {
+        final newName = result.name;
+        
+        if (parentModel != null) {
+          await _controller.updateCategory(result);
+        } else {
+          await _controller.addCategory(result);
+        }
+        
+        if (newName != oldParentName) {
+          for (var child in children) {
+            final updatedChild = CategoryModel(
+              id: child.id,
+              name: child.name,
+              type: child.type,
+              colorValue: child.colorValue,
+              iconCodePoint: child.iconCodePoint,
+              sortOrder: child.sortOrder,
+              parentName: newName,
+            );
+            await _controller.updateCategory(updatedChild);
+          }
+        }
+        
+        _hasChanges = true;
+        _showSuccessMessage('تم تعديل الفئة الرئيسية بنجاح');
+      } catch (e) {
+        if (e.toString().contains('UNIQUE constraint failed')) {
+          _showErrorMessage('عذراً، هذا الاسم موجود مسبقاً.');
+        } else {
+          _showErrorMessage('خطأ: $e');
+        }
+      }
+    }
   }
 
   void _showSuccessMessage(String message) {

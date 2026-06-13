@@ -103,27 +103,29 @@ class GoogleDriveBackupService {
     final account = await _requireAccount(interactive: interactive);
     final headers = await account.authHeaders;
 
-    return await Isolate.run(() async {
-      final authClient = _GoogleAuthClient(headers);
-      final api = drive.DriveApi(authClient);
-      final result = await api.files.list(
-        q: "name contains '$backupFileNamePrefix' and trashed = false",
-        orderBy: 'createdTime desc',
-        spaces: 'appDataFolder',
-        pageSize: 50,
-        $fields: 'files(id,name,createdTime,modifiedTime,size)',
-      );
-      return (result.files ?? const <drive.File>[])
-          .where((f) => f.id != null)
-          .map((f) => drive.File(
-                id: f.id,
-                name: f.name,
-                createdTime: f.createdTime,
-                modifiedTime: f.modifiedTime,
-                size: f.size,
-              ))
-          .toList();
-    });
+    return await Isolate.run(() => _listBackupsBg(headers));
+  }
+
+  static Future<List<drive.File>> _listBackupsBg(Map<String, String> headers) async {
+    final authClient = _GoogleAuthClient(headers);
+    final api = drive.DriveApi(authClient);
+    final result = await api.files.list(
+      q: "name contains '$backupFileNamePrefix' and trashed = false",
+      orderBy: 'createdTime desc',
+      spaces: 'appDataFolder',
+      pageSize: 50,
+      $fields: 'files(id,name,createdTime,modifiedTime,size)',
+    );
+    return (result.files ?? const <drive.File>[])
+        .where((f) => f.id != null)
+        .map((f) => drive.File(
+              id: f.id,
+              name: f.name,
+              createdTime: f.createdTime,
+              modifiedTime: f.modifiedTime,
+              size: f.size,
+            ))
+        .toList();
   }
 
   Future<void> cleanupOldBackups({
@@ -133,26 +135,28 @@ class GoogleDriveBackupService {
     final account = await _requireAccount(interactive: interactive);
     final headers = await account.authHeaders;
 
-    await Isolate.run(() async {
-      final authClient = _GoogleAuthClient(headers);
-      final api = drive.DriveApi(authClient);
+    await Isolate.run(() => _cleanupOldBackupsBg(headers, keepCount));
+  }
 
-      final result = await api.files.list(
-        q: "name contains '$backupFileNamePrefix' and trashed = false",
-        orderBy: 'createdTime desc',
-        spaces: 'appDataFolder',
-        pageSize: 50,
-        $fields: 'files(id,name,createdTime,modifiedTime,size)',
-      );
-      final backups = (result.files ?? const <drive.File>[]).where((f) => f.id != null).toList();
+  static Future<void> _cleanupOldBackupsBg(Map<String, String> headers, int keepCount) async {
+    final authClient = _GoogleAuthClient(headers);
+    final api = drive.DriveApi(authClient);
 
-      if (backups.length <= keepCount) return;
-      final toDelete = backups.skip(keepCount);
-      for (final f in toDelete) {
-        if (f.id == null) continue;
-        await api.files.delete(f.id!);
-      }
-    });
+    final result = await api.files.list(
+      q: "name contains '$backupFileNamePrefix' and trashed = false",
+      orderBy: 'createdTime desc',
+      spaces: 'appDataFolder',
+      pageSize: 50,
+      $fields: 'files(id,name,createdTime,modifiedTime,size)',
+    );
+    final backups = (result.files ?? const <drive.File>[]).where((f) => f.id != null).toList();
+
+    if (backups.length <= keepCount) return;
+    final toDelete = backups.skip(keepCount);
+    for (final f in toDelete) {
+      if (f.id == null) continue;
+      await api.files.delete(f.id!);
+    }
   }
 
   Future<String> uploadBackupFile(
@@ -166,53 +170,65 @@ class GoogleDriveBackupService {
     final headers = await account.authHeaders;
     final filePath = file.path;
 
-    return await Isolate.run(() async {
-      final authClient = _GoogleAuthClient(headers);
-      final api = drive.DriveApi(authClient);
-      final bgFile = File(filePath);
+    return await Isolate.run(() => _uploadBackupFileBg(
+          headers: headers,
+          filePath: filePath,
+          keepCount: keepCount,
+          customName: customName,
+        ));
+  }
 
-      final now = DateTime.now();
-      final base = _sanitizeBackupBaseName(customName ?? '');
-      final stampName = _timestampedBackupName(now);
-      final name = base.isEmpty ? stampName : '${backupFileNamePrefix}${base}_' + stampName.substring(backupFileNamePrefix.length);
+  static Future<String> _uploadBackupFileBg({
+    required Map<String, String> headers,
+    required String filePath,
+    required int keepCount,
+    required String? customName,
+  }) async {
+    final authClient = _GoogleAuthClient(headers);
+    final api = drive.DriveApi(authClient);
+    final bgFile = File(filePath);
 
-      final media = drive.Media(
-        bgFile.openRead(),
-        await bgFile.length(),
-        contentType: 'application/octet-stream',
+    final now = DateTime.now();
+    final base = _sanitizeBackupBaseName(customName ?? '');
+    final stampName = _timestampedBackupName(now);
+    final name = base.isEmpty ? stampName : '${backupFileNamePrefix}${base}_' + stampName.substring(backupFileNamePrefix.length);
+
+    final media = drive.Media(
+      bgFile.openRead(),
+      await bgFile.length(),
+      contentType: 'application/octet-stream',
+    );
+
+    final created = await api.files.create(
+      drive.File(name: name, parents: const <String>['appDataFolder']),
+      uploadMedia: media,
+      $fields: 'id,name',
+    );
+    if (created.id == null) {
+      throw StateError('Failed to upload backup file to Drive');
+    }
+
+    try {
+      final result = await api.files.list(
+        q: "name contains '$backupFileNamePrefix' and trashed = false",
+        orderBy: 'createdTime desc',
+        spaces: 'appDataFolder',
+        pageSize: 50,
+        $fields: 'files(id,name,createdTime,modifiedTime,size)',
       );
-
-      final created = await api.files.create(
-        drive.File(name: name, parents: const <String>['appDataFolder']),
-        uploadMedia: media,
-        $fields: 'id,name',
-      );
-      if (created.id == null) {
-        throw StateError('Failed to upload backup file to Drive');
-      }
-
-      try {
-        final result = await api.files.list(
-          q: "name contains '$backupFileNamePrefix' and trashed = false",
-          orderBy: 'createdTime desc',
-          spaces: 'appDataFolder',
-          pageSize: 50,
-          $fields: 'files(id,name,createdTime,modifiedTime,size)',
-        );
-        final backups = (result.files ?? const <drive.File>[]).where((f) => f.id != null).toList();
-        if (backups.length > keepCount) {
-          final toDelete = backups.skip(keepCount);
-          for (final f in toDelete) {
-            if (f.id == null) continue;
-            await api.files.delete(f.id!);
-          }
+      final backups = (result.files ?? const <drive.File>[]).where((f) => f.id != null).toList();
+      if (backups.length > keepCount) {
+        final toDelete = backups.skip(keepCount);
+        for (final f in toDelete) {
+          if (f.id == null) continue;
+          await api.files.delete(f.id!);
         }
-      } catch (_) {
-        // Cleanup failure should not fail a successful backup upload.
       }
+    } catch (_) {
+      // Cleanup failure should not fail a successful backup upload.
+    }
 
-      return created.id!;
-    });
+    return created.id!;
   }
 
   Future<String> uploadMetadata(
@@ -223,42 +239,44 @@ class GoogleDriveBackupService {
     final account = await _requireAccount(interactive: interactive);
     final headers = await account.authHeaders;
 
-    return await Isolate.run(() async {
-      final authClient = _GoogleAuthClient(headers);
-      final api = drive.DriveApi(authClient);
+    return await Isolate.run(() => _uploadMetadataBg(headers, metadata));
+  }
 
-      // Find app data file by name (inlined _findAppDataFileByName)
-      final result = await api.files.list(
-        spaces: 'appDataFolder',
-        q: "name = '$metadataFileName' and trashed = false",
-        $fields: 'files(id,name,modifiedTime,size,createdTime)',
-        pageSize: 10,
-      );
-      final files = result.files;
-      final existingMeta = (files == null || files.isEmpty) ? null : files.first;
+  static Future<String> _uploadMetadataBg(Map<String, String> headers, Map<String, dynamic> metadata) async {
+    final authClient = _GoogleAuthClient(headers);
+    final api = drive.DriveApi(authClient);
 
-      final bytes = utf8.encode(jsonEncode(metadata));
-      final stream = Stream<List<int>>.value(bytes);
-      final media = drive.Media(stream, bytes.length, contentType: 'application/json');
+    // Find app data file by name (inlined _findAppDataFileByName)
+    final result = await api.files.list(
+      spaces: 'appDataFolder',
+      q: "name = '$metadataFileName' and trashed = false",
+      $fields: 'files(id,name,modifiedTime,size,createdTime)',
+      pageSize: 10,
+    );
+    final files = result.files;
+    final existingMeta = (files == null || files.isEmpty) ? null : files.first;
 
-      if (existingMeta?.id != null) {
-        final updated = await api.files.update(
-          drive.File(name: metadataFileName),
-          existingMeta!.id!,
-          uploadMedia: media,
-        );
-        return updated.id ?? existingMeta.id!;
-      }
+    final bytes = utf8.encode(jsonEncode(metadata));
+    final stream = Stream<List<int>>.value(bytes);
+    final media = drive.Media(stream, bytes.length, contentType: 'application/json');
 
-      final created = await api.files.create(
-        drive.File(name: metadataFileName, parents: const <String>['appDataFolder']),
+    if (existingMeta?.id != null) {
+      final updated = await api.files.update(
+        drive.File(name: metadataFileName),
+        existingMeta!.id!,
         uploadMedia: media,
       );
-      if (created.id == null) {
-        throw StateError('Failed to create metadata file on Drive');
-      }
-      return created.id!;
-    });
+      return updated.id ?? existingMeta.id!;
+    }
+
+    final created = await api.files.create(
+      drive.File(name: metadataFileName, parents: const <String>['appDataFolder']),
+      uploadMedia: media,
+    );
+    if (created.id == null) {
+      throw StateError('Failed to create metadata file on Drive');
+    }
+    return created.id!;
   }
 
   Future<void> renameBackup({
@@ -268,31 +286,43 @@ class GoogleDriveBackupService {
     final account = await _requireAccount(interactive: true);
     final headers = await account.authHeaders;
 
-    await Isolate.run(() async {
-      final authClient = _GoogleAuthClient(headers);
-      final api = drive.DriveApi(authClient);
-      final trimmed = newName.trim();
-      if (trimmed.isEmpty) {
-        throw ArgumentError('newName is empty');
-      }
-      final finalName = trimmed.toLowerCase().endsWith('.db') ? trimmed : '$trimmed.db';
-      await api.files.update(
-        drive.File(name: finalName),
-        fileId,
-        $fields: 'id,name',
-      );
-    });
+    await Isolate.run(() => _renameBackupBg(
+          headers: headers,
+          fileId: fileId,
+          newName: newName,
+        ));
+  }
+
+  static Future<void> _renameBackupBg({
+    required Map<String, String> headers,
+    required String fileId,
+    required String newName,
+  }) async {
+    final authClient = _GoogleAuthClient(headers);
+    final api = drive.DriveApi(authClient);
+    final trimmed = newName.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError('newName is empty');
+    }
+    final finalName = trimmed.toLowerCase().endsWith('.db') ? trimmed : '$trimmed.db';
+    await api.files.update(
+      drive.File(name: finalName),
+      fileId,
+      $fields: 'id,name',
+    );
   }
 
   Future<void> deleteBackup(String fileId) async {
     final account = await _requireAccount(interactive: true);
     final headers = await account.authHeaders;
 
-    await Isolate.run(() async {
-      final authClient = _GoogleAuthClient(headers);
-      final api = drive.DriveApi(authClient);
-      await api.files.delete(fileId);
-    });
+    await Isolate.run(() => _deleteBackupBg(headers, fileId));
+  }
+
+  static Future<void> _deleteBackupBg(Map<String, String> headers, String fileId) async {
+    final authClient = _GoogleAuthClient(headers);
+    final api = drive.DriveApi(authClient);
+    await api.files.delete(fileId);
   }
 
   Future<drive.File?> getLatestBackup({bool interactive = false}) async {
@@ -307,68 +337,81 @@ class GoogleDriveBackupService {
     final destPath = destination.path;
     final effectiveFileId = fileId;
 
-    return await Isolate.run(() async {
-      final authClient = _GoogleAuthClient(headers);
-      final api = drive.DriveApi(authClient);
+    final path = await Isolate.run(() => _downloadBackupToBg(
+          headers: headers,
+          destPath: destPath,
+          fileId: effectiveFileId,
+        ));
+    return File(path);
+  }
 
-      String? activeId = effectiveFileId;
-      if (activeId == null || activeId.trim().isEmpty) {
-        // Find latest backup
-        final result = await api.files.list(
-          q: "name contains '$backupFileNamePrefix' and trashed = false",
-          orderBy: 'createdTime desc',
-          spaces: 'appDataFolder',
-          pageSize: 10,
-          $fields: 'files(id,name,createdTime,modifiedTime,size)',
-        );
-        final backups = (result.files ?? const <drive.File>[])
-            .where((f) => f.id != null)
-            .toList();
-        if (backups.isEmpty) {
-          throw StateError('No backup found on Google Drive');
-        }
-        activeId = backups.first.id;
-      }
+  static Future<String> _downloadBackupToBg({
+    required Map<String, String> headers,
+    required String destPath,
+    required String? fileId,
+  }) async {
+    final authClient = _GoogleAuthClient(headers);
+    final api = drive.DriveApi(authClient);
 
-      if (activeId == null) {
+    String? activeId = fileId;
+    if (activeId == null || activeId.trim().isEmpty) {
+      // Find latest backup
+      final result = await api.files.list(
+        q: "name contains '$backupFileNamePrefix' and trashed = false",
+        orderBy: 'createdTime desc',
+        spaces: 'appDataFolder',
+        pageSize: 10,
+        $fields: 'files(id,name,createdTime,modifiedTime,size)',
+      );
+      final backups = (result.files ?? const <drive.File>[])
+          .where((f) => f.id != null)
+          .toList();
+      if (backups.isEmpty) {
         throw StateError('No backup found on Google Drive');
       }
+      activeId = backups.first.id;
+    }
 
-      final media = await api.files.get(activeId, downloadOptions: drive.DownloadOptions.fullMedia) as drive.Media;
-      final bgDest = File(destPath);
-      final sink = bgDest.openWrite();
-      await media.stream.pipe(sink);
-      await sink.flush();
-      await sink.close();
+    if (activeId == null) {
+      throw StateError('No backup found on Google Drive');
+    }
 
-      return bgDest;
-    });
+    final media = await api.files.get(activeId, downloadOptions: drive.DownloadOptions.fullMedia) as drive.Media;
+    final bgDest = File(destPath);
+    final sink = bgDest.openWrite();
+    await media.stream.pipe(sink);
+    await sink.flush();
+    await sink.close();
+
+    return bgDest.path;
   }
 
   Future<Map<String, dynamic>?> downloadMetadata() async {
     final account = await _requireAccount(interactive: true);
     final headers = await account.authHeaders;
 
-    return await Isolate.run(() async {
-      final authClient = _GoogleAuthClient(headers);
-      final api = drive.DriveApi(authClient);
+    return await Isolate.run(() => _downloadMetadataBg(headers));
+  }
 
-      // Find metadata file
-      final result = await api.files.list(
-        spaces: 'appDataFolder',
-        q: "name = '$metadataFileName' and trashed = false",
-        $fields: 'files(id,name,modifiedTime,size,createdTime)',
-        pageSize: 10,
-      );
-      final files = result.files;
-      final existingMeta = (files == null || files.isEmpty) ? null : files.first;
-      if (existingMeta?.id == null) return null;
+  static Future<Map<String, dynamic>?> _downloadMetadataBg(Map<String, String> headers) async {
+    final authClient = _GoogleAuthClient(headers);
+    final api = drive.DriveApi(authClient);
 
-      final media = await api.files.get(existingMeta!.id!, downloadOptions: drive.DownloadOptions.fullMedia) as drive.Media;
-      final bytes = await media.stream.fold<List<int>>(<int>[], (a, b) => a..addAll(b));
-      final decoded = jsonDecode(utf8.decode(bytes));
-      return decoded is Map<String, dynamic> ? decoded : null;
-    });
+    // Find metadata file
+    final result = await api.files.list(
+      spaces: 'appDataFolder',
+      q: "name = '$metadataFileName' and trashed = false",
+      $fields: 'files(id,name,modifiedTime,size,createdTime)',
+      pageSize: 10,
+    );
+    final files = result.files;
+    final existingMeta = (files == null || files.isEmpty) ? null : files.first;
+    if (existingMeta?.id == null) return null;
+
+    final media = await api.files.get(existingMeta!.id!, downloadOptions: drive.DownloadOptions.fullMedia) as drive.Media;
+    final bytes = await media.stream.fold<List<int>>(<int>[], (a, b) => a..addAll(b));
+    final decoded = jsonDecode(utf8.decode(bytes));
+    return decoded is Map<String, dynamic> ? decoded : null;
   }
 }
 

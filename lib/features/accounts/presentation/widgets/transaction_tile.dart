@@ -6,6 +6,7 @@ import 'package:debit_credit_app/core/theme/app_theme.dart';
 
 class TransactionTile extends StatelessWidget {
   final TransactionModel transaction;
+  final double? runningBalance;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final bool selected;
@@ -14,6 +15,7 @@ class TransactionTile extends StatelessWidget {
   const TransactionTile({
     super.key,
     required this.transaction,
+    this.runningBalance,
     required this.selected,
     this.onTap,
     this.onLongPress,
@@ -96,7 +98,7 @@ class TransactionTile extends StatelessWidget {
 
                     // Description & Date Column
                     Expanded(
-                      flex: 4,
+                      flex: 3,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -111,28 +113,32 @@ class TransactionTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(Icons.calendar_today_outlined, size: 10, color: AppTheme.textTertiary),
-                              const SizedBox(width: 4),
-                              Text(
-                                formattedDate,
-                                style: const TextStyle(
-                                  color: AppTheme.textTertiary,
-                                  fontSize: 11,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Row(
+                              children: [
+                                Icon(Icons.calendar_today_outlined, size: 10, color: AppTheme.textTertiary),
+                                const SizedBox(width: 4),
+                                Text(
+                                  formattedDate,
+                                  style: const TextStyle(
+                                    color: AppTheme.textTertiary,
+                                    fontSize: 11,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Icon(Icons.access_time_rounded, size: 10, color: AppTheme.textTertiary),
-                              const SizedBox(width: 4),
-                              Text(
-                                formattedTime,
-                                style: const TextStyle(
-                                  color: AppTheme.textTertiary,
-                                  fontSize: 11,
+                                const SizedBox(width: 8),
+                                Icon(Icons.access_time_rounded, size: 10, color: AppTheme.textTertiary),
+                                const SizedBox(width: 4),
+                                Text(
+                                  formattedTime,
+                                  style: const TextStyle(
+                                    color: AppTheme.textTertiary,
+                                    fontSize: 11,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -140,27 +146,55 @@ class TransactionTile extends StatelessWidget {
                     const SizedBox(width: 12),
 
                     // Amounts Columns
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          isCredit ? '+$formattedAmount' : '-$formattedAmount',
-                          style: TextStyle(
-                            color: badgeColor,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              isCredit ? '+$formattedAmount' : '-$formattedAmount',
+                              style: TextStyle(
+                                color: badgeColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          isCredit ? 'ديون لك' : 'ديون عليك',
-                          style: TextStyle(
-                            color: badgeColor.withOpacity(0.8),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(height: 2),
+                          Text(
+                            isCredit ? 'ديون لك' : 'ديون عليك',
+                            style: TextStyle(
+                              color: badgeColor.withOpacity(0.8),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                          if (runningBalance != null) ...[
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppTheme.backgroundColor,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'المتبقي: ${NumberFormat('#,##0').format(runningBalance!.abs())}',
+                                  style: TextStyle(
+                                    color: runningBalance! >= 0 ? AppTheme.creditColor : AppTheme.debitColor,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ],
                 ),

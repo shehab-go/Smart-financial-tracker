@@ -1769,7 +1769,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'ديون لك',
+                                      _isNewAccount ? 'ديون لك' : 'لك',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -1855,7 +1855,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'ديون عليك',
+                                      _isNewAccount ? 'ديون عليك' : 'عليك',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,

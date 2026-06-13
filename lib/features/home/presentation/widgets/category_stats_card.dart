@@ -158,7 +158,8 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
 
     final creditPercent = hasData ? (totalCredit / total) * 100 : 0.0;
     final debitPercent = hasData ? (totalDebit / total) * 100 : 0.0;
-
+    
+    final double netBalance = totalCredit - totalDebit;
     // Filter other currencies that have non-zero balances
     final List<MapEntry<String, List<AccountModel>>> otherCurrenciesWithBalances = [];
     currencyGroups.entries
@@ -184,8 +185,8 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
     final double collapsedHeight = isSmall ? 56.0 : 64.0;
     // Responsive expanded height: shrink by 30px on small screens
     final double expandedHeight = hasOtherCurrencies
-        ? (isSmall ? 310.0 : 340.0)
-        : (isSmall ? 210.0 : 240.0);
+        ? (isSmall ? 380.0 : 410.0)
+        : (isSmall ? 280.0 : 310.0);
 
     final double aHeight = lerp(expandedHeight, collapsedHeight, t);
     final double aPad    = lerp(isSmall ? 12.0 : 18.0, 10.0, t);
@@ -297,17 +298,16 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Credit Stat ( له )
+                               // Credit Stat ( له )
                                  _buildBentoStatCard(
                                    title: 'إجمالي الديون لك',
                                    amount: totalCredit,
                                    percentage: creditPercent,
                                    color: AppTheme.creditColor,
                                    icon: Icons.trending_up_rounded,
-                                   isCredit: true,
                                    isSmall: isSmall,
                                  ),
-                                 SizedBox(height: isSmall ? 6 : 12),
+                                 SizedBox(height: isSmall ? 6 : 10),
                                 // Debit Stat ( عليه )
                                  _buildBentoStatCard(
                                    title: 'إجمالي الديون عليك',
@@ -315,8 +315,18 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                                    percentage: debitPercent,
                                    color: AppTheme.debitColor,
                                    icon: Icons.trending_down_rounded,
-                                   isCredit: false,
                                    isSmall: isSmall,
+                                 ),
+                                 SizedBox(height: isSmall ? 6 : 10),
+                                // Net Stat ( الصافي )
+                                 _buildBentoStatCard(
+                                   title: netBalance > 0 ? 'صافي الديون لك' : (netBalance < 0 ? 'صافي الديون عليك' : 'توازن مالي'),
+                                   amount: netBalance.abs(),
+                                   percentage: 0,
+                                   color: netBalance > 0 ? AppTheme.creditColor : (netBalance < 0 ? AppTheme.debitColor : AppTheme.textTertiary),
+                                   icon: netBalance > 0 ? Icons.account_balance_wallet_rounded : (netBalance < 0 ? Icons.money_off_csred_rounded : Icons.balance_rounded),
+                                   isSmall: isSmall,
+                                   showPercentage: false,
                                  ),
                               ],
                             ),
@@ -329,7 +339,7 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                             flex: 4,
                             child: Container(
                               // Responsive chart height
-                              height: isSmall ? 110.0 : 136.0,
+                              height: isSmall ? 180.0 : 210.0,
                               padding: EdgeInsets.all(isSmall ? 4 : 8),
                               decoration: BoxDecoration(
                                 color: AppTheme.surfaceColor,
@@ -408,9 +418,9 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                                         Column(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            const Text(
-                                              'النسبة',
-                                              style: TextStyle(
+                                            Text(
+                                              _touchedIndex == -1 ? 'الصافي' : 'النسبة',
+                                              style: const TextStyle(
                                                 fontSize: 9,
                                                 color: AppTheme.textTertiary,
                                                 fontWeight: FontWeight.bold,
@@ -421,12 +431,15 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                                                   ? '${creditPercent.toStringAsFixed(0)}%'
                                                   : _touchedIndex == 1
                                                       ? '${debitPercent.toStringAsFixed(0)}%'
-                                                      : 'موزعة',
-                                              style: const TextStyle(
-                                                fontSize: 10,
+                                                      : NumberFormat('#,##0').format(netBalance.abs()),
+                                              style: TextStyle(
+                                                fontSize: _touchedIndex == -1 ? 12 : 10,
                                                 fontWeight: FontWeight.bold,
-                                                color: AppTheme.textPrimary,
+                                                color: _touchedIndex == -1 
+                                                   ? (netBalance > 0 ? AppTheme.creditColor : (netBalance < 0 ? AppTheme.debitColor : AppTheme.textTertiary))
+                                                   : AppTheme.textPrimary,
                                               ),
+                                              maxLines: 1,
                                             ),
                                           ],
                                         ),
@@ -541,8 +554,8 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
     required double percentage,
     required Color color,
     required IconData icon,
-    required bool isCredit,
     bool isSmall = false,
+    bool showPercentage = true,
   }) {
     return Container(
       padding: EdgeInsets.all(isSmall ? 8 : 12),
@@ -598,22 +611,24 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${percentage.toStringAsFixed(0)}%',
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: color,
-                          fontWeight: FontWeight.bold,
+                    if (showPercentage) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${percentage.toStringAsFixed(0)}%',
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: color,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ],

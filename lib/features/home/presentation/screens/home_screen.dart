@@ -808,74 +808,45 @@ class HomeScreenState extends State<HomeScreen> {
                       
                       // Account Balances Section
                       if (!isMultiCurrency) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Credit Balance Column
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                        (() {
+                          final double netVal = creditVal - debitVal;
+                          final bool isNetCredit = netVal >= 0;
+                          final double absNet = netVal.abs();
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  const Row(
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.arrow_upward_rounded, color: AppTheme.creditColor, size: 12),
-                                      SizedBox(width: 4),
+                                      Icon(
+                                        isNetCredit ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                        color: isNetCredit ? AppTheme.creditColor : AppTheme.debitColor,
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 6),
                                       Text(
-                                        'ديون لك',
-                                        style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
+                                        isNetCredit ? 'صافي الديون لك' : 'صافي الديون عليك',
+                                        style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.bold),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 6),
                                   Text(
-                                    NumberFormat('#,##0').format(creditVal),
-                                    style: const TextStyle(
-                                      color: AppTheme.creditColor,
-                                      fontSize: 14,
+                                    NumberFormat('#,##0').format(absNet),
+                                    style: TextStyle(
+                                      color: isNetCredit ? AppTheme.creditColor : AppTheme.debitColor,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            
-                            // Divider
-                            Container(
-                              width: 1,
-                              height: 28,
-                              color: AppTheme.dividerColor.withOpacity(0.8),
-                            ),
-                            const SizedBox(width: 16),
-                            
-                            // Debit Balance Column
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Row(
-                                    children: [
-                                      Icon(Icons.arrow_downward_rounded, color: AppTheme.debitColor, size: 12),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'ديون عليك',
-                                        style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    NumberFormat('#,##0').format(debitVal),
-                                    style: const TextStyle(
-                                      color: AppTheme.debitColor,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          );
+                        })(),
                         
                         // Repayment Progress Bar
                         if (totalVal > 0) ...[
@@ -943,55 +914,35 @@ class HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                // Credit (له)
-                                // Credit (ديون لك)
                                 Expanded(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.arrow_upward_rounded, color: AppTheme.creditColor, size: 10),
-                                      const SizedBox(width: 2),
-                                      const Text(
-                                        'ديون لك: ',
-                                        style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
-                                      ),
-                                      Text(
-                                        NumberFormat('#,##0').format(s.totalCredit),
-                                        style: const TextStyle(
-                                          color: AppTheme.creditColor,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // Divider
-                                Container(
-                                  width: 1,
-                                  height: 16,
-                                  color: AppTheme.dividerColor.withOpacity(0.5),
-                                ),
-                                // Debit (ديون عليك)
-                                Expanded(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.arrow_downward_rounded, color: AppTheme.debitColor, size: 10),
-                                      const SizedBox(width: 2),
-                                      const Text(
-                                        'ديون عليك: ',
-                                        style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
-                                      ),
-                                      Text(
-                                        NumberFormat('#,##0').format(s.totalDebit),
-                                        style: const TextStyle(
-                                          color: AppTheme.debitColor,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
+                                  child: Builder(
+                                    builder: (context) {
+                                      final double sNet = s.totalCredit - s.totalDebit;
+                                      final bool sNetCredit = sNet >= 0;
+                                      return Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            sNetCredit ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                            color: sNetCredit ? AppTheme.creditColor : AppTheme.debitColor,
+                                            size: 10,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            sNetCredit ? 'الصافي لك: ' : 'الصافي عليك: ',
+                                            style: const TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.bold),
+                                          ),
+                                          Text(
+                                            NumberFormat('#,##0').format(sNet.abs()),
+                                            style: TextStyle(
+                                              color: sNetCredit ? AppTheme.creditColor : AppTheme.debitColor,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }
                                   ),
                                 ),
                               ],
@@ -2115,8 +2066,8 @@ class _CategoryStatsHeaderDelegate extends SliverPersistentHeaderDelegate {
     });
 
     final double cardHeight = hasOtherCurrenciesWithBalances
-        ? (isSmall ? 310.0 : 340.0)
-        : (isSmall ? 210.0 : 240.0);
+        ? (isSmall ? 380.0 : 410.0)
+        : (isSmall ? 280.0 : 310.0);
     return cardHeight + 16.0;
   }
 
