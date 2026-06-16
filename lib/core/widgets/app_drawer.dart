@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:debit_credit_app/features/about/presentation/screens/about_screen.dart';
 import 'package:debit_credit_app/features/privacy/presentation/screens/privacy_screen.dart';
 import 'package:debit_credit_app/features/categories/presentation/screens/categories_screen.dart';
@@ -154,10 +155,10 @@ class _AppDrawerState extends State<AppDrawer> {
                                                 fit: BoxFit.cover,
                                                 errorBuilder: (context, error, stackTrace) {
                                                   if (_googlePhotoUrl != null && _googlePhotoUrl!.isNotEmpty) {
-                                                    return Image.network(
-                                                      _googlePhotoUrl!,
+                                                    return CachedNetworkImage(
+                                                      imageUrl: _googlePhotoUrl!,
                                                       fit: BoxFit.cover,
-                                                      errorBuilder: (context, error, stackTrace) {
+                                                      errorWidget: (context, url, error) {
                                                         return const Icon(
                                                           Icons.person_rounded,
                                                           size: 32,
@@ -174,10 +175,10 @@ class _AppDrawerState extends State<AppDrawer> {
                                                 },
                                               )
                                             : (_googlePhotoUrl != null && _googlePhotoUrl!.isNotEmpty)
-                                                ? Image.network(
-                                                    _googlePhotoUrl!,
+                                                ? CachedNetworkImage(
+                                                    imageUrl: _googlePhotoUrl!,
                                                     fit: BoxFit.cover,
-                                                    errorBuilder: (context, error, stackTrace) {
+                                                    errorWidget: (context, url, error) {
                                                       return const Icon(
                                                         Icons.person_rounded,
                                                         size: 32,

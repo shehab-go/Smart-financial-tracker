@@ -1309,10 +1309,13 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
       }
     }
 
+    final double net = totalCredit - totalDebit;
     _totals = {
       'debit': totalDebit,
       'credit': totalCredit,
-      'net': totalCredit - totalDebit,
+      'net': net,
+      'netCredit': net > 0 ? net : 0.0,
+      'netDebit': net < 0 ? net.abs() : 0.0,
     };
   }
 
@@ -1490,7 +1493,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
   }
 
   List<TransactionModel> _transactions = [];
-  Map<String, double> _totals = {'debit': 0.0, 'credit': 0.0, 'net': 0.0};
+  Map<String, double> _totals = {'debit': 0.0, 'credit': 0.0, 'net': 0.0, 'netCredit': 0.0, 'netDebit': 0.0};
   bool _isLoading = true;
 
   int _lastPerfLogEpochMs = 0;
@@ -2476,7 +2479,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      NumberFormat('#,##0').format(_totals['credit']),
+                                      NumberFormat('#,##0').format(_totals['netCredit']),
                                       style: const TextStyle(
                                         color: AppTheme.creditColor,
                                         fontSize: 16,
@@ -2513,7 +2516,7 @@ class _AccountTransactionsScreenState extends State<AccountTransactionsScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      NumberFormat('#,##0').format(_totals['debit']),
+                                      NumberFormat('#,##0').format(_totals['netDebit']),
                                       style: const TextStyle(
                                         color: AppTheme.debitColor,
                                         fontSize: 16,

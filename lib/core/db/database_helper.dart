@@ -1362,11 +1362,32 @@ class DatabaseHelper {
 
   Future<int> deleteExpenseAccount(int id) async {
     final db = await database;
-    return await db.delete(
-      'expense_accounts',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    int count = 0;
+    await db.transaction((txn) async {
+      // First delete all expenses associated with this account
+      await txn.delete(
+        'expenses',
+        where: 'expenseAccountId = ?',
+        whereArgs: [id],
+      );
+      // Then delete the account itself
+      count = await txn.delete(
+        'expense_accounts',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    });
+    return count;
+  }
+
+  Future<void> cleanupOrphanedExpenses() async {
+    final db = await database;
+    // Delete any expense where expenseAccountId is not null but does not exist in expense_accounts table
+    await db.rawDelete('''
+      DELETE FROM expenses 
+      WHERE expenseAccountId IS NOT NULL 
+      AND expenseAccountId NOT IN (SELECT id FROM expense_accounts)
+    ''');
   }
 
   Future<List<ExpenseModel>> getExpensesByAccountId(int expenseAccountId) async {

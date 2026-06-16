@@ -1451,8 +1451,10 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _driveLoadError!,
-                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                  _driveLoadError!.contains('SocketException') || _driveLoadError!.contains('Failed host lookup')
+                      ? 'يبدو أنك غير متصل بالإنترنت. يرجى التحقق من الاتصال والمحاولة مرة أخرى.'
+                      : 'حدث خطأ أثناء الاتصال بالخدمة. يرجى المحاولة مرة أخرى.',
+                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontFamily: 'ArbFONTSIBMPlexArabicText'),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),

@@ -330,6 +330,225 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     }
   }
 
+  void _showExpenseAccountOptions(ExpenseAccountModel account) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.edit_rounded, color: AppTheme.primaryColor),
+                ),
+                title: const Text(
+                  'تعديل تفاصيل المصروف',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  if (account.expenseCount == 1) {
+                    final accountExpenses = _controller.state.expenses
+                        .where((e) => e.expenseAccountId == account.id)
+                        .toList();
+                    if (accountExpenses.isNotEmpty) {
+                      await _showAddExpenseDialog(expense: accountExpenses.first);
+                    } else {
+                      _showEditExpenseAccountDialog(account);
+                    }
+                  } else {
+                    _showEditExpenseAccountDialog(account);
+                  }
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.errorColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.delete_rounded, color: AppTheme.errorColor),
+                ),
+                title: const Text(
+                  'حذف المصروف بالكامل',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.errorColor, fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                ),
+                subtitle: const Text(
+                  'سيتم حذف المصروف وجميع العمليات التابعة له',
+                  style: TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (c) => Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: AlertDialog(
+                        title: const Text('تأكيد الحذف', style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText')),
+                        content: const Text(
+                          'هل أنت متأكد من حذف هذا المصروف؟ سيتم مسح جميع بياناته بشكل نهائي.',
+                          style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, false),
+                            child: const Text('إلغاء', style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', color: AppTheme.textSecondary)),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, true),
+                            child: const Text('حذف', style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', color: AppTheme.errorColor)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+
+                  if (confirmed == true && mounted) {
+                    final success = await _controller.deleteExpenseAccount(account.id!);
+                    if (success) {
+                      await _loadExpenses();
+                    } else {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(_controller.state.error ?? 'فشل الحذف')),
+                      );
+                    }
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEditExpenseAccountDialog(ExpenseAccountModel account) async {
+    final nameController = TextEditingController(text: account.name);
+    String selectedCategory = account.category;
+    
+    // Make sure the category exists in the list
+    if (selectedCategory.isNotEmpty && !_categories.any((c) => c.name == selectedCategory)) {
+      setState(() {
+        _categories.add(CategoryModel(name: selectedCategory, type: 'expense'));
+      });
+    }
+
+    final formKey = GlobalKey<FormState>();
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: Dialog(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'تعديل المصروف',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'ArbFONTSIBMPlexArabicText'),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    TextFormField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: 'اسم المصروف',
+                        prefixIcon: const Icon(Icons.edit_note_rounded),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'مطلوب' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: selectedCategory.isNotEmpty ? selectedCategory : null,
+                      decoration: InputDecoration(
+                        labelText: 'الفئة',
+                        prefixIcon: const Icon(Icons.category_rounded),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      items: _categories
+                          .map((c) => DropdownMenuItem(value: c.name, child: Text(c.name)))
+                          .toList(),
+                      onChanged: (v) {
+                        setStateDialog(() {
+                          selectedCategory = v ?? '';
+                        });
+                      },
+                      validator: (v) => v == null || v.isEmpty ? 'اختر الفئة' : null,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        backgroundColor: AppTheme.primaryColor,
+                      ),
+                      onPressed: () async {
+                        if (formKey.currentState!.validate()) {
+                          Navigator.pop(context, true);
+                        }
+                      },
+                      child: const Text('حفظ التعديلات', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'ArbFONTSIBMPlexArabicText')),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ).then((confirmed) async {
+      if (confirmed == true && mounted) {
+        final updatedAccount = account.copyWith(
+          name: nameController.text.trim(),
+          category: selectedCategory,
+        );
+        final success = await _controller.updateExpenseAccount(updatedAccount);
+        if (success) {
+          await _loadExpenses();
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(_controller.state.error ?? 'فشل التعديل')),
+          );
+        }
+      }
+    });
+  }
+
   Future<void> _showAddExpenseDialog({ExpenseModel? expense}) async {
     HapticFeedback.lightImpact();
     final result = await showDialog<Map<String, dynamic>>(
@@ -871,6 +1090,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
             if (mounted) {
               await _loadExpenses();
             }
+          },
+          onLongPress: () {
+            HapticFeedback.heavyImpact();
+            _showExpenseAccountOptions(account);
           },
           child: Padding(
             padding: const EdgeInsets.all(16),

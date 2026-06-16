@@ -66,7 +66,11 @@ class _ExpenseAccountDetailsScreenState extends State<ExpenseAccountDetailsScree
     HapticFeedback.lightImpact();
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => AddExpenseDialog(expense: expense),
+      builder: (context) => AddExpenseDialog(
+        expense: expense,
+        hideCategoryPicker: true,
+        fixedCategory: widget.account.category,
+      ),
     );
 
     if (result == null) return;

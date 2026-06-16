@@ -97,6 +97,18 @@ class ExpenseRepository {
     return _db.insertExpenseAccount(account);
   }
 
+  Future<int> updateExpenseAccount(ExpenseAccountModel account) {
+    return _db.updateExpenseAccount(account);
+  }
+
+  Future<int> deleteExpenseAccount(int id) {
+    return _db.deleteExpenseAccount(id);
+  }
+
+  Future<void> cleanupOrphanedExpenses() {
+    return _db.cleanupOrphanedExpenses();
+  }
+
   Future<void> deleteExpenses(Iterable<int> ids) async {
     for (final id in ids) {
       await _db.deleteExpense(id);

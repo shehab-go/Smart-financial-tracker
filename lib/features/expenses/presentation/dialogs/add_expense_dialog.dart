@@ -24,8 +24,15 @@ class _ExpenseBalanceAllocationInput {
 
 class AddExpenseDialog extends StatefulWidget {
   final ExpenseModel? expense;
+  final bool hideCategoryPicker;
+  final String? fixedCategory;
 
-  const AddExpenseDialog({super.key, this.expense});
+  const AddExpenseDialog({
+    super.key,
+    this.expense,
+    this.hideCategoryPicker = false,
+    this.fixedCategory,
+  });
 
   @override
   State<AddExpenseDialog> createState() => _AddExpenseDialogState();
@@ -67,11 +74,17 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     _loadData();
     _initBalancesAndAllocations();
 
+    if (widget.fixedCategory != null) {
+      _selectedCategory = widget.fixedCategory;
+    }
+
     if (widget.expense != null) {
       _nameController.text = widget.expense!.name;
       _amountController.text = widget.expense!.amount.toString();
       _detailController.text = widget.expense!.detail;
-      _selectedCategory = widget.expense!.category;
+      if (widget.fixedCategory == null) {
+        _selectedCategory = widget.expense!.category;
+      }
       _selectedCurrency = widget.expense!.currency;
     } else {
       _initDefaultCurrency();
@@ -632,61 +645,63 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                           style: const TextStyle(fontSize: 14, fontFamily: 'ArbFONTSIBMPlexArabicText'),
                           maxLines: 3,
                         ),
-                        const SizedBox(height: 16),
-                        Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: InkWell(
-                            onTap: () async {
-                              HapticFeedback.lightImpact();
-                              FocusScope.of(context).unfocus();
-                              await _showCategorySheet();
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: InputDecorator(
-                              decoration: InputDecoration(
-                                labelText: 'الفئة *',
-                                labelStyle: const TextStyle(
-                                  fontSize: 13, 
-                                  fontWeight: FontWeight.bold, 
-                                  color: AppTheme.textSecondary,
-                                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+                        if (!widget.hideCategoryPicker) ...[
+                          const SizedBox(height: 16),
+                          Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: InkWell(
+                              onTap: () async {
+                                HapticFeedback.lightImpact();
+                                FocusScope.of(context).unfocus();
+                                await _showCategorySheet();
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: 'الفئة *',
+                                  labelStyle: const TextStyle(
+                                    fontSize: 13, 
+                                    fontWeight: FontWeight.bold, 
+                                    color: AppTheme.textSecondary,
+                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                  ),
+                                  filled: true,
+                                  fillColor: AppTheme.surfaceColor,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                                 ),
-                                filled: true,
-                                fillColor: AppTheme.surfaceColor,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: AppTheme.dividerColor.withOpacity(0.3)),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      _selectedCategory ?? 'اختر الفئة',
-                                      style: TextStyle(
-                                        fontSize: 14, 
-                                        color: _selectedCategory == null ? AppTheme.textSecondary : AppTheme.textPrimary, 
-                                        fontWeight: FontWeight.bold, 
-                                        fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _selectedCategory ?? 'اختر الفئة',
+                                        style: TextStyle(
+                                          fontSize: 14, 
+                                          color: _selectedCategory == null ? AppTheme.textSecondary : AppTheme.textPrimary, 
+                                          fontWeight: FontWeight.bold, 
+                                          fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
-                                ],
+                                    const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                         const SizedBox(height: 16),
                         if (!_hasExistingAllocations) ...[
                           Container(

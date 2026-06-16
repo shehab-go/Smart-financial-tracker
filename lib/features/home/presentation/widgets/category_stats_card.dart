@@ -149,8 +149,12 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
     double totalCredit = 0;
     double totalDebit = 0;
     for (var account in currencyGroups[activeCurrency]!) {
-      totalCredit += account.totalCredit;
-      totalDebit += account.totalDebit;
+      final double netBalance = account.totalCredit - account.totalDebit;
+      if (netBalance > 0) {
+        totalCredit += netBalance;
+      } else if (netBalance < 0) {
+        totalDebit += netBalance.abs();
+      }
     }
 
     final double total = totalCredit + totalDebit;
@@ -168,8 +172,12 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
       double cred = 0;
       double deb = 0;
       for (var a in entry.value) {
-        cred += a.totalCredit;
-        deb += a.totalDebit;
+        final double netBalance = a.totalCredit - a.totalDebit;
+        if (netBalance > 0) {
+          cred += netBalance;
+        } else if (netBalance < 0) {
+          deb += netBalance.abs();
+        }
       }
       if (cred > 0 || deb > 0) {
         otherCurrenciesWithBalances.add(entry);
@@ -306,6 +314,7 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                                    color: AppTheme.creditColor,
                                    icon: Icons.trending_up_rounded,
                                    isSmall: isSmall,
+                                   showPercentage: false,
                                  ),
                                  SizedBox(height: isSmall ? 6 : 10),
                                 // Debit Stat ( عليه )
@@ -316,6 +325,7 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                                    color: AppTheme.debitColor,
                                    icon: Icons.trending_down_rounded,
                                    isSmall: isSmall,
+                                   showPercentage: false,
                                  ),
                                  SizedBox(height: isSmall ? 6 : 10),
                                 // Net Stat ( الصافي )
@@ -477,8 +487,12 @@ class _CategoryStatsCardState extends State<CategoryStatsCard> {
                               double cred = 0;
                               double deb = 0;
                               for (var a in entry.value) {
-                                cred += a.totalCredit;
-                                deb += a.totalDebit;
+                                final double netBalance = a.totalCredit - a.totalDebit;
+                                if (netBalance > 0) {
+                                  cred += netBalance;
+                                } else if (netBalance < 0) {
+                                  deb += netBalance.abs();
+                                }
                               }
                               return GestureDetector(
                                 onTap: () {

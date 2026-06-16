@@ -1035,8 +1035,12 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
         double cred = 0;
         double deb = 0;
         for (var a in list) {
-          cred += a.totalCredit;
-          deb += a.totalDebit;
+          final double netBalance = a.totalCredit - a.totalDebit;
+          if (netBalance > 0) {
+            cred += netBalance;
+          } else if (netBalance < 0) {
+            deb += netBalance.abs();
+          }
         }
         if (cred > 0 || deb > 0) {
           hasOtherCurrenciesWithBalances = true;
@@ -1128,9 +1132,17 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
     if (_sortBy == 'name') {
       list.sort((a, b) => a.name.compareTo(b.name));
     } else if (_sortBy == 'credit_desc') {
-      list.sort((a, b) => b.totalCredit.compareTo(a.totalCredit));
+      list.sort((a, b) {
+        final aNet = a.totalCredit - a.totalDebit;
+        final bNet = b.totalCredit - b.totalDebit;
+        return bNet.compareTo(aNet);
+      });
     } else if (_sortBy == 'debit_desc') {
-      list.sort((a, b) => b.totalDebit.compareTo(a.totalDebit));
+      list.sort((a, b) {
+        final aNet = a.totalDebit - a.totalCredit;
+        final bNet = b.totalDebit - b.totalCredit;
+        return bNet.compareTo(aNet);
+      });
     } else if (_sortBy == 'recent') {
       list.sort((a, b) => b.createdDate.compareTo(a.createdDate));
     } else if (_sortBy == 'last_transaction') {
@@ -2056,8 +2068,12 @@ class _CategoryStatsHeaderDelegate extends SliverPersistentHeaderDelegate {
         double cred = 0;
         double deb = 0;
         for (var a in list) {
-          cred += a.totalCredit;
-          deb += a.totalDebit;
+          final double netBalance = a.totalCredit - a.totalDebit;
+          if (netBalance > 0) {
+            cred += netBalance;
+          } else if (netBalance < 0) {
+            deb += netBalance.abs();
+          }
         }
         if (cred > 0 || deb > 0) {
           hasOtherCurrenciesWithBalances = true;

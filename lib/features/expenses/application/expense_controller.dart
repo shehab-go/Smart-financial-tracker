@@ -15,6 +15,8 @@ class ExpenseController {
     try {
       _state = _state.copyWith(isLoading: true, error: null);
 
+      await _repo.cleanupOrphanedExpenses();
+
       final expenses = await _repo.fetchExpenses();
       final accounts = await _repo.fetchExpenseAccountsWithStats();
       final totalExpenses = await _repo.getTotalExpenses();
@@ -82,6 +84,28 @@ class ExpenseController {
       } else {
         await _repo.updateExpenseWithAllocations(expense, allocations);
       }
+
+      // Sync the parent account if needed
+      if (expense.expenseAccountId != null) {
+        final accounts = await _repo.fetchExpenseAccountsWithStats();
+        final account = accounts.firstWhere(
+            (a) => a.id == expense.expenseAccountId,
+            orElse: () => ExpenseAccountModel(name: '', category: '', currencyName: '', createdDate: DateTime.now()));
+            
+        // Only auto-update the account name/category if the account has only 1 expense
+        // OR if the user is editing it from the main screen where they perceive it as 1 item.
+        // Actually, if it has 1 expense, it's perfectly safe to sync it.
+        if (account.id != null && account.expenseCount <= 1) {
+          if (account.name != expense.name || account.category != expense.category || account.currencyName != expense.currency) {
+            await _repo.updateExpenseAccount(account.copyWith(
+              name: expense.name,
+              category: expense.category,
+              currencyName: expense.currency,
+            ));
+          }
+        }
+      }
+
       await load(); // Refresh the list
       return true;
     } catch (e) {
@@ -108,6 +132,28 @@ class ExpenseController {
       return true;
     } catch (e) {
       _state = _state.copyWith(error: 'Failed to delete expenses: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateExpenseAccount(ExpenseAccountModel account) async {
+    try {
+      await _repo.updateExpenseAccount(account);
+      await load(); // Refresh the list
+      return true;
+    } catch (e) {
+      _state = _state.copyWith(error: 'Failed to update expense account: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteExpenseAccount(int id) async {
+    try {
+      await _repo.deleteExpenseAccount(id);
+      await load(); // Refresh the list
+      return true;
+    } catch (e) {
+      _state = _state.copyWith(error: 'Failed to delete expense account: $e');
       return false;
     }
   }
