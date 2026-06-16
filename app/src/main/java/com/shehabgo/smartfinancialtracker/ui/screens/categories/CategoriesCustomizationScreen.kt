@@ -62,7 +62,7 @@ fun defaultCategories() = listOf(
     // ── مدفوعات التشغيل (Payment) ────────────────────────────
     CategoryItem(
         id       = 1,
-        name     = "يمن موبايل",
+        name     = "اتصالات وباقات",
         subtitle = "رصيد وباقات",
         icon     = Icons.Rounded.CellTower,
         color    = AppColors.CatTelecom
@@ -143,20 +143,27 @@ fun defaultCategories() = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesCustomizationScreen() {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var manualCashEnabled by remember { mutableStateOf(true) }
-    var categories        by remember { mutableStateOf(defaultCategories()) }
+    var categories        by remember { mutableStateOf(com.shehabgo.smartfinancialtracker.data.CategoryManager.getCategories(context)) }
     var selectedId        by remember { mutableStateOf<Int?>(null) }
     var showSheet         by remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // ── الشاشة الرئيسية ───────────────────────────────────────
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Scaffold(
+        containerColor = AppColors.Surface
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = AppSpacing.ScreenH)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(AppSpacing.xl))
 
         // ── العنوان ───────────────────────────────────────────
         Text(
@@ -239,6 +246,56 @@ fun CategoriesCustomizationScreen() {
 
         Spacer(modifier = Modifier.height(AppSpacing.xl))
 
+        // ── ملخص المصروفات (Expense Analytics) ────────────────────
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(AppElevation.sm, AppShapes.CardLg, spotColor = AppColors.Error.copy(alpha = 0.1f))
+                .background(AppColors.Surface, AppShapes.CardLg)
+                .border(1.dp, AppColors.Border, AppShapes.CardLg)
+                .padding(AppSpacing.CardPadLg)
+        ) {
+            Column {
+                Text(
+                    text = "تحليل مصروفات الشهر",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = AppColors.TextPrimary
+                )
+                Spacer(modifier = Modifier.height(AppSpacing.md))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // الدائرة البيانية الوهمية للجماليات (Pie Chart Placeholder)
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .background(AppColors.SurfaceVariant, CircleShape)
+                            .border(8.dp, AppColors.Primary, CircleShape)
+                            .padding(8.dp)
+                            .border(8.dp, AppColors.CatShopping, CircleShape)
+                            .padding(8.dp)
+                            .border(8.dp, AppColors.CatTelecom, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.Analytics, contentDescription = null, tint = AppColors.TextSecondary)
+                    }
+                    
+                    Column(
+                        modifier = Modifier.weight(1f).padding(start = AppSpacing.md),
+                        verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+                    ) {
+                        AnalyticsLegendItem(color = AppColors.Primary, label = "اتصالات وإنترنت", percentage = "45%")
+                        AnalyticsLegendItem(color = AppColors.CatShopping, label = "مشتريات وبقالة", percentage = "35%")
+                        AnalyticsLegendItem(color = AppColors.CatTelecom, label = "مواصلات", percentage = "20%")
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(AppSpacing.xl))
+
         // ── رأس الـ Grid ───────────────────────────────────────
         Row(
             modifier  = Modifier.fillMaxWidth(),
@@ -261,7 +318,9 @@ fun CategoriesCustomizationScreen() {
                         icon     = Icons.Rounded.Add,
                         color    = AppColors.Primary
                     )
-                    categories = categories + newCat
+                    val newCats = categories + newCat
+                    categories = newCats
+                    com.shehabgo.smartfinancialtracker.data.CategoryManager.saveCategories(context, newCats)
                     selectedId = newId
                     showSheet  = true
                 },
@@ -316,9 +375,11 @@ fun CategoriesCustomizationScreen() {
         }
 
         Spacer(modifier = Modifier.height(AppSpacing.base))
+        // ── مساحة فارغة سفلية لتجنب شريط التنقل ─────────────────────
+        Spacer(modifier = Modifier.height(120.dp))
     }
 
-    // ── Bottom Sheet ───────────────────────────────────────────
+    // ── نافذة التعديل (Bottom Sheet) ──────────────────────────
     val selectedCategory = categories.find { it.id == selectedId }
     if (showSheet && selectedCategory != null) {
         ModalBottomSheet(
@@ -338,12 +399,16 @@ fun CategoriesCustomizationScreen() {
             CategoryEditBottomSheet(
                 category = selectedCategory,
                 onSave   = { updated ->
-                    categories = categories.map { if (it.id == updated.id) updated else it }
+                    val updatedCats = categories.map { if (it.id == updated.id) updated else it }
+                    categories = updatedCats
+                    com.shehabgo.smartfinancialtracker.data.CategoryManager.saveCategories(context, updatedCats)
                     showSheet  = false
                     selectedId = null
                 },
                 onDelete = {
-                    categories = categories.filter { it.id != selectedCategory.id }
+                    val filteredCats = categories.filter { it.id != selectedCategory.id }
+                    categories = filteredCats
+                    com.shehabgo.smartfinancialtracker.data.CategoryManager.saveCategories(context, filteredCats)
                     showSheet  = false
                     selectedId = null
                 },
@@ -351,6 +416,7 @@ fun CategoriesCustomizationScreen() {
             )
         }
     }
+}
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -778,3 +844,34 @@ fun CategoryEditBottomSheet(
         )
     }
 }
+
+@Composable
+fun AnalyticsLegendItem(color: Color, label: String, percentage: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(color, CircleShape)
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                color = AppColors.TextPrimary
+            )
+        }
+        Text(
+            text = percentage,
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Black),
+            color = AppColors.TextSecondary
+        )
+    }
+}
+

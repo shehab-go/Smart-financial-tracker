@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "financial_tracker.db", null, 6) {
+internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "financial_tracker.db", null, 7) {
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
@@ -24,7 +24,8 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
                     "isSettled INTEGER DEFAULT 0, " +
                     "settlementRefId TEXT, " +
                     "isClassified INTEGER DEFAULT 0, " +
-                    "category TEXT)"
+                    "category TEXT, " +
+                    "balance TEXT)"
         )
         
         db.execSQL(
@@ -54,6 +55,9 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
         if (oldVersion < 6) {
             db.execSQL("ALTER TABLE transactions ADD COLUMN category TEXT")
         }
+        if (oldVersion < 7) {
+            db.execSQL("ALTER TABLE transactions ADD COLUMN balance TEXT")
+        }
     }
 
     suspend fun insertTransaction(transaction: FinancialTransaction) = withContext(Dispatchers.IO) {
@@ -73,6 +77,9 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
             put("settlementRefId", transaction.settlementRefId)
             put("isClassified", if (transaction.isClassified) 1 else 0)
             put("category", transaction.category)
+            transaction.balance?.let {
+                put("balance", AESEncryptionHelper.encrypt(it.toString()))
+            }
         }
         db.insert("transactions", null, values)
     }
@@ -98,7 +105,11 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
                 isSettled = cursor.getInt(cursor.getColumnIndexOrThrow("isSettled")) == 1,
                 settlementRefId = cursor.getString(cursor.getColumnIndexOrThrow("settlementRefId")),
                 isClassified = cursor.getInt(cursor.getColumnIndexOrThrow("isClassified")) == 1,
-                category = cursor.getColumnIndex("category").takeIf { it >= 0 }?.let { cursor.getString(it) }
+                category = cursor.getColumnIndex("category").takeIf { it >= 0 }?.let { cursor.getString(it) },
+                balance = cursor.getColumnIndex("balance").takeIf { it >= 0 }?.let { 
+                    val encryptedBal = cursor.getString(it)
+                    if (encryptedBal != null) AESEncryptionHelper.decrypt(encryptedBal).toDoubleOrNull() else null
+                }
             )
         }
         cursor.close()
@@ -127,7 +138,11 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
                     isSettled = cursor.getInt(cursor.getColumnIndexOrThrow("isSettled")) == 1,
                     settlementRefId = cursor.getString(cursor.getColumnIndexOrThrow("settlementRefId")),
                     isClassified = cursor.getInt(cursor.getColumnIndexOrThrow("isClassified")) == 1,
-                    category = cursor.getColumnIndex("category").takeIf { it >= 0 }?.let { cursor.getString(it) }
+                    category = cursor.getColumnIndex("category").takeIf { it >= 0 }?.let { cursor.getString(it) },
+                    balance = cursor.getColumnIndex("balance").takeIf { it >= 0 }?.let { 
+                        val encryptedBal = cursor.getString(it)
+                        if (encryptedBal != null) AESEncryptionHelper.decrypt(encryptedBal).toDoubleOrNull() else null
+                    }
                 )
                 list.add(t)
             } while (cursor.moveToNext())

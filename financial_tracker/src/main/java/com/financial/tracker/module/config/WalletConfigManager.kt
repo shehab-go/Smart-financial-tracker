@@ -52,5 +52,6 @@ internal data class TransactionParsers(
     val amount: String,
     val currency: String,
     val counterpart: String,
-    val referenceId: String
+    val referenceId: String,
+    val balance: String? = null
 )

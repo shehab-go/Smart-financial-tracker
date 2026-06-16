@@ -52,7 +52,7 @@ fun AppNavigation(
     val currentRoute = navBackStackEntry?.destination?.route
 
     // Check if bottom bar should be visible (only inside logged-in dashboard/ledger screens)
-    val showBottomBar = currentRoute in listOf("dashboard", "wallets", "social_ledger")
+    val showBottomBar = currentRoute in listOf("dashboard", "categories", "social_ledger")
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Box(
@@ -103,10 +103,8 @@ fun AppNavigation(
                     )
                 }
 
-                composable("wallets") {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("شاشة المحافظ قريباً", color = AppColors.TextPrimary, fontSize = 20.sp)
-                    }
+                composable("categories") {
+                    com.shehabgo.smartfinancialtracker.ui.screens.categories.CategoriesCustomizationScreen()
                 }
             }
 
@@ -167,9 +165,9 @@ fun PersistentBottomNavigationBar(
             )
             PersistentBottomNavItem(
                 icon = Icons.Rounded.AccountBalanceWallet,
-                label = "المحافظ",
-                isSelected = currentRoute == "wallets",
-                onClick = { onNavigate("wallets") }
+                label = "المصروفات",
+                isSelected = currentRoute == "categories",
+                onClick = { onNavigate("categories") }
             )
             PersistentBottomNavItem(
                 icon = Icons.Rounded.AccountBalance,

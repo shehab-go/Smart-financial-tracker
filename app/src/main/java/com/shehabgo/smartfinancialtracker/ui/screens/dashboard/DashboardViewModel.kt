@@ -23,12 +23,22 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             // Listen for incoming real-time transactions and prepend them to the list
             FinancialTrackerClient.transactionFlow.collect { newTx ->
                 val currentList = _transactions.value.toMutableList()
-                // Avoid duplicates if needed, or simply add to the top
-                if (currentList.none { it.referenceId == newTx.referenceId }) {
+                val existingIndex = currentList.indexOfFirst { it.referenceId == newTx.referenceId }
+                if (existingIndex >= 0) {
+                    currentList[existingIndex] = newTx
+                } else {
                     currentList.add(0, newTx)
-                    _transactions.value = currentList
                 }
+                _transactions.value = currentList
             }
+        }
+    }
+
+    fun classifyTransaction(context: android.content.Context, tx: FinancialTransaction, isDebt: Boolean, category: String? = null) {
+        viewModelScope.launch {
+            val updated = tx.copy(isClassified = true, isDebt = isDebt, category = category)
+            FinancialTrackerClient.updateTransaction(context, updated)
+            _transactions.value = FinancialTrackerClient.getAllTransactions(context)
         }
     }
 }

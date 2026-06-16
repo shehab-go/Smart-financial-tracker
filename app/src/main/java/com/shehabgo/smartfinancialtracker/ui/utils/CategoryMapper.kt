@@ -14,7 +14,7 @@ data class CategoryStyle(
 object CategoryMapper {
     
     // Define brand colors
-    private val colorYemenMobile = Color(0xFFE91E63) // Pink/Red
+    private val colorTelecom = Color(0xFFE91E63) // Pink/Red
     private val colorInternet = Color(0xFF2196F3) // Blue
     private val colorGaming = Color(0xFF9C27B0) // Purple
     private val colorEducation = Color(0xFF4CAF50) // Green
@@ -26,11 +26,11 @@ object CategoryMapper {
         val lowerCaseName = counterpart.lowercase()
         
         return when {
-            lowerCaseName.contains("يمن موبايل") || lowerCaseName.contains("سبأفون") || lowerCaseName.contains("you") -> {
+            lowerCaseName.contains("يمن موبايل") || lowerCaseName.contains("سبأفون") || lowerCaseName.contains("you") || lowerCaseName.contains("اتصالات") || lowerCaseName.contains("رصيد وباقات") -> {
                 CategoryStyle(
                     icon = Icons.Default.PhoneAndroid,
-                    containerColor = colorYemenMobile.copy(alpha = 0.2f),
-                    contentColor = colorYemenMobile
+                    containerColor = colorTelecom.copy(alpha = 0.2f),
+                    contentColor = colorTelecom
                 )
             }
             lowerCaseName.contains("يمن نت") || lowerCaseName.contains("عدن نت") -> {

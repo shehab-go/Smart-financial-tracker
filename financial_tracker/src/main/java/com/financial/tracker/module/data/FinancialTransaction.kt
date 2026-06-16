@@ -25,5 +25,6 @@ data class FinancialTransaction(
     val isSettled: Boolean = false,
     val settlementRefId: String? = null,
     val isClassified: Boolean = false,
-    val category: String? = null
+    val category: String? = null,
+    val balance: Double? = null
 )

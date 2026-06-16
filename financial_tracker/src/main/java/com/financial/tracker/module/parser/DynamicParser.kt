@@ -29,6 +29,11 @@ internal object DynamicParser {
                 val currency = extractField(fullContent, rule.parsers.currency) ?: "SAR"
                 val counterpart = extractField(fullContent, rule.parsers.counterpart) ?: "Unknown"
                 var referenceId = extractField(fullContent, rule.parsers.referenceId) ?: ""
+                val balanceRaw = extractField(fullContent, rule.parsers.balance)
+                val balance = if (balanceRaw != null) {
+                    balanceRaw.replace(Regex("[^0-9.]"), "").toDoubleOrNull()
+                } else null
+
                 if (referenceId.isEmpty() || referenceId == "N/A") {
                     referenceId = "hash_" + Math.abs(fullContent.hashCode()).toString()
                 }
@@ -40,7 +45,8 @@ internal object DynamicParser {
                     currency = currency,
                     counterpart = counterpart,
                     referenceId = referenceId,
-                    timestamp = System.currentTimeMillis()
+                    timestamp = System.currentTimeMillis(),
+                    balance = balance
                 )
                 
                 android.util.Log.i("WalletTracker", "✅ Parsed Successfully: \nAmount: $amount $currency\nType: ${rule.transactionType}\nCounterpart: $counterpart\nRef: $referenceId")
