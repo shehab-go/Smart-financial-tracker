@@ -14,6 +14,7 @@ import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/models/user_profile.dart';
 import 'package:debit_credit_app/core/services/google_drive_backup_service.dart';
+import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -44,9 +45,19 @@ class _AppDrawerState extends State<AppDrawer> {
         if (await GoogleDriveBackupService.instance.isSignedIn()) {
           googlePhoto = await GoogleDriveBackupService.instance.currentPhotoUrl();
           googleEmail = await GoogleDriveBackupService.instance.currentEmail();
+          if (googleEmail != null) {
+            await dbHelper.setMetaValue(AutoBackupManager.metaAccountEmail, googleEmail);
+          }
         }
       } catch (_) {}
-      
+
+      if (googleEmail == null) {
+        googleEmail = await dbHelper.getMetaValue(AutoBackupManager.metaAccountEmail);
+        if (googleEmail != null && googleEmail.isEmpty) {
+          googleEmail = null;
+        }
+      }
+
       if (mounted) {
         setState(() {
           _userProfile = profile;
@@ -246,6 +257,9 @@ class _AppDrawerState extends State<AppDrawer> {
                                                   if (account != null) {
                                                     final photo = await GoogleDriveBackupService.instance.currentPhotoUrl();
                                                     final email = await GoogleDriveBackupService.instance.currentEmail();
+                                                    if (email != null) {
+                                                      await DatabaseHelper().setMetaValue(AutoBackupManager.metaAccountEmail, email);
+                                                    }
                                                     setState(() {
                                                       _googlePhotoUrl = photo;
                                                       _googleEmail = email;

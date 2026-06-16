@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -501,9 +502,7 @@ class DatabaseHelper {
   Future<List<CategoryModel>> getCategories() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('categories', orderBy: 'sortOrder ASC');
-    return List.generate(maps.length, (i) {
-      return CategoryModel.fromMap(maps[i]);
-    });
+    return compute(_parseCategories, maps);
   }
 
   Future<int> insertCategory(CategoryModel category) async {
@@ -586,9 +585,7 @@ class DatabaseHelper {
   Future<List<CurrencyModel>> getCurrencies() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('currencies');
-    return List.generate(maps.length, (i) {
-      return CurrencyModel.fromMap(maps[i]);
-    });
+    return compute(_parseCurrencies, maps);
   }
 
   Future<int> insertCurrency(CurrencyModel currency) async {
@@ -904,9 +901,7 @@ class DatabaseHelper {
   Future<List<AccountModel>> getAccounts() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('accounts');
-    final accounts = List.generate(maps.length, (i) {
-      return AccountModel.fromMap(maps[i]);
-    });
+    final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
@@ -919,9 +914,7 @@ class DatabaseHelper {
       whereArgs: [category],
       orderBy: 'createdDate DESC',
     );
-    final accounts = List.generate(maps.length, (i) {
-      return AccountModel.fromMap(maps[i]);
-    });
+    final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
@@ -941,7 +934,7 @@ class DatabaseHelper {
       ORDER BY a.createdDate DESC
     ''', [category]);
 
-    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
@@ -959,7 +952,7 @@ class DatabaseHelper {
       ORDER BY a.category ASC, a.createdDate DESC
     ''');
 
-    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
@@ -980,7 +973,7 @@ class DatabaseHelper {
       ORDER BY a.category ASC, a.createdDate DESC
     ''', [cur]);
 
-    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
@@ -1001,7 +994,7 @@ class DatabaseHelper {
       ORDER BY a.createdDate DESC
     ''', [category]);
 
-    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
@@ -1024,7 +1017,7 @@ class DatabaseHelper {
       ORDER BY a.createdDate DESC
     ''', [cur, category]);
 
-    final accounts = List.generate(maps.length, (i) => AccountModel.fromMap(maps[i]));
+    final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
@@ -1153,9 +1146,7 @@ class DatabaseHelper {
       'transactions',
       orderBy: 'date DESC',
     );
-    return List.generate(maps.length, (i) {
-      return TransactionModel.fromMap(maps[i]);
-    });
+    return compute(_parseTransactions, maps);
   }
 
   Future<List<TransactionModel>> getTransactionsByCategory(String category) async {
@@ -1166,9 +1157,7 @@ class DatabaseHelper {
       whereArgs: [category],
       orderBy: 'date DESC',
     );
-    return List.generate(maps.length, (i) {
-      return TransactionModel.fromMap(maps[i]);
-    });
+    return compute(_parseTransactions, maps);
   }
 
   Future<List<TransactionModel>> getTransactionsByAccount(int accountId) async {
@@ -1179,9 +1168,7 @@ class DatabaseHelper {
       whereArgs: [accountId],
       orderBy: 'date DESC',
     );
-    return List.generate(maps.length, (i) {
-      return TransactionModel.fromMap(maps[i]);
-    });
+    return compute(_parseTransactions, maps);
   }
 
   Future<List<TransactionModel>> getTransactionsByDateRange(
@@ -1193,9 +1180,7 @@ class DatabaseHelper {
       whereArgs: [startDate.millisecondsSinceEpoch, endDate.millisecondsSinceEpoch],
       orderBy: 'date DESC',
     );
-    return List.generate(maps.length, (i) {
-      return TransactionModel.fromMap(maps[i]);
-    });
+    return compute(_parseTransactions, maps);
   }
 
   Future<int> insertTransaction(TransactionModel transaction) async {
@@ -1297,9 +1282,7 @@ class DatabaseHelper {
       'expenses',
       orderBy: 'createdDate DESC',
     );
-    return List.generate(maps.length, (i) {
-      return ExpenseModel.fromMap(maps[i]);
-    });
+    return compute(_parseExpenses, maps);
   }
 
   Future<ExpenseModel?> getExpenseById(int id) async {
@@ -1359,7 +1342,7 @@ class DatabaseHelper {
       ORDER BY ea.createdDate DESC
     ''');
 
-    return List.generate(rows.length, (i) => ExpenseAccountModel.fromMap(rows[i]));
+    return compute(_parseExpenseAccounts, rows);
   }
 
   Future<int> insertExpenseAccount(ExpenseAccountModel account) async {
@@ -1394,7 +1377,7 @@ class DatabaseHelper {
       whereArgs: [expenseAccountId],
       orderBy: 'createdDate DESC',
     );
-    return List.generate(maps.length, (i) => ExpenseModel.fromMap(maps[i]));
+    return compute(_parseExpenses, maps);
   }
 
   // Income resources operations
@@ -1404,9 +1387,7 @@ class DatabaseHelper {
       'income_resources',
       orderBy: 'createdDate DESC',
     );
-    return List.generate(maps.length, (i) {
-      return IncomeResourceModel.fromMap(maps[i]);
-    });
+    return compute(_parseIncomeResources, maps);
   }
 
   Future<int> insertIncomeResource(IncomeResourceModel resource) async {
@@ -1440,9 +1421,7 @@ class DatabaseHelper {
       'income_balances',
       orderBy: 'createdDate DESC',
     );
-    return List.generate(maps.length, (i) {
-      return IncomeBalanceModel.fromMap(maps[i]);
-    });
+    return compute(_parseIncomeBalances, maps);
   }
 
   Future<List<IncomeBalanceModel>> getIncomeBalancesByResource(int resourceId) async {
@@ -1453,9 +1432,7 @@ class DatabaseHelper {
       whereArgs: [resourceId],
       orderBy: 'createdDate DESC',
     );
-    return List.generate(maps.length, (i) {
-      return IncomeBalanceModel.fromMap(maps[i]);
-    });
+    return compute(_parseIncomeBalances, maps);
   }
 
   Future<IncomeBalanceModel?> getDefaultIncomeBalance() async {
@@ -1592,9 +1569,7 @@ class DatabaseHelper {
       where: 'transactionId = ?',
       whereArgs: [transactionId],
     );
-    return List.generate(maps.length, (i) {
-      return TransactionBalanceAllocation.fromMap(maps[i]);
-    });
+    return compute(_parseTransactionAllocations, maps);
   }
 
   Future<List<ExpenseBalanceAllocation>> getExpenseAllocations(
@@ -1605,9 +1580,7 @@ class DatabaseHelper {
       where: 'expenseId = ?',
       whereArgs: [expenseId],
     );
-    return List.generate(maps.length, (i) {
-      return ExpenseBalanceAllocation.fromMap(maps[i]);
-    });
+    return compute(_parseExpenseAllocations, maps);
   }
 
   Future<List<Map<String, Object?>>> getResourceTransactionAllocationsWithDetails(
@@ -1704,4 +1677,44 @@ class DatabaseHelper {
     // Reset instance so subsequent calls reopen a fresh connection
     _database = null;
   }
+}
+
+List<CategoryModel> _parseCategories(List<Map<String, dynamic>> maps) {
+  return maps.map((map) => CategoryModel.fromMap(map)).toList();
+}
+
+List<CurrencyModel> _parseCurrencies(List<Map<String, dynamic>> maps) {
+  return maps.map((map) => CurrencyModel.fromMap(map)).toList();
+}
+
+List<AccountModel> _parseAccounts(List<Map<String, dynamic>> maps) {
+  return maps.map((map) => AccountModel.fromMap(map)).toList();
+}
+
+List<TransactionModel> _parseTransactions(List<Map<String, dynamic>> maps) {
+  return maps.map((map) => TransactionModel.fromMap(map)).toList();
+}
+
+List<ExpenseModel> _parseExpenses(List<Map<String, dynamic>> maps) {
+  return maps.map((map) => ExpenseModel.fromMap(map)).toList();
+}
+
+List<ExpenseAccountModel> _parseExpenseAccounts(List<Map<String, dynamic>> maps) {
+  return maps.map((map) => ExpenseAccountModel.fromMap(map)).toList();
+}
+
+List<IncomeResourceModel> _parseIncomeResources(List<Map<String, dynamic>> maps) {
+  return maps.map((map) => IncomeResourceModel.fromMap(map)).toList();
+}
+
+List<IncomeBalanceModel> _parseIncomeBalances(List<Map<String, dynamic>> maps) {
+  return maps.map((map) => IncomeBalanceModel.fromMap(map)).toList();
+}
+
+List<TransactionBalanceAllocation> _parseTransactionAllocations(List<Map<String, dynamic>> maps) {
+  return maps.map((map) => TransactionBalanceAllocation.fromMap(map)).toList();
+}
+
+List<ExpenseBalanceAllocation> _parseExpenseAllocations(List<Map<String, dynamic>> maps) {
+  return maps.map((map) => ExpenseBalanceAllocation.fromMap(map)).toList();
 }

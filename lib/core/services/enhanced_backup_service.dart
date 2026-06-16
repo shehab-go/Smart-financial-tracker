@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+ import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
@@ -128,9 +129,13 @@ class EnhancedBackupService {
 
   /// Calculate MD5 checksum of a file
   Future<String> _calculateChecksum(File file) async {
-    final bytes = await file.readAsBytes();
-    final digest = md5.convert(bytes);
-    return digest.toString();
+    final path = file.path;
+    return await Isolate.run(() async {
+      final f = File(path);
+      final stream = f.openRead();
+      final digest = await md5.bind(stream).first;
+      return digest.toString();
+    });
   }
 
   /// Get database statistics

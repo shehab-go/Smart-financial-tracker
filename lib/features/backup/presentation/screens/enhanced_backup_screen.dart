@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' show DateFormat;
-import 'package:path/path.dart' as p;
 import 'package:open_file/open_file.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 
@@ -11,6 +10,7 @@ import 'package:debit_credit_app/core/services/enhanced_backup_service.dart';
 import 'package:debit_credit_app/core/services/google_drive_backup_service.dart';
 import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
+import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 
 class EnhancedBackupScreen extends StatefulWidget {
@@ -70,7 +70,18 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
 
       if (!mounted) return;
       setState(() => _driveLoadStage = 'قراءة تفاصيل الحساب...');
-      final email = await GoogleDriveBackupService.instance.currentEmail().timeout(const Duration(seconds: 15));
+      String? email = await GoogleDriveBackupService.instance.currentEmail().timeout(const Duration(seconds: 15));
+
+      if (email != null) {
+        await DatabaseHelper().setMetaValue(AutoBackupManager.metaAccountEmail, email);
+      } else {
+        email = await DatabaseHelper().getMetaValue(AutoBackupManager.metaAccountEmail);
+        if (email != null && email.isEmpty) {
+          email = null;
+        }
+      }
+
+      final effectivelySignedIn = signedIn || (email != null);
 
       if (!mounted) return;
       setState(() => _driveLoadStage = 'جلب إعدادات المزامنة...');
@@ -79,15 +90,21 @@ class _EnhancedBackupScreenState extends State<EnhancedBackupScreen> {
       final last = await AutoBackupManager.instance.getLastBackupMs().timeout(const Duration(seconds: 10));
 
       List<drive.File> backups = const <drive.File>[];
-      if (signedIn) {
+      if (effectivelySignedIn) {
         if (!mounted) return;
         setState(() => _driveLoadStage = 'جلب النسخ من السحابة...');
-        backups = await GoogleDriveBackupService.instance.listBackups(interactive: false).timeout(const Duration(seconds: 25));
+        try {
+          backups = await GoogleDriveBackupService.instance.listBackups(interactive: false).timeout(const Duration(seconds: 25));
+        } catch (e) {
+          if (signedIn) {
+            rethrow;
+          }
+        }
       }
 
       if (!mounted) return;
       setState(() {
-        _driveSignedIn = signedIn;
+        _driveSignedIn = effectivelySignedIn;
         _driveEmail = email;
         _driveEnabled = enabled;
         _driveFrequency = frequency;
