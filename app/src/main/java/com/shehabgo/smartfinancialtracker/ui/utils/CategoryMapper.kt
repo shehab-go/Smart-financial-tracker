@@ -2,13 +2,15 @@ package com.shehabgo.smartfinancialtracker.ui.utils
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 
 data class CategoryStyle(
     val icon: ImageVector,
     val containerColor: Color,
-    val contentColor: Color
+    val contentColor: Color,
+    val emoji: String = "💰"
 )
 
 object CategoryMapper {
@@ -23,57 +25,99 @@ object CategoryMapper {
     private val colorDefault = Color(0xFF795548) // Brown
 
     fun getStyleForCounterpart(counterpart: String): CategoryStyle {
-        val lowerCaseName = counterpart.lowercase()
+        return getEmojiAndColorForText(counterpart)
+    }
+
+    fun getEmojiAndColorForText(text: String, isIncome: Boolean = false): CategoryStyle {
+        val lowerCaseName = text.lowercase()
         
         return when {
-            lowerCaseName.contains("يمن موبايل") || lowerCaseName.contains("سبأفون") || lowerCaseName.contains("you") || lowerCaseName.contains("اتصالات") || lowerCaseName.contains("رصيد وباقات") -> {
-                CategoryStyle(
-                    icon = Icons.Default.PhoneAndroid,
-                    containerColor = colorTelecom.copy(alpha = 0.2f),
-                    contentColor = colorTelecom
-                )
-            }
-            lowerCaseName.contains("يمن نت") || lowerCaseName.contains("عدن نت") -> {
+            lowerCaseName.contains("يمن موبايل") || lowerCaseName.contains("سبأفون") || lowerCaseName.contains("you") || lowerCaseName.contains("اتصالات") || lowerCaseName.contains("رصيد وباقات") || lowerCaseName.contains("نت") || lowerCaseName.contains("يمن نت") || lowerCaseName.contains("عدن نت") -> {
                 CategoryStyle(
                     icon = Icons.Default.Wifi,
                     containerColor = colorInternet.copy(alpha = 0.2f),
-                    contentColor = colorInternet
+                    contentColor = colorInternet,
+                    emoji = "📶"
+                )
+            }
+            lowerCaseName.contains("مطعم") || lowerCaseName.contains("أكل") || lowerCaseName.contains("طعام") || lowerCaseName.contains("كافيه") -> {
+                CategoryStyle(
+                    icon = Icons.Default.Fastfood,
+                    containerColor = colorCharity.copy(alpha = 0.2f),
+                    contentColor = colorCharity,
+                    emoji = "🍔"
+                )
+            }
+            lowerCaseName.contains("جامعة") || lowerCaseName.contains("مدرسة") || lowerCaseName.contains("تعليم") || lowerCaseName.contains("معهد") -> {
+                CategoryStyle(
+                    icon = Icons.Default.School,
+                    containerColor = colorEducation.copy(alpha = 0.2f),
+                    contentColor = colorEducation,
+                    emoji = "📚"
+                )
+            }
+            lowerCaseName.contains("مواصلات") || lowerCaseName.contains("بترول") || lowerCaseName.contains("محطة") || lowerCaseName.contains("بنزين") -> {
+                CategoryStyle(
+                    icon = Icons.Default.DirectionsCar,
+                    containerColor = colorGov.copy(alpha = 0.2f),
+                    contentColor = colorGov,
+                    emoji = "🚗"
+                )
+            }
+            lowerCaseName.contains("بقالة") || lowerCaseName.contains("سوبر ماركت") -> {
+                CategoryStyle(
+                    icon = Icons.Default.ShoppingCart,
+                    containerColor = colorDefault.copy(alpha = 0.2f),
+                    contentColor = colorDefault,
+                    emoji = "🛒"
+                )
+            }
+            lowerCaseName.contains("صيدلية") || lowerCaseName.contains("علاج") || lowerCaseName.contains("مستشفى") -> {
+                CategoryStyle(
+                    icon = Icons.Default.LocalPharmacy,
+                    containerColor = colorTelecom.copy(alpha = 0.2f),
+                    contentColor = colorTelecom,
+                    emoji = "💊"
                 )
             }
             lowerCaseName.contains("ببجي") || lowerCaseName.contains("جوجل بلاي") || lowerCaseName.contains("ترفيه") -> {
                 CategoryStyle(
                     icon = Icons.Default.SportsEsports,
                     containerColor = colorGaming.copy(alpha = 0.2f),
-                    contentColor = colorGaming
-                )
-            }
-            lowerCaseName.contains("جامعة") || lowerCaseName.contains("مدرسة") || lowerCaseName.contains("تعليم") -> {
-                CategoryStyle(
-                    icon = Icons.Default.School,
-                    containerColor = colorEducation.copy(alpha = 0.2f),
-                    contentColor = colorEducation
+                    contentColor = colorGaming,
+                    emoji = "🎮"
                 )
             }
             lowerCaseName.contains("جوازات") || lowerCaseName.contains("مرور") || lowerCaseName.contains("حكومي") -> {
                 CategoryStyle(
                     icon = Icons.Default.AccountBalance,
                     containerColor = colorGov.copy(alpha = 0.2f),
-                    contentColor = colorGov
+                    contentColor = colorGov,
+                    emoji = "🏛️"
                 )
             }
             lowerCaseName.contains("تبرع") || lowerCaseName.contains("زكاة") || lowerCaseName.contains("صدقة") -> {
                 CategoryStyle(
                     icon = Icons.Default.Favorite,
                     containerColor = colorCharity.copy(alpha = 0.2f),
-                    contentColor = colorCharity
+                    contentColor = colorCharity,
+                    emoji = "❤️"
+                )
+            }
+            isIncome -> {
+                CategoryStyle(
+                    icon = Icons.AutoMirrored.Default.TrendingUp,
+                    containerColor = colorEducation.copy(alpha = 0.2f),
+                    contentColor = colorEducation,
+                    emoji = "📈"
                 )
             }
             else -> {
-                // Default style for unknown counterparts (e.g. personal transfers)
                 CategoryStyle(
-                    icon = Icons.Default.Person,
-                    containerColor = colorDefault.copy(alpha = 0.2f),
-                    contentColor = colorDefault
+                    icon = Icons.AutoMirrored.Default.TrendingDown,
+                    containerColor = colorTelecom.copy(alpha = 0.2f),
+                    contentColor = colorTelecom,
+                    emoji = "📉"
                 )
             }
         }

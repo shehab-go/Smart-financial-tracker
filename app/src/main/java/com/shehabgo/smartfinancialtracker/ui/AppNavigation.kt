@@ -91,6 +91,17 @@ fun AppNavigation(
                     UnifiedDashboardScreen(
                         onNavigateToLedger = {
                             navController.navigate("social_ledger")
+                        },
+                        onNavigateToTransactions = {
+                            navController.navigate("transactions_history")
+                        }
+                    )
+                }
+
+                composable("transactions_history") {
+                    com.shehabgo.smartfinancialtracker.ui.screens.transactions.TransactionsHistoryScreen(
+                        onNavigateBack = {
+                            navController.navigateUp()
                         }
                     )
                 }

@@ -39,12 +39,20 @@ fun UnparsedLogsScreen(
     var reprocessProgress by remember { mutableStateOf(0f) }
     var reprocessCompleted by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(reprocessCompleted) {
+        if (reprocessCompleted) {
+            snackbarHostState.showSnackbar("تمت إعادة تحليل السجل بنجاح")
+        }
+    }
 
     androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
         viewModel.loadLogs(context)
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {

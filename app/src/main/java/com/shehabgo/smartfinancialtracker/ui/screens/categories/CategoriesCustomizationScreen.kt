@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +25,9 @@ import com.shehabgo.smartfinancialtracker.ui.theme.AppColors
 import com.shehabgo.smartfinancialtracker.ui.theme.AppShapes
 import com.shehabgo.smartfinancialtracker.ui.theme.AppSpacing
 import com.shehabgo.smartfinancialtracker.ui.theme.AppElevation
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.shehabgo.smartfinancialtracker.ui.screens.dashboard.DashboardViewModel
 
 // ── الألوان المتاحة ───────────────────────────────────────────
 val availableColors = listOf(
@@ -117,7 +121,7 @@ fun defaultCategories() = listOf(
         id       = 8,
         name     = "تحويل مالي",
         subtitle = "إرسال حوالات وتغذية",
-        icon     = Icons.Rounded.SendToMobile,
+        icon     = Icons.AutoMirrored.Rounded.SendToMobile,
         color    = AppColors.CatTransfer
     ),
 
@@ -142,8 +146,11 @@ fun defaultCategories() = listOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoriesCustomizationScreen() {
+fun CategoriesCustomizationScreen(
+    viewModel: DashboardViewModel = viewModel()
+) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val transactions by viewModel.transactions.collectAsStateWithLifecycle()
     var manualCashEnabled by remember { mutableStateOf(true) }
     var categories        by remember { mutableStateOf(com.shehabgo.smartfinancialtracker.data.CategoryManager.getCategories(context)) }
     var selectedId        by remember { mutableStateOf<Int?>(null) }
@@ -262,33 +269,113 @@ fun CategoriesCustomizationScreen() {
                     color = AppColors.TextPrimary
                 )
                 Spacer(modifier = Modifier.height(AppSpacing.md))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // الدائرة البيانية الوهمية للجماليات (Pie Chart Placeholder)
+                // ── ملخص المصروفات الحقيقي (Real-time Analytics) ────────
+                val expensesList = transactions.filter { it.transactionType == "Payment" || it.transactionType == "TransferOut" || it.transactionType == "Transfer Out" || it.transactionType == "Purchase" }
+                val categoryGroups = expensesList.groupBy { it.category ?: "غير مصنف" }
+                    .mapValues { entry -> entry.value.sumOf { it.amount } }
+                    .toList()
+                    .sortedByDescending { it.second }
+
+                var animationPlayed by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) { animationPlayed = true }
+                val sweepAnimation by animateFloatAsState(
+                    targetValue = if (animationPlayed) 360f else 0f,
+                    animationSpec = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
+                    label = "sweepAnimation"
+                )
+
+                if (categoryGroups.isEmpty()) {
+                    // حالة الفراغ الأنيقة (Zero-state)
                     Box(
                         modifier = Modifier
-                            .size(100.dp)
-                            .background(AppColors.SurfaceVariant, CircleShape)
-                            .border(8.dp, AppColors.Primary, CircleShape)
-                            .padding(8.dp)
-                            .border(8.dp, AppColors.CatShopping, CircleShape)
-                            .padding(8.dp)
-                            .border(8.dp, AppColors.CatTelecom, CircleShape),
+                            .fillMaxWidth()
+                            .padding(vertical = AppSpacing.lg),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Rounded.Analytics, contentDescription = null, tint = AppColors.TextSecondary)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .background(AppColors.SurfaceVariant.copy(alpha = 0.5f), CircleShape)
+                                    .border(2.dp, AppColors.BorderStrong, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Rounded.Savings, contentDescription = null, tint = AppColors.TextHint, modifier = Modifier.size(36.dp))
+                            }
+                            Spacer(modifier = Modifier.height(AppSpacing.md))
+                            Text(
+                                text = "لم تقم بأي مصروفات حتى الآن...\nبداية رائعة للتوفير!",
+                                style = MaterialTheme.typography.labelMedium.copy(lineHeight = 20.sp),
+                                color = AppColors.TextSecondary,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
-                    
-                    Column(
-                        modifier = Modifier.weight(1f).padding(start = AppSpacing.md),
-                        verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        AnalyticsLegendItem(color = AppColors.Primary, label = "اتصالات وإنترنت", percentage = "45%")
-                        AnalyticsLegendItem(color = AppColors.CatShopping, label = "مشتريات وبقالة", percentage = "35%")
-                        AnalyticsLegendItem(color = AppColors.CatTelecom, label = "مواصلات", percentage = "20%")
+                        val total = categoryGroups.sumOf { it.second }.coerceAtLeast(1.0)
+                        
+                        // المخطط الدائري الأسطوري
+                        Box(
+                            modifier = Modifier.size(100.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            androidx.compose.foundation.Canvas(modifier = Modifier.size(100.dp)) {
+                                var startAngle = -90f
+                                categoryGroups.forEach { pair ->
+                                    val sweep = ((pair.second / total) * 360f).toFloat()
+                                    val currentSweep = if (sweepAnimation >= (startAngle + 90f) + sweep) {
+                                        sweep
+                                    } else if (sweepAnimation > startAngle + 90f) {
+                                        sweepAnimation - (startAngle + 90f)
+                                    } else {
+                                        0f
+                                    }
+                                    
+                                    val catColor = categories.find { it.name == pair.first }?.color ?: AppColors.Primary
+                                    
+                                    if (currentSweep > 0) {
+                                        drawArc(
+                                            color = catColor,
+                                            startAngle = startAngle,
+                                            sweepAngle = currentSweep,
+                                            useCenter = false,
+                                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 20.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Butt)
+                                        )
+                                    }
+                                    startAngle += sweep
+                                }
+                            }
+                            // إجمالي المصروفات في المنتصف
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "إجمالي",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                    color = AppColors.TextSecondary
+                                )
+                                Text(
+                                    text = String.format("%,.0f", total),
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = AppColors.TextPrimary
+                                )
+                            }
+                        }
+                        
+                        // قائمة الفئات الديناميكية
+                        Column(
+                            modifier = Modifier.weight(1f).padding(start = AppSpacing.md),
+                            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+                        ) {
+                            categoryGroups.take(3).forEach { pair ->
+                                val percent = ((pair.second / total) * 100).toInt()
+                                val catColor = categories.find { it.name == pair.first }?.color ?: AppColors.Primary
+                                AnalyticsLegendItem(color = catColor, label = pair.first, percentage = "$percent%")
+                            }
+                        }
                     }
                 }
             }

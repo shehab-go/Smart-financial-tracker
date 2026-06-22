@@ -1,22 +1,13 @@
 package com.shehabgo.smartfinancialtracker.ui.screens.ledger
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,29 +15,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection.Rtl
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import com.shehabgo.smartfinancialtracker.ui.theme.AppColors
 import com.shehabgo.smartfinancialtracker.ui.theme.AppShapes
 import com.shehabgo.smartfinancialtracker.ui.theme.AppSpacing
 import com.shehabgo.smartfinancialtracker.ui.theme.AppElevation
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.geometry.Rect
 import com.financial.tracker.module.data.FinancialTransaction
-import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,10 +43,6 @@ fun SocialLedgerScreen(
     androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
         viewModel.loadTransactions(context)
     }
-
-    // Drop Zone state
-    var dropZoneRect by remember { mutableStateOf(Rect.Zero) }
-    var isHoveringDropZone by remember { mutableStateOf(false) }
 
     CompositionLocalProvider(LocalLayoutDirection provides Rtl) {
         Scaffold(
@@ -92,183 +67,121 @@ fun SocialLedgerScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Icon(imageVector = Icons.Rounded.SyncAlt, contentDescription = null, modifier = Modifier.size(16.dp), tint = AppColors.TextSecondary)
-                        Text(text = "مزامنة لحظية لديونك والتزاماتك", style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp), color = AppColors.TextSecondary)
+                        Text(text = "مزامنة لحظية لديونك والتزاماتك مع الأشخاص", style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp), color = AppColors.TextSecondary)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // ── نافذة التصنيف الذكي (Dynamic Intent Prompt - Queue) ───────────────
-                AnimatedVisibility(visible = unclassifiedQueue.isNotEmpty(), enter = fadeIn(), exit = fadeOut()) {
+                // ── شريط الإجراءات المعلقة (Sleek Action Required Carousel) ──
+                AnimatedVisibility(visible = unclassifiedQueue.isNotEmpty(), enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                     val tx = unclassifiedQueue.firstOrNull()
-                    tx?.let { 
-                        val isIncome = tx.transactionType == "Transfer In"
-                        var showCategories by remember { mutableStateOf(false) }
-
-                        // Reset state if transaction changes
-                        LaunchedEffect(tx.referenceId) { showCategories = false }
-
+                    tx?.let {
+                        var showSheet by remember { mutableStateOf(false) }
+                        
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 24.dp)
-                                .shadow(8.dp, AppShapes.CardLg, spotColor = AppColors.Warning.copy(alpha = 0.2f))
-                                .background(AppColors.Warning.copy(alpha = 0.05f), AppShapes.CardLg)
-                                .border(1.dp, AppColors.Warning.copy(alpha = 0.3f), AppShapes.CardLg)
-                                .padding(20.dp)
+                                .padding(bottom = AppSpacing.lg)
+                                .shadow(AppElevation.sm, AppShapes.CardSm, spotColor = AppColors.Warning.copy(alpha = 0.2f))
+                                .background(AppColors.Surface, AppShapes.CardSm)
+                                .border(1.dp, AppColors.Warning.copy(alpha = 0.4f), AppShapes.CardSm)
+                                .clickable { showSheet = true }
+                                .padding(horizontal = AppSpacing.md, vertical = AppSpacing.sm)
                         ) {
-                            Column {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Icon(imageVector = Icons.Rounded.TipsAndUpdates, contentDescription = null, tint = AppColors.Warning, modifier = Modifier.size(24.dp))
-                                        Text(
-                                            text = "عملية غير مصنفة!",
-                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                            color = AppColors.Warning
-                                        )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Box(modifier = Modifier.size(40.dp).background(AppColors.Warning.copy(alpha = 0.15f), CircleShape), contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Rounded.NotificationsActive, contentDescription = null, tint = AppColors.Warning, modifier = Modifier.size(20.dp))
                                     }
-                                    if (unclassifiedQueue.size > 1) {
-                                        Box(modifier = Modifier.background(AppColors.Warning.copy(alpha = 0.15f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                                            Text(text = "طابور: ${unclassifiedQueue.size}", style = MaterialTheme.typography.labelSmall, color = AppColors.Warning)
-                                        }
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    text = "تم التقاط حوالة ${if(isIncome) "واردة من" else "صادرة إلى"} (${tx.counterpart}) بقيمة ${tx.amount} ر.ي. كيف تود تصنيفها؟",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = AppColors.TextPrimary
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                
-                                AnimatedVisibility(visible = !showCategories) {
-                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                                        if (isIncome) {
-                                            Button(onClick = { viewModel.classifyTransaction(context, tx, isDebt = true, category = "Debt") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)) { Text("سجلها كدين لي (سلف)", color = Color.White) }
-                                            Button(onClick = { showCategories = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = AppColors.Success)) { Text("تسجيل كدخل / إيراد", color = Color.White) }
-                                            OutlinedButton(onClick = { viewModel.classifyTransaction(context, tx, isDebt = false, category = "Debt Repayment") }, modifier = Modifier.fillMaxWidth()) { Text("استرداد دين (سددني)") }
-                                        } else {
-                                            Button(onClick = { viewModel.classifyTransaction(context, tx, isDebt = true, category = "Debt") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)) { Text("سجلها كدين عليه (سلف)", color = Color.White) }
-                                            Button(onClick = { showCategories = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = AppColors.Error)) { Text("تسجيل كمصروف", color = Color.White) }
-                                            OutlinedButton(onClick = { viewModel.classifyTransaction(context, tx, isDebt = false, category = "Debt Repayment") }, modifier = Modifier.fillMaxWidth()) { Text("سداد دين علي") }
-                                        }
-                                    }
-                                }
-
-                                AnimatedVisibility(visible = showCategories) {
                                     Column {
-                                        Text(text = if (isIncome) "اختر تصنيف الدخل:" else "اختر تصنيف المصروف:", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = AppColors.TextSecondary)
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        
-                                        val categories = if (isIncome) listOf("راتب 💰", "أعمال حرة 💻", "هدية 🎁", "أخرى 📝") else listOf("طعام 🍔", "مواصلات 🚕", "فواتير 🧾", "تسوق 🛍️", "أخرى 📝")
-                                        
-                                        val chunkedCategories = categories.chunked(2)
-                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            chunkedCategories.forEach { rowItems ->
-                                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                                                    rowItems.forEach { cat ->
-                                                        OutlinedButton(
-                                                            onClick = { viewModel.classifyTransaction(context, tx, isDebt = false, category = cat) },
-                                                            modifier = Modifier.weight(1f),
-                                                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp)
-                                                        ) {
-                                                            Text(text = cat, fontSize = 13.sp, maxLines = 1, textAlign = TextAlign.Center)
-                                                        }
-                                                    }
-                                                    if (rowItems.size < 2) {
-                                                        repeat(2 - rowItems.size) { Spacer(modifier = Modifier.weight(1f)) }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        TextButton(onClick = { showCategories = false }, modifier = Modifier.fillMaxWidth()) {
-                                            Text("رجوع للخلف", color = AppColors.TextSecondary)
-                                        }
+                                        Text(text = "عملية تحتاج تصنيفك", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
+                                        Text(text = "بقيمة ${tx.amount} ر.ي مع ${tx.counterpart.ifEmpty { "مجهول" }}", style = MaterialTheme.typography.labelSmall, color = AppColors.TextSecondary)
                                     }
                                 }
+                                Icon(Icons.AutoMirrored.Rounded.ArrowForwardIos, contentDescription = null, tint = AppColors.TextHint, modifier = Modifier.size(14.dp))
+                            }
+                        }
+                        
+                        if (showSheet) {
+                            val sheetState = rememberModalBottomSheetState()
+                            ModalBottomSheet(
+                                onDismissRequest = { showSheet = false },
+                                sheetState = sheetState,
+                                containerColor = AppColors.Surface,
+                                shape = AppShapes.Sheet
+                            ) {
+                                UnclassifiedBottomSheetContent(tx, viewModel, context) { showSheet = false }
                             }
                         }
                     }
                 }
 
-                // ── مؤشر توازن الديون (Debt Equilibrium Index Cards) ───────────
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                // ── بطاقة الميزان الموحدة (Unified Balance Card) ───────────
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(16.dp, AppShapes.CardLg, spotColor = AppColors.Primary.copy(alpha = 0.2f))
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                                colors = listOf(AppColors.Surface, AppColors.Background)
+                            ),
+                            shape = AppShapes.CardLg
+                        )
+                        .border(1.dp, AppColors.Border, AppShapes.CardLg)
+                        .padding(AppSpacing.CardPadLg)
                 ) {
-                    // كارت مستحقات (لي) - Premium Green Gradient
-                    val owedToMeProgress by animateFloatAsState(targetValue = if (totalOwedToMe > 0) 1f else 0f)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .shadow(12.dp, AppShapes.CardLg, spotColor = AppColors.Success.copy(alpha = 0.4f))
-                            .background(
-                                brush = androidx.compose.ui.graphics.Brush.linearGradient(colors = listOf(AppColors.Success, AppColors.Success.copy(alpha = 0.8f))),
-                                shape = AppShapes.CardLg
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "الميزان الصافي (الديون)", style = MaterialTheme.typography.labelLarge, color = AppColors.TextSecondary)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        val netBalance = totalOwedToMe - totalOwedByMe
+                        val isPositive = netBalance >= 0
+                        
+                        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = String.format("%,.0f", Math.abs(netBalance)),
+                                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Black, fontSize = 36.sp),
+                                color = if (netBalance == 0.0) AppColors.TextPrimary else if (isPositive) AppColors.Success else AppColors.Primary
                             )
-                            .padding(20.dp)
-                    ) {
-                        Column {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "مستحقات (لي)", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = Color.White.copy(alpha = 0.9f))
-                                Box(modifier = Modifier.background(Color.White.copy(alpha = 0.2f), CircleShape).padding(6.dp)) {
-                                    Icon(imageVector = Icons.Rounded.ArrowDownward, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(text = String.format("%,.0f", totalOwedToMe), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black, fontSize = 26.sp), color = Color.White)
-                                Text(text = "ر.ي", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold), color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(bottom = 4.dp))
-                            }
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Box(modifier = Modifier.fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.3f), CircleShape)) {
-                                Box(modifier = Modifier.fillMaxWidth(owedToMeProgress).fillMaxHeight().background(Color.White, CircleShape))
-                            }
+                            Text(
+                                text = "ر.ي",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = AppColors.TextSecondary,
+                                modifier = Modifier.padding(bottom = 6.dp)
+                            )
                         }
-                    }
-
-                    // كارت التزامات (علي) - Premium Red Gradient
-                    val owedByMeProgress by animateFloatAsState(targetValue = if (totalOwedByMe > 0) 1f else 0f)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .shadow(12.dp, AppShapes.CardLg, spotColor = AppColors.Primary.copy(alpha = 0.4f))
-                            .background(
-                                brush = androidx.compose.ui.graphics.Brush.linearGradient(colors = listOf(AppColors.PrimaryLight, AppColors.Primary)),
-                                shape = AppShapes.CardLg
-                            )
-                            .padding(20.dp)
-                    ) {
-                        Column {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "التزامات (علي)", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = Color.White.copy(alpha = 0.9f))
-                                Box(modifier = Modifier.background(Color.White.copy(alpha = 0.2f), CircleShape).padding(6.dp)) {
-                                    Icon(imageVector = Icons.Rounded.ArrowUpward, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(text = String.format("%,.0f", totalOwedByMe), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black, fontSize = 26.sp), color = Color.White)
-                                Text(text = "ر.ي", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold), color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(bottom = 4.dp))
-                            }
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Box(modifier = Modifier.fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.3f), CircleShape)) {
-                                Box(modifier = Modifier.fillMaxWidth(owedByMeProgress).fillMaxHeight().background(Color.White, CircleShape))
-                            }
+                        
+                        Text(
+                            text = if (netBalance == 0.0) "ميزانيتك متعادلة تماماً" else if (isPositive) "الناس مدينون لك أكثر" else "أنت مدين للناس أكثر",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AppColors.TextHint
+                        )
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        // ProgressBar الموحد
+                        val totalDebtAndCredit = (totalOwedToMe + totalOwedByMe).coerceAtLeast(1.0)
+                        val greenWeight = (totalOwedToMe / totalDebtAndCredit).toFloat()
+                        val redWeight = (totalOwedByMe / totalDebtAndCredit).toFloat()
+                        
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(text = "مستحقات لك: ${String.format("%,.0f", totalOwedToMe)}", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold), color = AppColors.Success)
+                            Text(text = "التزامات عليك: ${String.format("%,.0f", totalOwedByMe)}", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold), color = AppColors.Primary)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(modifier = Modifier.fillMaxWidth().height(10.dp).clip(AppShapes.ButtonPill).background(AppColors.SurfaceVariant)) {
+                            if (greenWeight > 0f) Box(modifier = Modifier.weight(greenWeight).fillMaxHeight().background(AppColors.Success))
+                            if (redWeight > 0f) Box(modifier = Modifier.weight(redWeight).fillMaxHeight().background(AppColors.Primary))
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                // ── رأس قائمة سجل الحساب الموحد (Timeline Header) ───────────────
+                // ── رأس قائمة الأشخاص ─────────────────────────────────
                 Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "الديون النشطة", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
+                    Text(text = "علاقاتك المالية", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.clickable { /*TODO Filter*/ }) {
                         Text(text = "أرشيف التسويات", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = AppColors.Primary)
                         Icon(imageVector = Icons.Rounded.History, contentDescription = null, tint = AppColors.Primary, modifier = Modifier.size(16.dp))
@@ -277,135 +190,33 @@ fun SocialLedgerScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Show only unsettled debts
-                val displayTransactions = transactions.filter { it.isDebt && !it.isSettled }
+                // ── قائمة الديون المجمعة حسب الأشخاص ─────────────────────
+                val activeDebts = transactions.filter { it.isDebt && !it.isSettled }
+                val groupedDebts = activeDebts.groupBy { it.counterpart.ifEmpty { "غير محدد" } }
 
-                if (displayTransactions.isEmpty()) {
+                if (groupedDebts.isEmpty()) {
                     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(modifier = Modifier.size(80.dp).background(AppColors.Primary.copy(alpha = 0.05f), CircleShape), contentAlignment = Alignment.Center) {
-                            Icon(imageVector = Icons.Rounded.AllInclusive, contentDescription = null, tint = AppColors.Primary.copy(alpha = 0.5f), modifier = Modifier.size(40.dp))
+                            Icon(imageVector = Icons.Rounded.VerifiedUser, contentDescription = null, tint = AppColors.Primary.copy(alpha = 0.5f), modifier = Modifier.size(40.dp))
                         }
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(text = "السجل نظيف تماماً", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
+                        Text(text = "لا توجد ديون معلقة", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "لا توجد أي ديون نشطة حالياً. استمتع براحة البال!", style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary, textAlign = TextAlign.Center, modifier = Modifier.width(260.dp))
+                        Text(text = "سجلك نظيف تماماً. لا أحد يطالبك بشيء، ولا أنت تطالب أحداً!", style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary, textAlign = TextAlign.Center, modifier = Modifier.width(260.dp))
                     }
                 } else {
-                    displayTransactions.forEach { tx ->
-                        val isIncome = tx.transactionType == "Transfer In"
-                        
-                        val coroutineScope = rememberCoroutineScope()
-                        val offsetX = remember { Animatable(0f) }
-                        val offsetY = remember { Animatable(0f) }
-                        var isDragging by remember { mutableStateOf(false) }
-
-                        Box(
-                            modifier = Modifier
-                                .offset { IntOffset(offsetX.value.roundToInt(), offsetY.value.roundToInt()) }
-                                .onGloballyPositioned { coordinates ->
-                                    if (isDragging) {
-                                        val itemBounds = coordinates.boundsInRoot()
-                                        isHoveringDropZone = itemBounds.overlaps(dropZoneRect)
-                                    }
-                                }
-                                .pointerInput(Unit) {
-                                    detectDragGestures(
-                                        onDragStart = { 
-                                            isDragging = true 
-                                        },
-                                        onDragEnd = { 
-                                            isDragging = false
-                                            if (isHoveringDropZone) {
-                                                viewModel.settleTransaction(context, tx)
-                                                // It will disappear since it becomes settled
-                                                isHoveringDropZone = false
-                                            } else {
-                                                coroutineScope.launch {
-                                                    offsetX.animateTo(0f, spring())
-                                                    offsetY.animateTo(0f, spring())
-                                                }
-                                            }
-                                        },
-                                        onDragCancel = { 
-                                            isDragging = false
-                                            isHoveringDropZone = false
-                                            coroutineScope.launch {
-                                                offsetX.animateTo(0f, spring())
-                                                offsetY.animateTo(0f, spring())
-                                            }
-                                        },
-                                        onDrag = { change, dragAmount -> 
-                                            change.consume()
-                                            coroutineScope.launch {
-                                                offsetX.snapTo(offsetX.value + dragAmount.x)
-                                                offsetY.snapTo(offsetY.value + dragAmount.y)
-                                            }
-                                        }
-                                    )
-                                },
-                            // Bring dragged item to front
-                            contentAlignment = Alignment.Center
-                        ) {
-                            LedgerItem(
-                                name = tx.counterpart.ifEmpty { "غير محدد" },
-                                subtitle = if (isIncome) "دين وارد (سلف لي)" else "دين صادر (سلف مني)",
-                                amount = "${if(isIncome) "+" else "-"}${tx.amount} ر.ي",
-                                amountSub = "غير مسوى (اسحب للتسوية)",
-                                amountColor = if (isIncome) AppColors.Success else AppColors.Primary,
-                                icon = if (isIncome) Icons.Rounded.CallReceived else Icons.Rounded.CallMade,
-                                iconBg = if (isIncome) AppColors.Success.copy(alpha = 0.1f) else AppColors.PrimaryContainer,
-                                iconColor = if (isIncome) AppColors.Success else AppColors.Primary,
-                                isSettled = false
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // ── لوحة التسوية السريعة بالسحب والإسقاط (Settlement Visualizer) ──
-                val dropZoneBg = if (isHoveringDropZone) AppColors.Primary.copy(alpha = 0.15f) else AppColors.Primary.copy(alpha = 0.03f)
-                val dropZoneStrokeColor = if (isHoveringDropZone) AppColors.Primary else AppColors.Primary.copy(alpha = 0.3f)
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(8.dp, AppShapes.CardLg, spotColor = AppColors.Primary.copy(alpha = 0.1f))
-                        .background(Color.White, AppShapes.CardLg)
-                        .padding(24.dp)
-                        .onGloballyPositioned { coordinates ->
-                            dropZoneRect = coordinates.boundsInRoot()
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(modifier = Modifier.background(AppColors.SurfaceVariant, CircleShape).padding(12.dp)) {
-                            Icon(imageVector = Icons.Rounded.SyncAlt, contentDescription = null, tint = AppColors.Primary, modifier = Modifier.size(28.dp))
-                        }
+                    groupedDebts.forEach { (personName, personTxs) ->
+                        // Calculate Net for this person
+                        // Transfer In (Income) + Debt = they lent me money (I owe them) -> negative net
+                        // Transfer Out (Expense) + Debt = I lent them money (they owe me) -> positive net
+                        val netForPerson = personTxs.sumOf { if (it.transactionType == "Transfer Out") it.amount else -it.amount }
+                        PersonDebtCard(
+                            personName = personName,
+                            netBalance = netForPerson,
+                            transactions = personTxs,
+                            onSettle = { tx -> viewModel.settleTransaction(context, tx) }
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(text = "التسوية السريعة", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = "اسحب الدين من القائمة أعلاه وأسقطه هنا لتسويته وإغلاقه نهائياً", style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary, textAlign = TextAlign.Center, modifier = Modifier.width(240.dp))
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        val stroke = Stroke(width = 4f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(90.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(dropZoneBg)
-                                .drawBehind {
-                                    drawRoundRect(color = dropZoneStrokeColor, style = stroke, cornerRadius = CornerRadius(16.dp.toPx()))
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Icon(imageVector = Icons.Rounded.Download, contentDescription = null, tint = AppColors.Primary.copy(alpha = if(isHoveringDropZone) 1f else 0.7f), modifier = Modifier.size(20.dp))
-                                Text(text = "أفلت المعاملة هنا", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = AppColors.Primary.copy(alpha = if(isHoveringDropZone) 1f else 0.8f))
-                            }
-                        }
                     }
                 }
 
@@ -416,58 +227,188 @@ fun SocialLedgerScreen(
 }
 
 @Composable
-fun LedgerItem(
-    name: String,
-    subtitle: String,
-    amount: String,
-    amountSub: String,
-    amountColor: Color,
-    icon: ImageVector,
-    iconBg: Color,
-    iconColor: Color,
-    isSettled: Boolean = false,
-    hasIndicator: Boolean = false
+fun PersonDebtCard(
+    personName: String,
+    netBalance: Double,
+    transactions: List<FinancialTransaction>,
+    onSettle: (FinancialTransaction) -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(AppElevation.xs, AppShapes.Card, spotColor = Color.Black.copy(alpha = 0.02f))
-            .background(AppColors.Surface, AppShapes.Card)
-            .border(1.dp, AppColors.Border, AppShapes.Card)
-            .padding(16.dp)
+    var expanded by remember { mutableStateOf(false) }
+    val isOwedToMe = netBalance > 0
+    val isOwedByMe = netBalance < 0
+    val balanceColor = if (netBalance == 0.0) AppColors.TextPrimary else if (isOwedToMe) AppColors.Success else AppColors.Primary
+    val balanceText = if (netBalance == 0.0) "تمت التسوية تماماً" else if (isOwedToMe) "يجب أن يدفع لك" else "يجب أن تدفع له"
+    
+    Card(
+        shape = AppShapes.Card,
+        colors = CardDefaults.cardColors(containerColor = AppColors.Surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppElevation.sm),
+        modifier = Modifier.fillMaxWidth().border(1.dp, AppColors.Border, AppShapes.Card)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Box(modifier = Modifier.size(44.dp).background(iconBg, CircleShape), contentAlignment = Alignment.Center) {
-                    Icon(imageVector = icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(22.dp))
-                }
-                Column {
-                    Text(text = name, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        if (hasIndicator) { Box(modifier = Modifier.size(6.dp).background(AppColors.Primary, CircleShape)) }
-                        Text(text = subtitle, style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp), color = AppColors.TextSecondary)
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(AppSpacing.CardPad),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically, 
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(modifier = Modifier.size(52.dp).background(AppColors.SurfaceVariant, CircleShape).border(1.dp, AppColors.Border, CircleShape), contentAlignment = Alignment.Center) {
+                        Text(text = personName.take(1).uppercase(), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary)
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = personName, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = AppColors.TextPrimary, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        Text(text = balanceText, style = MaterialTheme.typography.labelSmall, color = AppColors.TextSecondary)
                     }
                 }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(text = amount, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = amountColor)
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(text = amountSub, style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp), color = AppColors.TextHint)
+                
+                Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 8.dp)) {
+                    Text(text = String.format("%,.0f", Math.abs(netBalance)), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black), color = balanceColor)
+                    Icon(imageVector = if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, contentDescription = null, tint = AppColors.TextHint)
                 }
-                if (isSettled) {
-                    Icon(imageVector = Icons.Rounded.CheckCircle, contentDescription = null, tint = AppColors.Success, modifier = Modifier.size(22.dp))
-                } else {
-                    Icon(imageVector = Icons.Rounded.DragIndicator, contentDescription = null, tint = AppColors.TextHint, modifier = Modifier.size(22.dp))
+            }
+            
+            AnimatedVisibility(visible = expanded) {
+                Column(modifier = Modifier.fillMaxWidth().background(AppColors.Background).padding(AppSpacing.sm)) {
+                    Text("المعاملات النشطة (اسحب للتسوية)", style = MaterialTheme.typography.labelSmall, color = AppColors.TextHint, modifier = Modifier.padding(bottom = 8.dp, start = 8.dp))
+                    transactions.forEach { tx ->
+                        SwipeableTransactionItem(tx = tx, onSettle = { onSettle(tx) })
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwipeableTransactionItem(
+    tx: FinancialTransaction,
+    onSettle: () -> Unit
+) {
+    val isIncome = tx.transactionType == "Transfer In"
+    // Income + Debt = They lent me (I owe them, Primary/Red)
+    // Out + Debt = I lent them (They owe me, Success/Green)
+    val color = if (isIncome) AppColors.Primary else AppColors.Success 
+    val typeText = if (isIncome) "دين عليك (استلفت منه)" else "دين لك (أقرضته)"
+    
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart || it == SwipeToDismissBoxValue.StartToEnd) {
+                onSettle()
+                true
+            } else {
+                false
+            }
+        }
+    )
 
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = true,
+        enableDismissFromEndToStart = true,
+        backgroundContent = {
+            val bgColor = AppColors.Success
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(AppShapes.CardSm)
+                    .background(bgColor)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("تسوية", color = Color.White, fontWeight = FontWeight.Bold)
+                    Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Color.White)
+                }
+            }
+        },
+        content = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(AppShapes.CardSm)
+                    .background(AppColors.Surface)
+                    .border(1.dp, AppColors.Border, AppShapes.CardSm)
+                    .padding(16.dp)
+            ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Column {
+                        Text(text = typeText, style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold), color = AppColors.TextSecondary)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                        val dateString = dateFormat.format(java.util.Date(tx.timestamp))
+                        Text(text = "تاريخ: $dateString", style = MaterialTheme.typography.labelSmall, color = AppColors.TextHint)
+                    }
+                    Text(text = String.format("%,.0f ر.ي", tx.amount), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = color)
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun UnclassifiedBottomSheetContent(
+    tx: FinancialTransaction,
+    viewModel: LedgerViewModel,
+    context: android.content.Context,
+    onDismiss: () -> Unit
+) {
+    val isIncome = tx.transactionType == "Transfer In"
+    var showCategories by remember { mutableStateOf(false) }
+    
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = AppSpacing.ScreenH).padding(bottom = 32.dp)) {
+        Text(
+            text = "تصنيف العملية",
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            color = AppColors.TextPrimary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "تم التقاط حوالة ${if(isIncome) "واردة من" else "صادرة إلى"} (${tx.counterpart.ifEmpty { "غير محدد" }}) بقيمة ${tx.amount} ر.ي.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = AppColors.TextSecondary
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        if (!showCategories) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (isIncome) {
+                    Button(onClick = { viewModel.classifyTransaction(context, tx, isDebt = true, category = "Debt"); onDismiss() }, modifier = Modifier.fillMaxWidth().height(AppSpacing.ButtonHeight), shape = AppShapes.Button, colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)) { Text("سجلها كدين لي (سلف)", fontWeight = FontWeight.Bold) }
+                    Button(onClick = { showCategories = true }, modifier = Modifier.fillMaxWidth().height(AppSpacing.ButtonHeight), shape = AppShapes.Button, colors = ButtonDefaults.buttonColors(containerColor = AppColors.Success)) { Text("تسجيل كدخل / إيراد", fontWeight = FontWeight.Bold) }
+                    OutlinedButton(onClick = { viewModel.classifyTransaction(context, tx, isDebt = false, category = "Debt Repayment"); onDismiss() }, modifier = Modifier.fillMaxWidth().height(AppSpacing.ButtonHeight), shape = AppShapes.Button) { Text("استرداد دين (سددني)", fontWeight = FontWeight.Bold) }
+                } else {
+                    Button(onClick = { viewModel.classifyTransaction(context, tx, isDebt = true, category = "Debt"); onDismiss() }, modifier = Modifier.fillMaxWidth().height(AppSpacing.ButtonHeight), shape = AppShapes.Button, colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)) { Text("سجلها كدين عليه (سلف)", fontWeight = FontWeight.Bold) }
+                    Button(onClick = { showCategories = true }, modifier = Modifier.fillMaxWidth().height(AppSpacing.ButtonHeight), shape = AppShapes.Button, colors = ButtonDefaults.buttonColors(containerColor = AppColors.Error)) { Text("تسجيل كمصروف", fontWeight = FontWeight.Bold) }
+                    OutlinedButton(onClick = { viewModel.classifyTransaction(context, tx, isDebt = false, category = "Debt Repayment"); onDismiss() }, modifier = Modifier.fillMaxWidth().height(AppSpacing.ButtonHeight), shape = AppShapes.Button) { Text("سداد دين علي", fontWeight = FontWeight.Bold) }
+                }
+            }
+        } else {
+            val categories = if (isIncome) listOf("راتب 💰", "أعمال حرة 💻", "هدية 🎁", "أخرى 📝") else listOf("طعام 🍔", "مواصلات 🚕", "فواتير 🧾", "تسوق 🛍️", "أخرى 📝")
+            val chunkedCategories = categories.chunked(2)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                chunkedCategories.forEach { rowItems ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        rowItems.forEach { cat ->
+                            OutlinedButton(
+                                onClick = { viewModel.classifyTransaction(context, tx, isDebt = false, category = cat); onDismiss() },
+                                modifier = Modifier.weight(1f).height(AppSpacing.ButtonHeight),
+                                shape = AppShapes.Button
+                            ) { Text(text = cat, fontSize = 13.sp) }
+                        }
+                        if (rowItems.size < 2) repeat(2 - rowItems.size) { Spacer(modifier = Modifier.weight(1f)) }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            TextButton(onClick = { showCategories = false }, modifier = Modifier.fillMaxWidth()) { Text("رجوع", color = AppColors.TextSecondary) }
+        }
+    }
+}

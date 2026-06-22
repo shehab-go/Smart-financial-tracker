@@ -1,13 +1,12 @@
 package com.shehabgo.smartfinancialtracker.ui.screens.onboarding
 
 import android.content.Intent
-import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.BatteryAlert
+import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun BatteryOptimizationScreen(
+fun NotificationPermissionScreen(
     hasPermission: Boolean,
     onNext: () -> Unit
 ) {
@@ -39,13 +38,13 @@ fun BatteryOptimizationScreen(
         Box(
             modifier = Modifier
                 .size(120.dp)
-                .background(Color(0xFFFFF3E0), RoundedCornerShape(32.dp)),
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(32.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Rounded.BatteryAlert,
-                contentDescription = "Battery Optimization",
-                tint = Color(0xFFFF9800),
+                imageVector = Icons.Rounded.NotificationsActive,
+                contentDescription = "Notifications",
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(64.dp)
             )
         }
@@ -53,7 +52,7 @@ fun BatteryOptimizationScreen(
         Spacer(modifier = Modifier.height(40.dp))
         
         Text(
-            text = "لا تدع النظام يوقفنا",
+            text = "الذكاء وراء الكواليس",
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
             color = Color(0xFF141D23),
             textAlign = TextAlign.Center
@@ -62,7 +61,7 @@ fun BatteryOptimizationScreen(
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "لضمان عدم ضياع أي عملية مالية، يرجى السماح للتطبيق بالعمل في الخلفية بحرية.",
+            text = "لكي نتمكن من تسجيل مصروفاتك آلياً وبدون لمس، نحتاج إلى قراءة إشعارات الدفع الخاصة بك. نحن نقرأ الأرقام فقط.",
             style = MaterialTheme.typography.bodyLarge,
             color = Color(0xFF5D5E61),
             textAlign = TextAlign.Center,
@@ -74,19 +73,17 @@ fun BatteryOptimizationScreen(
         if (!hasPermission) {
             Button(
                 onClick = {
-                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                        data = Uri.parse("package:${context.packageName}")
-                    }
+                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
                     context.startActivity(intent)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text(
-                    text = "تعطيل تحسين البطارية",
+                    text = "منح صلاحية الإشعارات",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color.White
                 )
@@ -106,7 +103,7 @@ fun BatteryOptimizationScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
             ) {
                 Text(
-                    text = "البطارية جاهزة - إنهاء",
+                    text = "صلاحية ممنوحة - المتابعة",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color.White
                 )

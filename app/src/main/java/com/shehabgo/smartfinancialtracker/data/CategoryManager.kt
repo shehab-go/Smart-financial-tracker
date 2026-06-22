@@ -3,6 +3,7 @@ package com.shehabgo.smartfinancialtracker.data
 import android.content.Context
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -86,7 +87,7 @@ object CategoryManager {
             Icons.Rounded.Flight.name to Icons.Rounded.Flight,
             Icons.Rounded.Medication.name to Icons.Rounded.Medication,
             Icons.Rounded.Coffee.name to Icons.Rounded.Coffee,
-            Icons.Rounded.SendToMobile.name to Icons.Rounded.SendToMobile,
+            Icons.AutoMirrored.Rounded.SendToMobile.name to Icons.AutoMirrored.Rounded.SendToMobile,
             Icons.Rounded.LocalAtm.name to Icons.Rounded.LocalAtm,
             Icons.Rounded.VolunteerActivism.name to Icons.Rounded.VolunteerActivism
         )

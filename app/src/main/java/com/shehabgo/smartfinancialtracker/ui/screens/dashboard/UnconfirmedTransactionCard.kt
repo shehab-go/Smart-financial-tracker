@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CallMade
-import androidx.compose.material.icons.rounded.CallReceived
+import androidx.compose.material.icons.automirrored.rounded.CallReceived
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Handshake
 import androidx.compose.material.icons.rounded.MoneyOff
@@ -20,6 +20,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import com.financial.tracker.module.data.FinancialTransaction
 import com.shehabgo.smartfinancialtracker.ui.theme.AppColors
 import com.shehabgo.smartfinancialtracker.ui.theme.AppShapes
@@ -33,14 +48,30 @@ fun UnconfirmedTransactionCard(
 ) {
     val isIncome = transaction.transactionType == "Transfer In" || transaction.transactionType == "TransferIn"
     
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(4.dp, AppShapes.Card, spotColor = AppColors.Warning.copy(alpha = 0.2f))
-            .background(AppColors.Surface, AppShapes.Card)
-            .border(1.dp, AppColors.Warning.copy(alpha = 0.3f), AppShapes.Card)
-            .padding(16.dp)
+    val haptic = LocalHapticFeedback.current
+    var visible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(transaction.id) {
+        visible = true
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInVertically(
+            initialOffsetY = { -40 },
+            animationSpec = tween(500)
+        ) + expandVertically() + fadeIn(),
+        exit = slideOutVertically() + shrinkVertically() + fadeOut()
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(4.dp, AppShapes.Card, spotColor = AppColors.Warning.copy(alpha = 0.2f))
+                .background(AppColors.Surface, AppShapes.Card)
+                .border(1.dp, AppColors.Warning.copy(alpha = 0.3f), AppShapes.Card)
+                .padding(16.dp)
+        ) {
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -100,7 +131,7 @@ fun UnconfirmedTransactionCard(
                     )
                 ) {
                     Icon(
-                        imageVector = if(isIncome) Icons.Rounded.CallReceived else Icons.Rounded.MoneyOff,
+                        imageVector = if(isIncome) Icons.AutoMirrored.Rounded.CallReceived else Icons.Rounded.MoneyOff,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp)
                     )
@@ -151,3 +182,5 @@ fun UnconfirmedTransactionCard(
         }
     }
 }
+}
+
