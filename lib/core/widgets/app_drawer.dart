@@ -11,6 +11,7 @@ import 'package:debit_credit_app/features/currencies/presentation/screens/curren
 import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_backup_screen.dart';
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
+import 'package:debit_credit_app/features/home/presentation/screens/smart_dashboard_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/models/user_profile.dart';
@@ -359,6 +360,20 @@ class _AppDrawerState extends State<AppDrawer> {
                 // Drawer Items list
                 SliverList(
                   delegate: SliverChildListDelegate([
+                    _buildSectionDivider('المحفظة الذكية (الآلية)'),
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.account_balance_wallet_rounded,
+                      title: 'لوحة القيادة اللحظية',
+                      subtitle: 'مراقبة الرصيد وحركة الإشعارات',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SmartDashboardScreen()),
+                        );
+                      },
+                    ),
                     _buildSectionDivider('إدارة البيانات'),
                     _buildDrawerItem(
                       context,

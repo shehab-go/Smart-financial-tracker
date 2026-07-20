@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/onboarding_service.dart';
 import '../../../../features/privacy/presentation/screens/app_lock_screen.dart';
+import '../../../../services/financial_tracker_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -14,7 +15,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  final int _numPages = 4;
+  final int _numPages = 5;
 
   @override
   void dispose() {
@@ -31,6 +32,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _completeOnboarding() async {
     HapticFeedback.mediumImpact();
+    // Request notification permission if not granted
+    await FinancialTrackerService.requestNotificationPermission();
     await OnboardingService.instance.setOnboardingCompleted();
     if (mounted) {
       Navigator.pushReplacement(
@@ -99,6 +102,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     title: 'حماية فائقة ونسخ سحابي',
                     subtitle: 'بياناتك آمنة ومحمية بقفل البصمة، بالإضافة لنسخ احتياطي تلقائي وسحابي مشفر على حسابك الخاص في Google Drive.',
                     illustration: const AnimatedSyncIllustration(),
+                  ),
+                  _buildPage(
+                    title: 'المحاسب الخفي 🤖',
+                    subtitle: 'دعنا ندير ميزانيتك بصمت. نسمع إشعارات الدفع ونسجلها لك دون تعب. الأمان 100% محلي في هاتفك فقط.',
+                    illustration: const AnimatedNotificationIllustration(),
                   ),
                 ],
               ),
@@ -782,6 +790,106 @@ class _AnimatedSyncIllustrationState extends State<AnimatedSyncIllustration> wit
                 ),
               ),
             ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class AnimatedNotificationIllustration extends StatefulWidget {
+  const AnimatedNotificationIllustration({super.key});
+
+  @override
+  State<AnimatedNotificationIllustration> createState() => _AnimatedNotificationIllustrationState();
+}
+
+class _AnimatedNotificationIllustrationState extends State<AnimatedNotificationIllustration> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+
+    _slideAnimation = Tween<double>(begin: -10.0, end: 10.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: AppTheme.cardShadow,
+              border: Border.all(
+                color: AppTheme.primaryColor.withOpacity(0.15),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.notifications_active_rounded,
+                    color: AppTheme.primaryColor,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'إشعار الدفع',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'تم تسجيل 500 ريال بنجاح',
+                        style: TextStyle(
+                          color: AppTheme.successColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

@@ -26,12 +26,16 @@ class AddExpenseDialog extends StatefulWidget {
   final ExpenseModel? expense;
   final bool hideCategoryPicker;
   final String? fixedCategory;
+  final bool forceLinkToBalance;
+  final int? defaultBalanceId;
 
   const AddExpenseDialog({
     super.key,
     this.expense,
     this.hideCategoryPicker = false,
     this.fixedCategory,
+    this.forceLinkToBalance = false,
+    this.defaultBalanceId,
   });
 
   @override
@@ -225,15 +229,25 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
       if (allocationInputs.isEmpty) {
         IncomeBalanceModel? defaultBalance;
 
-        if (balances.isNotEmpty) {
+        if (widget.defaultBalanceId != null && balances.isNotEmpty) {
+          try {
+            defaultBalance = balances.firstWhere((b) => b.id == widget.defaultBalanceId);
+          } catch (_) {}
+        }
+
+        if (defaultBalance == null && balances.isNotEmpty) {
           try {
             defaultBalance = balances.firstWhere((b) => b.isDefault);
           } catch (_) {
             defaultBalance = balances.first;
           }
         }
+        
         allocationInputs = [
-          _ExpenseBalanceAllocationInput(balanceId: defaultBalance?.id),
+          _ExpenseBalanceAllocationInput(
+            balanceId: defaultBalance?.id,
+            initialAmount: widget.expense != null && widget.expense!.amount > 0 ? widget.expense!.amount.toString() : '',
+          ),
         ];
       }
 
@@ -242,7 +256,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
         _incomeBalances = balances;
         _allocationInputs = allocationInputs;
         _hasExistingAllocations = hasExisting;
-        _linkToIncomeBalance = hasExisting;
+        _linkToIncomeBalance = hasExisting || widget.forceLinkToBalance;
       });
     } catch (e) {
       // Handle error silently

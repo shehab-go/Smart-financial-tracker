@@ -13,7 +13,7 @@ import 'database_helper.dart';
 /// - Detailed logging is provided for debugging and monitoring
 class MigrationHelper {
   /// Current database schema version
-  static const int currentVersion = 18;
+  static const int currentVersion = 19;
   
   // Constants for default values and common strings
   static const String defaultCurrencyName = 'محلي';
@@ -113,6 +113,10 @@ class MigrationHelper {
       if (oldVersion < 18) {
         print('[MigrationHelper] Applying migration to version 18');
         await _migrateToV18(db);
+      }
+      if (oldVersion < 19) {
+        print('[MigrationHelper] Applying migration to version 19');
+        await _migrateToV19(db);
       }
       
       print('[MigrationHelper] Database migration completed successfully');
@@ -1015,6 +1019,19 @@ class MigrationHelper {
       print('[MigrationHelper] Migration to v18 completed successfully');
     } catch (e) {
       print('[MigrationHelper] ERROR in _migrateToV18: ');
+      rethrow;
+    }
+  }
+
+  /// Migration to version 19: Placeholder for future schema changes
+  static Future<void> _migrateToV19(Database db) async {
+    try {
+      print('[MigrationHelper] Migrating to version 19...');
+      // Add migration logic here when needed
+      
+      print('[MigrationHelper] Migration to v19 completed successfully');
+    } catch (e) {
+      print('[MigrationHelper] ERROR in _migrateToV19: $e');
       rethrow;
     }
   }

@@ -109,6 +109,10 @@ class AddTransactionDialog extends StatefulWidget {
   final int? accountId;
   final String? accountCurrencyCode;
   final TransactionModel? transaction;
+  final String? initialAccountName;
+  final double? initialAmount;
+  final String? initialType;
+  final String? initialDetails;
 
   const AddTransactionDialog({
     super.key,
@@ -116,6 +120,10 @@ class AddTransactionDialog extends StatefulWidget {
     this.accountId,
     this.accountCurrencyCode,
     this.transaction,
+    this.initialAccountName,
+    this.initialAmount,
+    this.initialType,
+    this.initialDetails,
   });
 
   @override
@@ -174,6 +182,13 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       if (mounted) {
         setState(() {
           _existingAccounts = accounts;
+          if (widget.initialAccountName != null) {
+            try {
+              _selectedAccount = accounts.firstWhere(
+                (a) => a.name.trim().toLowerCase() == widget.initialAccountName!.trim().toLowerCase()
+              );
+            } catch (_) {}
+          }
         });
       }
     } catch (_) {}
@@ -330,6 +345,19 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       _selectedType = t.type;
       _selectedDate = t.date;
       _imagePaths = List<String>.from(t.imagePaths);
+    } else {
+      if (widget.initialAccountName != null) {
+        _accountNameController.text = widget.initialAccountName!;
+      }
+      if (widget.initialAmount != null) {
+        _amountController.text = widget.initialAmount.toString();
+      }
+      if (widget.initialType != null) {
+        _selectedType = widget.initialType!;
+      }
+      if (widget.initialDetails != null) {
+        _detailsController.text = widget.initialDetails!;
+      }
     }
     _hasDetailsText = _detailsController.text.trim().isNotEmpty;
     _detailsController.addListener(() {

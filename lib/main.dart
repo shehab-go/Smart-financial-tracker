@@ -7,6 +7,7 @@ import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
+import 'package:debit_credit_app/services/smart_debt_settlement_service.dart';
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -55,6 +56,9 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
   
+  // Initialize Smart Debt Settlement Service to listen for background transactions
+  SmartDebtSettlementService().initialize();
+
   runApp(Phoenix(child: const PersonalFinanceApp()));
 }
 
@@ -65,6 +69,7 @@ class PersonalFinanceApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: SmartDebtSettlementService.navigatorKey,
       title: '???? ??????',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
