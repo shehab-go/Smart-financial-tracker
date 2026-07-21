@@ -3,6 +3,15 @@ package com.financial.tracker.module
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.os.Bundle
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import com.ramzi.debit_credit_app.MainActivity
+import com.ramzi.debit_credit_app.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,8 +25,31 @@ class FinancialNotificationListener : NotificationListenerService() {
 
     override fun onCreate() {
         super.onCreate()
-        // Initialize config manager on creation
-        WalletConfigManager.init(applicationContext)
+        // Initialize config manager on creation in background
+        serviceScope.launch {
+            WalletConfigManager.init(applicationContext)
+        }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        // Helps sometimes to restart the service
+        val restartServiceIntent = Intent(applicationContext, this.javaClass)
+        restartServiceIntent.setPackage(packageName)
+        val restartServicePendingIntent = PendingIntent.getService(
+            applicationContext, 1, restartServiceIntent, 
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val alarmService = applicationContext.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        alarmService.set(
+            android.app.AlarmManager.ELAPSED_REALTIME,
+            android.os.SystemClock.elapsedRealtime() + 1000,
+            restartServicePendingIntent
+        )
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -52,6 +84,7 @@ class FinancialNotificationListener : NotificationListenerService() {
                 dao.insertTransaction(transaction)
                 FinancialTrackerClient.sendEventToUI(transaction)
                 triggerHapticFeedback()
+                showLocalNotification(transaction)
             }
         } else {
             // Error Analytics: Log the unparsed notification
@@ -76,6 +109,50 @@ class FinancialNotificationListener : NotificationListenerService() {
             }
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    private fun showLocalNotification(transaction: com.financial.tracker.module.data.FinancialTransaction) {
+        val channelId = "financial_tracker_alerts"
+        val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "إشعارات الراصد",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "إشعارات العمليات المالية الجديدة التي يلتقطها الراصد"
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val intent = Intent(applicationContext, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(
+            applicationContext, 
+            0, 
+            intent, 
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val amountStr = transaction.amount.toString()
+        val walletName = if (transaction.packageName.contains("stcpay")) "STC Pay" else "جيب"
+
+        val builder = NotificationCompat.Builder(applicationContext, channelId)
+            .setSmallIcon(R.mipmap.ic_launcher) // Using default launcher icon
+            .setContentTitle("عملية مالية جديدة")
+            .setContentText("تم التقاط عملية بمبلغ $amountStr ريال عبر $walletName. اضغط للتصنيف.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+
+        try {
+            notificationManager.notify(transaction.referenceId.hashCode(), builder.build())
+        } catch (e: SecurityException) {
+            android.util.Log.e("WalletTracker", "Missing POST_NOTIFICATIONS permission", e)
         }
     }
 }

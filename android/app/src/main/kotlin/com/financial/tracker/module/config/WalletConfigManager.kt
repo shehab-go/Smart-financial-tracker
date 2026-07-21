@@ -2,38 +2,51 @@ package com.financial.tracker.module.config
 
 import android.content.Context
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.InputStreamReader
 
 object WalletConfigManager {
     private val configs = mutableMapOf<String, WalletConfig>()
+    private var isInitialized = false
 
-    fun init(context: Context) {
-        if (configs.isNotEmpty()) return
+    suspend fun init(context: Context) {
+        if (isInitialized) return
         reload(context)
     }
 
-    fun reload(context: Context) {
-        configs.clear()
+    suspend fun reload(context: Context) = withContext(Dispatchers.IO) {
+        val newConfigs = mutableMapOf<String, WalletConfig>()
         try {
-            val inputStream = context.assets.open("financial_tracker_config.json")
-            val reader = InputStreamReader(inputStream)
-            val gson = Gson()
-            val configList = gson.fromJson(reader, Array<WalletConfig>::class.java)
-            for (config in configList) {
-                configs[config.packageName] = config
+            context.assets.open("financial_tracker_config.json").use { inputStream ->
+                InputStreamReader(inputStream).use { reader ->
+                    val gson = Gson()
+                    val configList = gson.fromJson(reader, Array<WalletConfig>::class.java)
+                    for (config in configList) {
+                        newConfigs[config.packageName] = config
+                    }
+                }
             }
-            reader.close()
+            synchronized(configs) {
+                configs.clear()
+                configs.putAll(newConfigs)
+                isInitialized = true
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     fun isTargetWallet(packageName: String): Boolean {
-        return configs.containsKey(packageName)
+        return synchronized(configs) {
+            configs.containsKey(packageName)
+        }
     }
 
     internal fun getConfigForPackage(packageName: String): WalletConfig? {
-        return configs[packageName]
+        return synchronized(configs) {
+            configs[packageName]
+        }
     }
 }
 

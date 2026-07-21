@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.enableEdgeToEdge
+import androidx.core.app.NotificationManagerCompat
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -34,10 +35,18 @@ class MainActivity : FlutterFragmentActivity() {
                     startActivity(intent)
                     result.success(true)
                 }
+                "isNotificationPermissionGranted" -> {
+                    val enabledListeners = NotificationManagerCompat.getEnabledListenerPackages(this@MainActivity)
+                    val isGranted = enabledListeners.contains(packageName)
+                    result.success(isGranted)
+                }
                 "getAllTransactions" -> {
                     scope.launch {
                         val transactions = FinancialTrackerClient.getAllTransactions(applicationContext)
-                        result.success(gson.toJson(transactions))
+                        val json = withContext(Dispatchers.Default) {
+                            gson.toJson(transactions)
+                        }
+                        result.success(json)
                     }
                 }
                 "markAsClassified" -> {
@@ -63,7 +72,10 @@ class MainActivity : FlutterFragmentActivity() {
                 override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
                     job = scope.launch {
                         FinancialTrackerClient.transactionFlow.collectLatest { transaction ->
-                            events?.success(gson.toJson(transaction))
+                            val json = withContext(Dispatchers.Default) {
+                                gson.toJson(transaction)
+                            }
+                            events?.success(json)
                         }
                     }
                 }

@@ -324,6 +324,7 @@ class HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
       drawer: const AppDrawer(),
       onDrawerChanged: (isOpened) {
         setState(() {
@@ -366,7 +367,7 @@ class HomeScreenState extends State<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'إدارة الديون',
+                    'الديون',
                     style: TextStyle(
                       fontSize: 16,
                       color: AppTheme.textPrimary,

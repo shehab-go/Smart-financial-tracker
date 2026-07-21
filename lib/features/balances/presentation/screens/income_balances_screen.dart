@@ -5278,7 +5278,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'أرصدة الدخل',
+                'الأرصدة',
                 style: TextStyle(
                   fontSize: 16,
                   color: AppTheme.textPrimary,

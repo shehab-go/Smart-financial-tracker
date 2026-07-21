@@ -17,14 +17,22 @@ internal object AESEncryptionHelper {
     private const val IV_LENGTH = 12
     private const val TAG_LENGTH = 128
 
-    init {
-        createKey()
+    @Volatile
+    private var keyStore: KeyStore? = null
+    
+    @Volatile
+    private var secretKey: SecretKey? = null
+
+    private fun getOrLoadKeyStore(): KeyStore {
+        return keyStore ?: synchronized(this) {
+            keyStore ?: KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }.also { keyStore = it }
+        }
     }
 
     private fun createKey() {
         try {
-            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-            if (!keyStore.containsAlias(ALIAS)) {
+            val ks = getOrLoadKeyStore()
+            if (!ks.containsAlias(ALIAS)) {
                 val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
                 val keyGenParameterSpec = KeyGenParameterSpec.Builder(
                     ALIAS,
@@ -36,6 +44,7 @@ internal object AESEncryptionHelper {
                     .build()
                 keyGenerator.init(keyGenParameterSpec)
                 keyGenerator.generateKey()
+                secretKey = null // Force reload key if it was somehow cached as null
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -43,8 +52,12 @@ internal object AESEncryptionHelper {
     }
 
     private fun getKey(): SecretKey {
-        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-        return keyStore.getKey(ALIAS, null) as SecretKey
+        return secretKey ?: synchronized(this) {
+            secretKey ?: (getOrLoadKeyStore().getKey(ALIAS, null) as? SecretKey) ?: run {
+                createKey()
+                getOrLoadKeyStore().getKey(ALIAS, null) as SecretKey
+            }.also { secretKey = it }
+        }
     }
 
     fun encrypt(plainText: String): String {

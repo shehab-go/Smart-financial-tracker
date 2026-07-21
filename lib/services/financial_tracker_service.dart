@@ -17,6 +17,17 @@ class FinancialTrackerService {
     }
   }
 
+  /// Check Android Notification Listener Permission
+  static Future<bool> isNotificationPermissionGranted() async {
+    try {
+      final bool result = await _methodChannel.invokeMethod('isNotificationPermissionGranted');
+      return result;
+    } on PlatformException catch (e) {
+      print("Failed to check permission: '${e.message}'.");
+      return false;
+    }
+  }
+
   /// Get all past transactions from Android's local DB
   static Future<List<Map<String, dynamic>>> getAllTransactions() async {
     try {

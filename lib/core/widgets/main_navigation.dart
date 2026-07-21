@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
 import 'package:debit_credit_app/features/expenses/presentation/screens/expense_screen.dart';
 import 'package:debit_credit_app/features/balances/presentation/screens/income_balances_screen.dart';
+import 'package:debit_credit_app/features/home/presentation/screens/smart_dashboard_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -52,6 +53,7 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
   }
 
   List<Widget> get _screens => [
+    SmartDashboardScreen(onDrawerChanged: _onDrawerChanged),
     HomeScreen(onDrawerChanged: _onDrawerChanged),
     ExpenseScreen(onDrawerChanged: _onDrawerChanged),
     IncomeBalancesScreen(
@@ -92,17 +94,22 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
                       children: [
                         _buildNavItem(
                           index: 0,
-                          label: 'ديون',
-                          assetPath: 'assets/images/money-borrow.svg',
+                          label: 'الراصد',
+                          icon: Icons.radar,
                         ),
                         _buildNavItem(
                           index: 1,
-                          label: 'مصروف',
-                          assetPath: 'assets/images/trend-down-expense.svg',
+                          label: 'الديون',
+                          assetPath: 'assets/images/money-borrow.svg',
                         ),
                         _buildNavItem(
                           index: 2,
-                          label: 'أرصدة',
+                          label: 'المصروفات',
+                          assetPath: 'assets/images/trend-down-expense.svg',
+                        ),
+                        _buildNavItem(
+                          index: 3,
+                          label: 'الأرصدة',
                           assetPath: 'assets/images/trend-up-income.svg',
                         ),
                       ],
@@ -117,7 +124,8 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
   Widget _buildNavItem({
     required int index,
     required String label,
-    required String assetPath,
+    String? assetPath,
+    IconData? icon,
   }) {
     final bool isSelected = _currentIndex == index;
 
@@ -127,7 +135,7 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
         onTap: () {
           setState(() {
             _currentIndex = index;
-            if (index == 2) {
+            if (index == 3) {
               // Force IncomeBalancesScreen to rebuild and reload balances
               _balancesTabVersion++;
             }
@@ -146,15 +154,22 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SvgPicture.asset(
-                assetPath,
-                width: isSelected ? 25 : 23,
-                height: isSelected ? 25 : 23,
-                colorFilter: ColorFilter.mode(
-                  isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
-                  BlendMode.srcIn,
+              if (assetPath != null)
+                SvgPicture.asset(
+                  assetPath,
+                  width: isSelected ? 25 : 23,
+                  height: isSelected ? 25 : 23,
+                  colorFilter: ColorFilter.mode(
+                    isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+                    BlendMode.srcIn,
+                  ),
+                )
+              else if (icon != null)
+                Icon(
+                  icon,
+                  size: isSelected ? 25 : 23,
+                  color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
                 ),
-              ),
               const SizedBox(height: 1),
               Text(
                 label,
