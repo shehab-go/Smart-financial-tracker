@@ -69,7 +69,7 @@ internal object DynamicParser {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         matcher.group("value")
                     } else {
-                        TODO("VERSION.SDK_INT < O")
+                        matcher.group(1)
                     }
                 } catch (e: IllegalArgumentException) {
                     matcher.group(1)

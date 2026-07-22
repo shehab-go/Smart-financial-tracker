@@ -1,0 +1,3 @@
+- [x] Update dependencies in `android/app/build.gradle`
+- [x] Increment version in `android/local.properties`
+- [/] Verify build with `flutter build apk --debug`

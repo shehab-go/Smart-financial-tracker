@@ -26,6 +26,7 @@
 
 # Preserve application classes to avoid obfuscation breaking reflective access
 -keep class com.ramzi.debit_credit_app.** { *; }
+-keep class com.financial.tracker.module.** { *; }
 
 # Keep annotations and runtime attributes helpful for debugging
 -keepattributes *Annotation*,Signature
