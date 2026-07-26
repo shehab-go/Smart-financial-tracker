@@ -31,8 +31,8 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
       _currentIndex = 0;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Delay auto backup to avoid ANR on startup
-      Future.delayed(const Duration(seconds: 2), () {
+      // Delay auto backup to avoid ANR on startup (Increased to 10s)
+      Future.delayed(const Duration(seconds: 10), () {
         if (mounted) {
           AutoBackupManager.instance.maybeRunAutoBackup(trigger: 'startup');
         }

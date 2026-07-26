@@ -186,15 +186,18 @@ class EnhancedBackupService {
   Future<File> createBackup({
     String backupType = _manualBackupPrefix,
     String? description,
+    bool runVacuum = true,
   }) async {
     final dbPath = await _getDbPath();
     final backupDir = await _getBackupDir();
 
     // Run VACUUM to optimize the database size before backing up
-    try {
-      await DatabaseHelper().vacuum();
-    } catch (e) {
-      debugPrint('Warning: Database VACUUM failed: $e');
+    if (runVacuum) {
+      try {
+        await DatabaseHelper().vacuum();
+      } catch (e) {
+        debugPrint('Warning: Database VACUUM failed: $e');
+      }
     }
 
     // Generate backup filename

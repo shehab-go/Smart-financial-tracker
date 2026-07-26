@@ -9,7 +9,6 @@ import 'package:debit_credit_app/features/expenses/domain/expense_repository.dar
 import 'package:debit_credit_app/features/currencies/presentation/widgets/local_currency_picker.dart';
 import 'package:debit_credit_app/features/categories/presentation/screens/categories_screen.dart';
 import '../widgets/category_picker_sheet.dart';
-import 'package:debit_credit_app/core/services/region_service.dart';
 
 class _ExpenseBalanceAllocationInput {
   int? balanceId;

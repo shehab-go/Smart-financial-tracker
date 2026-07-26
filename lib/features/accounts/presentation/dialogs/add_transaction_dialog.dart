@@ -14,7 +14,6 @@ import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/models/currency.dart';
 import 'package:debit_credit_app/features/currencies/presentation/widgets/local_currency_picker.dart';
-import 'package:debit_credit_app/core/services/region_service.dart';
 
 class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
   @override

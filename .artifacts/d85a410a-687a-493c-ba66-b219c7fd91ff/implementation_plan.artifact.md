@@ -1,34 +1,43 @@
-# Restrict "Rasid" (Balances) Feature by Region
+# Fix ANR Issues in Production
 
-The goal is to hide the "Rasid" (Balances/Income Balances) feature for users located outside of Yemen.
+The goal is to resolve the Application Not Responding (ANR) issues reported in the Play Store, specifically focusing on the UI thread unresponsiveness during startup and background tasks.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> I will use the device's system locale (Country Code) to detect if the user is in Yemen. If the device country code is not 'YE', the feature will be hidden.
->
-> **Clarification needed**: Do you mean the "الراصد" (Smart Dashboard/Radar) feature or the "الأرصدة" (Income Balances) feature? I will assume you mean the "الأرصدة" (Balances) feature as we were just working on it, but I can apply this to both if needed.
+> I have identified three major potential causes for the ANR:
+> 1.  **Database Deadlock on Startup**: The app runs a heavy `VACUUM` operation (database optimization) just 2 seconds after startup, while multiple screens are also trying to load data from the same database.
+> 2.  **Illegal State Mutation in Build**: The `SmartDashboardScreen` (Radar) performs logic and state updates inside its `build` method, which can cause performance bottlenecks and infinite rebuild loops.
+> 3.  **Synchronous JSON Parsing**: Large transaction logs are parsed synchronously on the main thread, which can freeze the UI if there are many entries.
 
 ## Proposed Changes
 
-### [Component] Core Services
-
-#### [NEW] [region_service.dart](file:///E:/hemmah/debit_credit_app/lib/core/services/region_service.dart)
-- Implement `RegionService` with a getter `isInYemen` using `PlatformDispatcher.instance.locale.countryCode`.
-
-### [Component] UI Navigation
+### [Component] Core Navigation & Backup
 
 #### [MODIFY] [main_navigation.dart](file:///E:/hemmah/debit_credit_app/lib/core/widgets/main_navigation.dart)
-- Conditionally include the "Balances" (الأرصدة) tab in the `_screens` list.
-- Conditionally show the "Balances" item in the bottom navigation bar.
-- Adjust index handling to ensure navigation remains consistent even when the item is hidden.
+- Increase the delay for the initial auto-backup check to 10 seconds to ensure the UI is fully loaded and idle before any heavy background work starts.
 
-#### [MODIFY] [app_drawer.dart](file:///E:/hemmah/debit_credit_app/lib/core/widgets/app_drawer.dart)
-- (If applicable) Hide any drawer items related to the restricted feature.
+#### [MODIFY] [auto_backup_manager.dart](file:///E:/hemmah/debit_credit_app/lib/core/services/auto_backup_manager.dart)
+- **Move `VACUUM`**: Only perform database `VACUUM` during the `Workmanager` (background) task. Avoid running it during "interactive" or "startup" backups triggered from the UI.
+
+### [Component] Smart Dashboard (Radar)
+
+#### [MODIFY] [smart_dashboard_screen.dart](file:///E:/hemmah/debit_credit_app/lib/features/home/presentation/screens/smart_dashboard_screen.dart)
+- **Refactor Stream Listening**: Remove the `StreamBuilder` logic that modifies state during `build`. Use a `StreamSubscription` in `initState` to handle new transactions and update the `AnimatedList` correctly.
+- **Isolate Parsing**: Use `compute` for `jsonDecode` when fetching all transactions from the native side.
+
+### [Component] Database Layer
+
+#### [MODIFY] [database_helper.dart](file:///E:/hemmah/debit_credit_app/lib/core/db/database_helper.dart)
+- **Add Indices**: Add a composite index on `transactions(accountId, date)` to speed up the `MAX(date)` subqueries used in account lists.
+- **Optimize Maintenance**: Ensure `_runPostOpenMaintenance` is as efficient as possible.
 
 ## Verification Plan
 
+### Automated Tests
+- Build the app in release mode and monitor startup time and CPU usage.
+
 ### Manual Verification
-1.  **Mock Region**: Temporarily hardcode `isInYemen` to `false` and verify the feature is hidden.
-2.  **Verify Indices**: Ensure that clicking other tabs still works correctly when one tab is removed.
-3.  **Check Persistence**: Ensure that if a user has data in that feature, it's not deleted, just hidden from the UI.
+1.  **Startup Performance**: Verify the app opens and responds to touch immediately without stutters.
+2.  **Radar Live Update**: Ensure new transactions coming through the stream still appear in the list with the correct animation.
+3.  **Backup Logic**: Trigger a manual backup and ensure it doesn't freeze the UI.

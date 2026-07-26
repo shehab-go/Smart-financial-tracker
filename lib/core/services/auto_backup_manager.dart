@@ -133,6 +133,7 @@ class AutoBackupManager {
     String? customName,
     bool interactive = true,
     bool promptIfNecessary = true,
+    bool runVacuum = false,
   }) async {
     // In background isolate we should not request runtime permissions or rely on external storage.
     // So we copy the DB to a temp file and upload that.
@@ -143,6 +144,7 @@ class AutoBackupManager {
       backup = await EnhancedBackupService.instance.createBackup(
         backupType: backupType,
         description: backupType == 'manual' ? 'نسخة Google Drive يدوية' : 'نسخة Google Drive تلقائية',
+        runVacuum: runVacuum,
       );
     }
 
@@ -183,7 +185,11 @@ class AutoBackupManager {
         return;
       }
 
-      await runBackupNow(backupType: 'auto').timeout(const Duration(minutes: 2));
+      await runBackupNow(
+        backupType: 'auto',
+        runVacuum: trigger == 'workmanager',
+        interactive: trigger != 'workmanager',
+      ).timeout(const Duration(minutes: 2));
     } finally {
       _isRunning = false;
     }

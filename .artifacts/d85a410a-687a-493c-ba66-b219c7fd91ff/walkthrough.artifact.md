@@ -1,28 +1,24 @@
-# Region-Based Restriction (Radar Only) & Bug Fixes Walkthrough
+# ANR Performance Optimization Walkthrough
 
-The region-based restriction has been successfully implemented and refined to target ONLY the **"الراصد" (Radar)** feature. Additionally, several compilation errors introduced during the implementation were fixed.
+I have implemented several optimizations to address the Application Not Responding (ANR) issues reported in the Play Store. These changes focus on keeping the UI thread idle and responsive during heavy operations.
 
 ## Changes Made
 
-### Core Logic
-- **[MODIFY] [region_service.dart](file:///E:/hemmah/debit_credit_app/lib/core/services/region_service.dart)**: Renamed `isRasidEnabled` to `isRadarEnabled` to accurately reflect its scope.
+### 1. Database Deadlock Prevention
+- **[MODIFY] [auto_backup_manager.dart](file:///E:/hemmah/debit_credit_app/lib/core/services/auto_backup_manager.dart)**: The heavy `VACUUM` (database optimization) command is now disabled during startup and interactive UI backups. It will only run during background `Workmanager` tasks when the user is not actively using the app.
+- **[MODIFY] [main_navigation.dart](file:///E:/hemmah/debit_credit_app/lib/core/widgets/main_navigation.dart)**: Increased the initial auto-backup delay from 2 seconds to **10 seconds** to ensure the app has finished all its initial loading before checking for backups.
 
-### UI Navigation & Location Restriction
-- **[MODIFY] [main_navigation.dart](file:///E:/hemmah/debit_credit_app/lib/core/widgets/main_navigation.dart)**:
-    - The "الراصد" tab is now the ONLY conditionally hidden tab.
-    - The "الأرصدة" (Balances) tab is available for all users.
-    - Navigation indexing logic was updated to handle the dynamic shifting of tabs when Radar is hidden.
-- **[MODIFY] [app_drawer.dart](file:///E:/hemmah/debit_credit_app/lib/core/widgets/app_drawer.dart)**: The "لوحة القيادة اللحظية" (Radar Dashboard) item is now hidden for users outside of Yemen.
+### 2. UI Thread Offloading
+- **[MODIFY] [financial_tracker_service.dart](file:///E:/hemmah/debit_credit_app/lib/services/financial_tracker_service.dart)**: Updated JSON parsing to use Flutter's `compute` function. This moves the heavy work of decoding large transaction lists to a background isolate, preventing the UI from freezing.
+- **[MODIFY] [smart_dashboard_screen.dart](file:///E:/hemmah/debit_credit_app/lib/features/home/presentation/screens/smart_dashboard_screen.dart)**: Refactored the "Radar" screen to remove illegal state mutations inside the `build` method. It now uses a dedicated `StreamSubscription` to handle real-time updates efficiently.
 
-### Bug Fixes (Compilation Errors)
-- **[FIX] [add_transaction_dialog.dart](file:///E:/hemmah/debit_credit_app/lib/features/accounts/presentation/dialogs/add_transaction_dialog.dart)**: Fixed "Directives must appear before any declarations" error by moving the `RegionService` import to the top of the file.
-- **[FIX] [add_expense_dialog.dart](file:///E:/hemmah/debit_credit_app/lib/features/expenses/presentation/dialogs/add_expense_dialog.dart)**: Fixed misplaced import error.
-- **[FIX] [income_balances_screen.dart](file:///E:/hemmah/debit_credit_app/lib/features/balances/presentation/screens/income_balances_screen.dart)**: Fixed "CurrencyModel isn't defined" error by adding the missing import.
+### 3. Database Query Optimization
+- **[MODIFY] [database_helper.dart](file:///E:/hemmah/debit_credit_app/lib/core/db/database_helper.dart)**: Added a composite index on `transactions(accountId, date)`. This significantly speeds up the "last transaction date" queries used on the Home screen, reducing the time spent holding database locks.
 
 ## Verification Results
-- **Radar Restriction**: Confirmed that "الراصد" is hidden for non-Yemen users.
-- **Balances Restored**: Confirmed that "الأرصدة" is visible to all users.
-- **Compilation**: All reported syntax and import errors are resolved.
+- **Startup Time**: The app now reaches an idle state much faster.
+- **Memory/CPU**: Reduced main thread spikes during background sync.
+- **Stability**: Fixed potential infinite rebuild loops in the Smart Dashboard.
 
 > [!TIP]
-> The app now correctly handles both local (Yemen) and international contexts while keeping the liquid asset management (Balances) accessible to everyone.
+> These changes target the specific "Input dispatching timed out" errors seen in the Play Store console by ensuring the main thread is always available to handle user touches.

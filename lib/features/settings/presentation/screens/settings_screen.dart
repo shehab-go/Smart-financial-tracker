@@ -38,6 +38,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadBackupSettings() async {
     final enabled = await AutoBackupManager.instance.isEnabled();
     final lastMs = await AutoBackupManager.instance.getLastBackupMs();
+    final defaultCurrency = await DatabaseHelper().getDefaultCurrencyName();
+    
     String lastText;
     if (lastMs == null) {
       lastText = 'لم يُحفظ سحابياً بعد ☁️';
@@ -49,6 +51,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _autoBackup = enabled;
       _lastBackupText = lastText;
+      if (defaultCurrency != null) {
+        _selectedCurrency = defaultCurrency;
+      }
     });
   }
 
@@ -152,11 +157,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     subtitle: 'العملة المستخدمة في التطبيق',
                     value: _selectedCurrency,
                     items: _currencies,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCurrency = value!;
-                      });
-                      // TODO: Implement currency switching
+                    onChanged: (value) async {
+                      if (value != null) {
+                        setState(() {
+                          _selectedCurrency = value;
+                        });
+                        await DatabaseHelper().setDefaultCurrencyName(value);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('تم تغيير العملة الافتراضية إلى $value'),
+                              backgroundColor: AppTheme.successColor,
+                            ),
+                          );
+                        }
+                      }
                     },
                   ),
                 ],
@@ -390,8 +405,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // App Version
               Center(
                 child: Text(
-                  'إصدار التطبيق 1.0.0',
-                  style: TextStyle(
+                  'إصدار التطبيق 1.3.23',
+                  style: const TextStyle(
                     color: AppTheme.textTertiary,
                     fontSize: 14,
                   ),
@@ -695,15 +710,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                // TODO: Implement data cleaning
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('تم تنظيف البيانات المؤقتة بنجاح'),
-                    backgroundColor: AppTheme.successColor,
-                  ),
-                );
+                await DatabaseHelper().cleanTemporaryData();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('تم تنظيف البيانات المؤقتة بنجاح'),
+                      backgroundColor: AppTheme.successColor,
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
@@ -763,15 +780,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                // TODO: Implement delete all data
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('تم حذف جميع البيانات'),
-                    backgroundColor: AppTheme.errorColor,
-                  ),
-                );
+                await DatabaseHelper().deleteAllData();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('تم حذف جميع البيانات نهائياً'),
+                      backgroundColor: AppTheme.errorColor,
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.errorColor,

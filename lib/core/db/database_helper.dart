@@ -82,16 +82,13 @@ class DatabaseHelper {
       GROUP BY t.accountId, t.currencyName
     ''');
 
-    // Repair bug where categories were inserted with NULL type by updating them to 'general'
     await db.execute("UPDATE categories SET type = 'general' WHERE type IS NULL");
 
-    // Migrate old flat expense categories to be under "فئات اضافية - غير مصنف"
     final metaKeyUncategorized = 'uncategorized_migration_v1';
     final uncatRows = await db.query('app_meta', where: 'key = ?', whereArgs: [metaKeyUncategorized]);
     if (uncatRows.isEmpty || uncatRows.first['value'] != 'true') {
       final String groupName = 'فئات اضافية - غير مصنف';
       
-      // 1. Ensure the parent category exists
       final existingParent = await db.query('categories', where: 'name = ? AND type = ?', whereArgs: [groupName, 'expense']);
       if (existingParent.isEmpty) {
         await db.insert('categories', {
@@ -104,7 +101,6 @@ class DatabaseHelper {
         });
       }
 
-      // 2. Get all root expense categories
       final rootCategories = await db.query(
         'categories', 
         where: "(parentName IS NULL OR parentName = '') AND type = ? AND name != ?",
@@ -113,10 +109,8 @@ class DatabaseHelper {
 
       for (var cat in rootCategories) {
         final catName = cat['name'] as String;
-        // 3. Check if this root category has any children
         final children = await db.query('categories', where: 'parentName = ?', whereArgs: [catName]);
         if (children.isEmpty) {
-          // 4. Update it to be a child of 'فئات اضافية - غير مصنف'
           await db.update(
             'categories', 
             {'parentName': groupName}, 
@@ -136,7 +130,6 @@ class DatabaseHelper {
     );
   }
 
-
   Future<void> _ensureCategoriesSeeded(Database db) async {
     final metaKey = 'categories_v18_seeded';
     final rows = await db.query('app_meta', where: 'key = ?', whereArgs: [metaKey]);
@@ -154,7 +147,6 @@ class DatabaseHelper {
         'type': category.type ?? 'expense',
       };
       
-      // Update if exists to add icons/colors/type, or insert if new
       final existing = await db.query('categories', where: 'name = ?', whereArgs: [category.name]);
       if (existing.isNotEmpty) {
         await db.update('categories', data, where: 'name = ?', whereArgs: [category.name]);
@@ -164,8 +156,8 @@ class DatabaseHelper {
     }
     await db.insert('app_meta', {'key': metaKey, 'value': 'true'}, conflictAlgorithm: ConflictAlgorithm.replace);
   }
+
   Future<Database> get database async {
-    // Ensure we don't return a closed database instance
     if (_database == null || !(_database!.isOpen)) {
       _database = await _initDatabase();
     }
@@ -186,22 +178,42 @@ class DatabaseHelper {
     );
   }
 
-  /// Returns the configured default currency display name, or null if none set.
-  /// This is stored in app_meta under the key 'default_currency'.
+  Future<String?> getMetaValue(String key) async {
+    final db = await database;
+    final List<Map<String, dynamic>> rows = await db.query(
+      'app_meta',
+      where: 'key = ?',
+      whereArgs: [key],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    final Object? value = rows.first['value'];
+    return value?.toString();
+  }
+
+  Future<void> setMetaValue(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      'app_meta',
+      {
+        'key': key,
+        'value': value,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   Future<String?> getDefaultCurrencyName() async {
     final raw = await getMetaValue('default_currency');
     if (raw == null || raw.trim().isEmpty) return 'محلي';
     return raw.trim();
   }
 
-  /// Sets the global default currency display name used for new transactions,
-  /// expenses, and balances.
   Future<void> setDefaultCurrencyName(String name) async {
     await setMetaValue('default_currency', name);
   }
 
   Future<void> _createDatabase(Database db, int version) async {
-    // Create categories table
     await db.execute('''
       CREATE TABLE categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -214,7 +226,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // Create app_meta table for storing global app flags (e.g., currency migration)
     await db.execute('''
       CREATE TABLE IF NOT EXISTS app_meta (
         key TEXT PRIMARY KEY,
@@ -222,7 +233,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // Create currencies table
     await db.execute('''
       CREATE TABLE currencies (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -230,7 +240,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // Create accounts table
     await db.execute('''
       CREATE TABLE accounts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -266,7 +275,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // Create transactions table
     await db.execute('''
       CREATE TABLE transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -298,6 +306,7 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_accountId ON transactions(accountId)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_currencyName ON transactions(currencyName)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_account_date ON transactions(accountId, date)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_account_currency_stats_currencyName ON account_currency_stats(currencyName)');
@@ -382,7 +391,6 @@ class DatabaseHelper {
       END;
     ''');
 
-    // Create user profile table
     await db.execute('''
       CREATE TABLE user_profile (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -397,7 +405,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // Create expense accounts table
     await db.execute('''
       CREATE TABLE expense_accounts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -408,7 +415,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // Create expenses table
     await db.execute('''
       CREATE TABLE expenses (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -446,57 +452,60 @@ class DatabaseHelper {
     ''');
 
     final int now = DateTime.now().millisecondsSinceEpoch;
+    int resourceId = await db.insert('income_resources', {
+      'name': 'المصدر الرئيسي',
+      'description': 'المصدر الافتراضي للرصيد',
+      'createdDate': now,
+    });
 
-    int resourceId;
-    final existingResources = await db.query(
-      'income_resources',
-      limit: 1,
-    );
-    if (existingResources.isEmpty) {
-      resourceId = await db.insert('income_resources', {
-        'name': 'المصدر الرئيسي',
-        'description': 'المصدر الافتراضي للرصيد',
-        'createdDate': now,
-      });
-    } else {
-      resourceId = existingResources.first['id'] as int;
-    }
+    await db.insert('income_balances', {
+      'resourceId': resourceId,
+      'name': 'الرصيد الأساسي',
+      'currencyName': 'محلي',
+      'initialAmount': 0.0,
+      'isDefault': 1,
+      'createdDate': now,
+    });
 
-    final existingDefaultBalance = await db.query(
-      'income_balances',
-      where: 'isDefault = ?',
-      whereArgs: [1],
-      limit: 1,
-    );
-    if (existingDefaultBalance.isEmpty) {
-      await db.insert('income_balances', {
-        'resourceId': resourceId,
-        'name': 'الرصيد الأساسي',
-        'currencyName': 'محلي',
-        'initialAmount': 0.0,
-        'isDefault': 1,
-        'createdDate': now,
-      });
-    }
-
-    // Insert default categories
     final defaultCategories = CategoryModel.getDefaultCategories();
     for (int i = 0; i < defaultCategories.length; i++) {
-      final category = defaultCategories[i];
-      final categoryWithOrder = category.copyWith(
-        sortOrder: i,
-      );
-      await db.insert('categories', categoryWithOrder.toMap());
+      final category = defaultCategories[i].copyWith(sortOrder: i);
+      await db.insert('categories', category.toMap());
     }
 
-    // Insert default currencies
     final defaultCurrencies = CurrencyModel.getDefaultCurrencies();
     for (CurrencyModel currency in defaultCurrencies) {
       await db.insert('currencies', currency.toMap());
     }
   }
 
+  Future<void> vacuum() async {
+    final db = await database;
+    await db.execute('VACUUM');
+  }
 
+  Future<void> deleteAllData() async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('transactions');
+      await txn.delete('accounts');
+      await txn.delete('expenses');
+      await txn.delete('expense_accounts');
+      await txn.delete('income_balances');
+      await txn.delete('income_resources');
+      await txn.delete('account_currency_stats');
+    });
+  }
+
+  Future<void> cleanTemporaryData() async {
+    await vacuum();
+  }
+
+  Future<void> close() async {
+    final db = await database;
+    await db.close();
+    _database = null;
+  }
 
   // Category operations
   Future<List<CategoryModel>> getCategories() async {
@@ -533,52 +542,21 @@ class DatabaseHelper {
 
   Future<bool> hasCategoryRelatedRecords(int categoryId) async {
     final db = await database;
-    
-    // Get category name first
-    final categoryResult = await db.query(
-      'categories',
-      where: 'id = ?',
-      whereArgs: [categoryId],
-    );
-    
+    final categoryResult = await db.query('categories', where: 'id = ?', whereArgs: [categoryId]);
     if (categoryResult.isEmpty) return false;
-    
     final categoryName = categoryResult.first['name'] as String;
-    
-    // Check for accounts in this category
-    final accountResult = await db.query(
-      'accounts',
-      where: 'category = ?',
-      whereArgs: [categoryName],
-      limit: 1,
-    );
-    
+    final accountResult = await db.query('accounts', where: 'category = ?', whereArgs: [categoryName], limit: 1);
     if (accountResult.isNotEmpty) return true;
-    
-    // Check for transactions in this category
-    final transactionResult = await db.query(
-      'transactions',
-      where: 'category = ?',
-      whereArgs: [categoryName],
-      limit: 1,
-    );
-    
+    final transactionResult = await db.query('transactions', where: 'category = ?', whereArgs: [categoryName], limit: 1);
     return transactionResult.isNotEmpty;
   }
 
   Future<int> deleteCategory(int id) async {
-    // Check if category has related records
-    final hasRelatedRecords = await hasCategoryRelatedRecords(id);
-    if (hasRelatedRecords) {
-      throw Exception('لا يمكن حذف هذه الفئة لأنها تحتوي على حسابات أو معاملات مرتبطة بها');
+    if (await hasCategoryRelatedRecords(id)) {
+      throw Exception('لا يمكن حذف هذه الفئة لأنها تحتوي على بيانات مرتبطة');
     }
-    
     final db = await database;
-    return await db.delete(
-      'categories',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
 
   // Currency operations
@@ -595,59 +573,26 @@ class DatabaseHelper {
 
   Future<int> updateCurrency(CurrencyModel currency) async {
     final db = await database;
-    return await db.update(
-      'currencies',
-      currency.toMap(),
-      where: 'id = ?',
-      whereArgs: [currency.id],
-    );
+    return await db.update('currencies', currency.toMap(), where: 'id = ?', whereArgs: [currency.id]);
   }
 
   Future<bool> hasCurrencyRelatedRecords(int currencyId) async {
     final db = await database;
-    
-    // Get currency name first
-    final currencyResult = await db.query(
-      'currencies',
-      where: 'id = ?',
-      whereArgs: [currencyId],
-    );
-    
+    final currencyResult = await db.query('currencies', where: 'id = ?', whereArgs: [currencyId]);
     if (currencyResult.isEmpty) return false;
-    
     final currencyName = currencyResult.first['name'] as String;
-    
-    // Check for accounts using this currency
-    final accountResult = await db.query(
-      'accounts',
-      where: 'currencyName = ?',
-      whereArgs: [currencyName],
-      limit: 1,
-    );
-    
+    final accountResult = await db.query('accounts', where: 'currencyName = ?', whereArgs: [currencyName], limit: 1);
     return accountResult.isNotEmpty;
   }
 
   Future<int> deleteCurrency(int id) async {
-    // Check if currency has related records
-    final hasRelatedRecords = await hasCurrencyRelatedRecords(id);
-    if (hasRelatedRecords) {
-      throw Exception('لا يمكن حذف هذه العملة لأنها مستخدمة في حسابات موجودة');
+    if (await hasCurrencyRelatedRecords(id)) {
+      throw Exception('لا يمكن حذف هذه العملة لأنها مستخدمة');
     }
-    
     final db = await database;
-    return await db.delete(
-      'currencies',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('currencies', where: 'id = ?', whereArgs: [id]);
   }
 
-  /// Returns usage counts (accounts, income balances, expenses) for each
-  /// currency name present in the currencies table, keyed by the currency
-  /// display name stored in `currencies.name`.
-  ///
-  /// The inner map uses keys: `accounts`, `balances`, `expenses`.
   Future<Map<String, Map<String, int>>> getCurrencyUsageCountsByName() async {
     final db = await database;
     final List<Map<String, Object?>> rows = await db.rawQuery('''
@@ -660,244 +605,89 @@ class DatabaseHelper {
 
     final Map<String, Map<String, int>> result = {};
     for (final row in rows) {
-      final Object? nameValue = row['name'];
-      if (nameValue == null) continue;
-      final String name = nameValue.toString();
-
-      final int accounts = (row['accountsCount'] as num?)?.toInt() ?? 0;
-      final int balances = (row['balancesCount'] as num?)?.toInt() ?? 0;
-      final int expenses = (row['expensesCount'] as num?)?.toInt() ?? 0;
-
-      result[name] = <String, int>{
-        'accounts': accounts,
-        'balances': balances,
-        'expenses': expenses,
+      final name = row['name']?.toString() ?? '';
+      result[name] = {
+        'accounts': (row['accountsCount'] as num?)?.toInt() ?? 0,
+        'balances': (row['balancesCount'] as num?)?.toInt() ?? 0,
+        'expenses': (row['expensesCount'] as num?)?.toInt() ?? 0,
       };
     }
-
     return result;
   }
 
-  /// Returns the set of favorite currency display names as stored in app_meta.
   Future<Set<String>> getFavoriteCurrencies() async {
     final raw = await getMetaValue('favorite_currencies');
-    if (raw == null || raw.trim().isEmpty) return <String>{};
-
+    if (raw == null || raw.trim().isEmpty) return {};
     try {
-      final List<dynamic> decoded = jsonDecode(raw) as List<dynamic>;
+      final decoded = jsonDecode(raw) as List;
       return decoded.whereType<String>().toSet();
     } catch (_) {
-      // If anything goes wrong with parsing, treat as no favorites.
-      return <String>{};
+      return {};
     }
   }
 
-  /// Persists the given set of favorite currency display names into app_meta.
   Future<void> setFavoriteCurrencies(Set<String> favorites) async {
-    final String encoded = jsonEncode(favorites.toList());
-    await setMetaValue('favorite_currencies', encoded);
+    await setMetaValue('favorite_currencies', jsonEncode(favorites.toList()));
   }
 
-  /// Register that a user actually used this currency in a transaction or expense.
-  ///
-  /// - If no global default currency is set yet, this currency becomes the default.
-  /// - The currency is also added to the favorites set so it appears in quick-pick lists.
   Future<void> registerCurrencyUsage(String displayName) async {
-    final String name = displayName.trim();
+    final name = displayName.trim();
     if (name.isEmpty) return;
-
-    // 1) Ensure there is a sensible global default.
-    final String? currentDefault = await getDefaultCurrencyName();
-    if (currentDefault == null || currentDefault.trim().isEmpty) {
-      await setDefaultCurrencyName(name);
-    }
-
-    // 2) Ensure this currency is in the favorites list.
-    final Set<String> favorites = await getFavoriteCurrencies();
-    if (!favorites.contains(name)) {
-      favorites.add(name);
-      await setFavoriteCurrencies(favorites);
-    }
-  }
-
-  // App meta operations (key-value storage for global flags)
-  Future<String?> getMetaValue(String key) async {
-    final db = await database;
-    final List<Map<String, dynamic>> rows = await db.query(
-      'app_meta',
-      where: 'key = ?',
-      whereArgs: [key],
-      limit: 1,
-    );
-    if (rows.isEmpty) return null;
-    final Object? value = rows.first['value'];
-    return value?.toString();
-  }
-
-  Future<void> setMetaValue(String key, String value) async {
-    final db = await database;
-    await db.insert(
-      'app_meta',
-      {
-        'key': key,
-        'value': value,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    if (await getDefaultCurrencyName() == null) await setDefaultCurrencyName(name);
+    final favorites = await getFavoriteCurrencies();
+    if (favorites.add(name)) await setFavoriteCurrencies(favorites);
   }
 
   Future<bool> isCurrencyMigrationCompleted() async {
-    final value = await getMetaValue('currency_migration_completed');
-    return value == 'true';
+    return await getMetaValue('currency_migration_completed') == 'true';
   }
 
-  /// Returns all distinct legacy currency names that are actually used
-  /// in accounts with transactions, income balances with allocations,
-  /// or expenses. Used to drive the world_countries migration UI.
   Future<List<String>> getUsedCurrenciesForMigration() async {
     final db = await database;
     final Set<String> names = {};
 
-    // Accounts that have transactions
-    final List<Map<String, Object?>> accountRows = await db.rawQuery('''
-      SELECT DISTINCT a.currencyName AS name
-      FROM accounts a
-      JOIN transactions t ON t.accountId = a.id
-      WHERE a.currencyName IS NOT NULL AND a.currencyName != ''
-    ''');
-    for (final row in accountRows) {
-      final Object? nameValue = row['name'];
-      if (nameValue == null) continue;
-      final String name = nameValue.toString().trim();
-      if (name.isNotEmpty) names.add(name);
-    }
+    final accountRows = await db.rawQuery('SELECT DISTINCT currencyName FROM accounts');
+    for (final row in accountRows) names.add(row['currencyName'].toString().trim());
 
-    // Income balances that have any allocations (transactions or expenses)
-    final List<Map<String, Object?>> balanceRows = await db.rawQuery('''
-      SELECT DISTINCT b.currencyName AS name
-      FROM income_balances b
-      JOIN transaction_balance_allocations ta ON ta.balanceId = b.id
-      JOIN transactions t ON t.id = ta.transactionId
-      WHERE b.currencyName IS NOT NULL AND b.currencyName != ''
-      UNION
-      SELECT DISTINCT b.currencyName AS name
-      FROM income_balances b
-      JOIN expense_balance_allocations ea ON ea.balanceId = b.id
-      JOIN expenses e ON e.id = ea.expenseId
-      WHERE b.currencyName IS NOT NULL AND b.currencyName != ''
-    ''');
-    for (final row in balanceRows) {
-      final Object? nameValue = row['name'];
-      if (nameValue == null) continue;
-      final String name = nameValue.toString().trim();
-      if (name.isNotEmpty) names.add(name);
-    }
+    final balanceRows = await db.rawQuery('SELECT DISTINCT currencyName FROM income_balances');
+    for (final row in balanceRows) names.add(row['currencyName'].toString().trim());
 
-    // Expenses
-    final List<Map<String, Object?>> expenseRows = await db.rawQuery('''
-      SELECT DISTINCT currency AS name
-      FROM expenses
-      WHERE currency IS NOT NULL AND currency != ''
-    ''');
-    for (final row in expenseRows) {
-      final Object? nameValue = row['name'];
-      if (nameValue == null) continue;
-      final String name = nameValue.toString().trim();
-      if (name.isNotEmpty) names.add(name);
-    }
+    final expenseRows = await db.rawQuery('SELECT DISTINCT currency FROM expenses');
+    for (final row in expenseRows) names.add(row['currency'].toString().trim());
 
-    return names.toList();
+    return names.where((n) => n.isNotEmpty).toList();
   }
 
-  /// Applies a mapping from legacy currency display names to new
-  /// world_countries-based display names (Arabic), updating all
-  /// relevant tables and marking the migration as completed.
   Future<void> applyCurrencyMappings(Map<String, String> mappings) async {
     if (mappings.isEmpty) return;
     final db = await database;
-
     await db.transaction((txn) async {
       for (final entry in mappings.entries) {
-        final String oldName = entry.key;
-        final String newName = entry.value;
-
-        // Update accounts
-        await txn.update(
-          'accounts',
-          {'currencyName': newName},
-          where: 'currencyName = ?',
-          whereArgs: [oldName],
-        );
-
-        // Update income balances
-        await txn.update(
-          'income_balances',
-          {'currencyName': newName},
-          where: 'currencyName = ?',
-          whereArgs: [oldName],
-        );
-
-        // Update expenses
-        await txn.update(
-          'expenses',
-          {'currency': newName},
-          where: 'currency = ?',
-          whereArgs: [oldName],
-        );
-
-        // Update currencies table
-        await txn.update(
-          'currencies',
-          {'name': newName},
-          where: 'name = ?',
-          whereArgs: [oldName],
-        );
+        await txn.update('accounts', {'currencyName': entry.value}, where: 'currencyName = ?', whereArgs: [entry.key]);
+        await txn.update('income_balances', {'currencyName': entry.value}, where: 'currencyName = ?', whereArgs: [entry.key]);
+        await txn.update('expenses', {'currency': entry.value}, where: 'currency = ?', whereArgs: [entry.key]);
+        await txn.update('currencies', {'name': entry.value}, where: 'name = ?', whereArgs: [entry.key]);
       }
-
-      // Mark migration as completed
-      await txn.insert(
-        'app_meta',
-        {
-          'key': 'currency_migration_completed',
-          'value': 'true',
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await txn.insert('app_meta', {'key': 'currency_migration_completed', 'value': 'true'}, conflictAlgorithm: ConflictAlgorithm.replace);
     });
   }
-
-
 
   Future<List<AccountModel>> _attachCurrencyStats(List<AccountModel> accounts) async {
     if (accounts.isEmpty) return accounts;
     final db = await database;
-    final List<int> ids = accounts.map((a) => a.id).whereType<int>().toList();
-    if (ids.isEmpty) return accounts;
+    final ids = accounts.map((a) => a.id).whereType<int>().toList();
+    final placeholders = List.filled(ids.length, '?').join(',');
+    final statsMaps = await db.query('account_currency_stats', where: 'accountId IN ($placeholders)', whereArgs: ids);
 
-    // Query all currency stats for these accounts
-    final String idPlaceholders = List.filled(ids.length, '?').join(',');
-    final List<Map<String, dynamic>> statsMaps = await db.rawQuery('''
-      SELECT * FROM account_currency_stats
-      WHERE accountId IN ($idPlaceholders)
-    ''', ids);
-
-    // Group stats by accountId
-    final Map<int, List<AccountCurrencyStats>> statsByAccountId = {};
+    final Map<int, List<AccountCurrencyStats>> groupedStats = {};
     for (final map in statsMaps) {
-      final int accountId = map['accountId'] as int;
-      final stats = AccountCurrencyStats.fromMap(map);
-      (statsByAccountId[accountId] ??= []).add(stats);
+      final accountId = map['accountId'] as int;
+      (groupedStats[accountId] ??= []).add(AccountCurrencyStats.fromMap(map));
     }
 
-    // Attach to accounts
-    return accounts.map((account) {
-      if (account.id == null) return account;
-      final stats = statsByAccountId[account.id] ?? [];
-      return account.copyWith(currencyStats: stats);
-    }).toList();
+    return accounts.map((a) => a.copyWith(currencyStats: groupedStats[a.id] ?? [])).toList();
   }
 
-  // Account operations
   Future<List<AccountModel>> getAccounts() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('accounts');
@@ -906,19 +696,12 @@ class DatabaseHelper {
   }
 
   Future<List<AccountModel>> getAccountsByCategory(String category) async {
-    // Original simple method kept for compatibility
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'accounts',
-      where: 'category = ?',
-      whereArgs: [category],
-      orderBy: 'createdDate DESC',
-    );
+    final List<Map<String, dynamic>> maps = await db.query('accounts', where: 'category = ?', whereArgs: [category], orderBy: 'createdDate DESC');
     final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
-  /// Returns accounts in a category along with aggregated stats
   Future<List<AccountModel>> getAccountsWithStatsByCategory(String category) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('''
@@ -933,7 +716,6 @@ class DatabaseHelper {
       GROUP BY a.id
       ORDER BY a.createdDate DESC
     ''', [category]);
-
     final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
@@ -951,16 +733,13 @@ class DatabaseHelper {
         ON s.accountId = a.id AND s.currencyName = a.currencyName
       ORDER BY a.category ASC, a.createdDate DESC
     ''');
-
     final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
-  Future<List<AccountModel>> getAccountsWithStatsByCurrencyAllCategories(
-    String currencyName,
-  ) async {
+  Future<List<AccountModel>> getAccountsWithStatsByCurrencyAllCategories(String currencyName) async {
     final db = await database;
-    final String cur = currencyName.trim().isNotEmpty ? currencyName.trim() : 'محلي';
+    final cur = currencyName.trim().isEmpty ? 'محلي' : currencyName.trim();
     final List<Map<String, dynamic>> maps = await db.rawQuery('''
       SELECT a.*,
              COALESCE(s.transactionCount, 0) AS transactionCount,
@@ -972,14 +751,11 @@ class DatabaseHelper {
         ON s.accountId = a.id AND s.currencyName = ?
       ORDER BY a.category ASC, a.createdDate DESC
     ''', [cur]);
-
     final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
-  Future<List<AccountModel>> getAccountsWithStatsByCategoryUsingAccountCurrency(
-    String category,
-  ) async {
+  Future<List<AccountModel>> getAccountsWithStatsByCategoryUsingAccountCurrency(String category) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('''
       SELECT a.*,
@@ -993,17 +769,13 @@ class DatabaseHelper {
       WHERE a.category = ?
       ORDER BY a.createdDate DESC
     ''', [category]);
-
     final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
-  Future<List<AccountModel>> getAccountsWithStatsByCategoryAndCurrency(
-    String category,
-    String currencyName,
-  ) async {
+  Future<List<AccountModel>> getAccountsWithStatsByCategoryAndCurrency(String category, String currencyName) async {
     final db = await database;
-    final String cur = currencyName.trim().isNotEmpty ? currencyName.trim() : 'محلي';
+    final cur = currencyName.trim().isEmpty ? 'محلي' : currencyName.trim();
     final List<Map<String, dynamic>> maps = await db.rawQuery('''
       SELECT a.*,
              COALESCE(s.transactionCount, 0) AS transactionCount,
@@ -1016,26 +788,14 @@ class DatabaseHelper {
       WHERE a.category = ?
       ORDER BY a.createdDate DESC
     ''', [cur, category]);
-
     final accounts = await compute(_parseAccounts, maps);
     return await _attachCurrencyStats(accounts);
   }
 
   Future<List<String>> getDistinctTransactionCurrencies() async {
     final db = await database;
-    final List<Map<String, Object?>> rows = await db.rawQuery(
-      'SELECT DISTINCT currencyName AS currencyName FROM account_currency_stats ORDER BY currencyName ASC',
-    );
-
-    final List<String> result = [];
-    for (final row in rows) {
-      final Object? value = row['currencyName'];
-      if (value == null) continue;
-      final String name = value.toString().trim();
-      if (name.isEmpty) continue;
-      result.add(name);
-    }
-    if (result.isEmpty) return ['محلي'];
+    final List<Map<String, Object?>> rows = await db.query('account_currency_stats', columns: ['DISTINCT currencyName'], orderBy: 'currencyName ASC');
+    final result = rows.map((r) => r['currencyName'].toString().trim()).where((n) => n.isNotEmpty).toList();
     if (!result.contains('محلي')) result.insert(0, 'محلي');
     return result;
   }
@@ -1051,26 +811,14 @@ class DatabaseHelper {
       WHERE a.category = ?
     ''', [category]);
 
-    double debit = 0.0;
-    double credit = 0.0;
-    if (rows.isNotEmpty) {
-      final row = rows.first;
-      debit = (row['totalDebit'] as num?)?.toDouble() ?? 0.0;
-      credit = (row['totalCredit'] as num?)?.toDouble() ?? 0.0;
-    }
-    return {
-      'debit': debit,
-      'credit': credit,
-      'net': credit - debit,
-    };
+    final double debit = (rows.first['totalDebit'] as num?)?.toDouble() ?? 0.0;
+    final double credit = (rows.first['totalCredit'] as num?)?.toDouble() ?? 0.0;
+    return {'debit': debit, 'credit': credit, 'net': credit - debit};
   }
 
-  Future<Map<String, Map<String, double>>> getCategoryTotalsByCurrency(
-    String currencyName,
-  ) async {
+  Future<Map<String, Map<String, double>>> getCategoryTotalsByCurrency(String currencyName) async {
     final db = await database;
-    final String cur = currencyName.trim().isNotEmpty ? currencyName.trim() : 'محلي';
-
+    final cur = currencyName.trim().isEmpty ? 'محلي' : currencyName.trim();
     final List<Map<String, Object?>> rows = await db.rawQuery('''
       SELECT
         a.category AS category,
@@ -1082,20 +830,15 @@ class DatabaseHelper {
       GROUP BY a.category
     ''', [cur]);
 
-    final Map<String, Map<String, double>> result = <String, Map<String, double>>{};
+    final Map<String, Map<String, double>> result = {};
     for (final row in rows) {
-      final Object? category = row['category'];
-      if (category == null) continue;
-      final String cat = category.toString();
-      final double debit = (row['totalDebit'] as num?)?.toDouble() ?? 0.0;
-      final double credit = (row['totalCredit'] as num?)?.toDouble() ?? 0.0;
-      result[cat] = <String, double>{
-        'debit': debit,
-        'credit': credit,
-        'net': credit - debit,
+      final cat = row['category'].toString();
+      result[cat] = {
+        'debit': (row['totalDebit'] as num?)?.toDouble() ?? 0.0,
+        'credit': (row['totalCredit'] as num?)?.toDouble() ?? 0.0,
+        'net': ((row['totalCredit'] as num?)?.toDouble() ?? 0.0) - ((row['totalDebit'] as num?)?.toDouble() ?? 0.0),
       };
     }
-
     return result;
   }
 
@@ -1106,149 +849,77 @@ class DatabaseHelper {
 
   Future<int> updateAccount(AccountModel account) async {
     final db = await database;
-    return await db.update(
-      'accounts',
-      account.toMap(),
-      where: 'id = ?',
-      whereArgs: [account.id],
-    );
+    return await db.update('accounts', account.toMap(), where: 'id = ?', whereArgs: [account.id]);
   }
 
   Future<AccountModel?> getAccountById(int id) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'accounts',
-      where: 'id = ?',
-      whereArgs: [id],
-      limit: 1,
-    );
-    if (maps.isNotEmpty) {
-      final account = AccountModel.fromMap(maps.first);
-      final attached = await _attachCurrencyStats([account]);
-      return attached.first;
-    }
-    return null;
+    final List<Map<String, dynamic>> maps = await db.query('accounts', where: 'id = ?', whereArgs: [id], limit: 1);
+    if (maps.isEmpty) return null;
+    final account = AccountModel.fromMap(maps.first);
+    final attached = await _attachCurrencyStats([account]);
+    return attached.first;
   }
 
   Future<int> deleteAccount(int id) async {
     final db = await database;
-    return await db.delete(
-      'accounts',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('accounts', where: 'id = ?', whereArgs: [id]);
   }
 
   // Transaction operations
   Future<List<TransactionModel>> getTransactions() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'transactions',
-      orderBy: 'date DESC',
-    );
+    final List<Map<String, dynamic>> maps = await db.query('transactions', orderBy: 'date DESC');
     return compute(_parseTransactions, maps);
   }
 
   Future<List<TransactionModel>> getTransactionsByCategory(String category) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'transactions',
-      where: 'category = ?',
-      whereArgs: [category],
-      orderBy: 'date DESC',
-    );
+    final List<Map<String, dynamic>> maps = await db.query('transactions', where: 'category = ?', whereArgs: [category], orderBy: 'date DESC');
     return compute(_parseTransactions, maps);
   }
 
   Future<List<TransactionModel>> getTransactionsByAccount(int accountId) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'transactions',
-      where: 'accountId = ?',
-      whereArgs: [accountId],
-      orderBy: 'date DESC',
-    );
+    final List<Map<String, dynamic>> maps = await db.query('transactions', where: 'accountId = ?', whereArgs: [accountId], orderBy: 'date DESC');
     return compute(_parseTransactions, maps);
   }
 
-  Future<List<TransactionModel>> getTransactionsByDateRange(
-      DateTime startDate, DateTime endDate) async {
+  Future<List<TransactionModel>> getTransactionsByDateRange(DateTime start, DateTime end) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'transactions',
-      where: 'date >= ? AND date <= ?',
-      whereArgs: [startDate.millisecondsSinceEpoch, endDate.millisecondsSinceEpoch],
-      orderBy: 'date DESC',
-    );
+    final List<Map<String, dynamic>> maps = await db.query('transactions', where: 'date >= ? AND date <= ?', whereArgs: [start.millisecondsSinceEpoch, end.millisecondsSinceEpoch], orderBy: 'date DESC');
     return compute(_parseTransactions, maps);
   }
 
   Future<int> insertTransaction(TransactionModel transaction) async {
     final db = await database;
-    final normalized = transaction.copyWith(
-      type: _normalizeTransactionType(transaction.type),
-    );
-    return await db.insert('transactions', normalized.toMap());
+    return await db.insert('transactions', transaction.copyWith(type: _normalizeTransactionType(transaction.type)).toMap());
   }
 
   Future<int> updateTransaction(TransactionModel transaction) async {
     final db = await database;
-    final normalized = transaction.copyWith(
-      type: _normalizeTransactionType(transaction.type),
-    );
-    return await db.update(
-      'transactions',
-      normalized.toMap(),
-      where: 'id = ?',
-      whereArgs: [transaction.id],
-    );
+    return await db.update('transactions', transaction.copyWith(type: _normalizeTransactionType(transaction.type)).toMap(), where: 'id = ?', whereArgs: [transaction.id]);
   }
 
   Future<int> deleteTransaction(int id) async {
     final db = await database;
-    return await db.delete(
-      'transactions',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('transactions', where: 'id = ?', whereArgs: [id]);
   }
 
-  // Get overall totals
   Future<Map<String, double>> getOverallTotals() async {
     final db = await database;
-
-    // Get total debits
-    final debitResult = await db.rawQuery(
-      'SELECT SUM(amount) as total FROM transactions WHERE type = ?',
-      ['debit'],
-    );
-    double totalDebit = debitResult.first['total'] as double? ?? 0.0;
-
-    // Get total credits
-    final creditResult = await db.rawQuery(
-      'SELECT SUM(amount) as total FROM transactions WHERE type = ?',
-      ['credit'],
-    );
-    double totalCredit = creditResult.first['total'] as double? ?? 0.0;
-
-    return {
-      'debit': totalDebit,
-      'credit': totalCredit,
-      'net': totalCredit - totalDebit,
-    };
+    final dResult = await db.rawQuery('SELECT SUM(amount) as total FROM transactions WHERE type = "debit"');
+    final cResult = await db.rawQuery('SELECT SUM(amount) as total FROM transactions WHERE type = "credit"');
+    final double d = (dResult.first['total'] as num?)?.toDouble() ?? 0.0;
+    final double c = (cResult.first['total'] as num?)?.toDouble() ?? 0.0;
+    return {'debit': d, 'credit': c, 'net': c - d};
   }
 
   // User Profile operations
   Future<UserProfile?> getUserProfile() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'user_profile',
-      limit: 1,
-    );
-    if (maps.isNotEmpty) {
-      return UserProfile.fromMap(maps.first);
-    }
-    return null;
+    final maps = await db.query('user_profile', limit: 1);
+    return maps.isNotEmpty ? UserProfile.fromMap(maps.first) : null;
   }
 
   Future<int> insertUserProfile(UserProfile profile) async {
@@ -1258,45 +929,20 @@ class DatabaseHelper {
 
   Future<int> updateUserProfile(UserProfile profile) async {
     final db = await database;
-    return await db.update(
-      'user_profile',
-      profile.toMap(),
-      where: 'id = ?',
-      whereArgs: [profile.id],
-    );
-  }
-
-  Future<int> deleteUserProfile(int id) async {
-    final db = await database;
-    return await db.delete(
-      'user_profile',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.update('user_profile', profile.toMap(), where: 'id = ?', whereArgs: [profile.id]);
   }
 
   // Expense operations
   Future<List<ExpenseModel>> getExpenses() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'expenses',
-      orderBy: 'createdDate DESC',
-    );
+    final List<Map<String, dynamic>> maps = await db.query('expenses', orderBy: 'createdDate DESC');
     return compute(_parseExpenses, maps);
   }
 
   Future<ExpenseModel?> getExpenseById(int id) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'expenses',
-      where: 'id = ?',
-      whereArgs: [id],
-      limit: 1,
-    );
-    if (maps.isNotEmpty) {
-      return ExpenseModel.fromMap(maps.first);
-    }
-    return null;
+    final maps = await db.query('expenses', where: 'id = ?', whereArgs: [id], limit: 1);
+    return maps.isNotEmpty ? ExpenseModel.fromMap(maps.first) : null;
   }
 
   Future<int> insertExpense(ExpenseModel expense) async {
@@ -1306,42 +952,30 @@ class DatabaseHelper {
 
   Future<int> updateExpense(ExpenseModel expense) async {
     final db = await database;
-    return await db.update(
-      'expenses',
-      expense.toMap(),
-      where: 'id = ?',
-      whereArgs: [expense.id],
-    );
+    return await db.update('expenses', expense.toMap(), where: 'id = ?', whereArgs: [expense.id]);
   }
 
   Future<int> deleteExpense(int id) async {
     final db = await database;
-    return await db.delete(
-      'expenses',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('expenses', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<double> getTotalExpenses() async {
     final db = await database;
     final result = await db.rawQuery('SELECT SUM(amount) as total FROM expenses');
-    return result.first['total'] as double? ?? 0.0;
+    return (result.first['total'] as num?)?.toDouble() ?? 0.0;
   }
 
   // Expense account operations
   Future<List<ExpenseAccountModel>> getExpenseAccountsWithStats() async {
     final db = await database;
-    final List<Map<String, dynamic>> rows = await db.rawQuery('''
-      SELECT ea.*, 
-             COUNT(e.id) AS expenseCount,
-             IFNULL(SUM(e.amount), 0) AS totalAmount
+    final rows = await db.rawQuery('''
+      SELECT ea.*, COUNT(e.id) AS expenseCount, IFNULL(SUM(e.amount), 0) AS totalAmount
       FROM expense_accounts ea
       LEFT JOIN expenses e ON e.expenseAccountId = ea.id
       GROUP BY ea.id
       ORDER BY ea.createdDate DESC
     ''');
-
     return compute(_parseExpenseAccounts, rows);
   }
 
@@ -1352,62 +986,34 @@ class DatabaseHelper {
 
   Future<int> updateExpenseAccount(ExpenseAccountModel account) async {
     final db = await database;
-    return await db.update(
-      'expense_accounts',
-      account.toMap(),
-      where: 'id = ?',
-      whereArgs: [account.id],
-    );
+    return await db.update('expense_accounts', account.toMap(), where: 'id = ?', whereArgs: [account.id]);
   }
 
   Future<int> deleteExpenseAccount(int id) async {
     final db = await database;
     int count = 0;
     await db.transaction((txn) async {
-      // First delete all expenses associated with this account
-      await txn.delete(
-        'expenses',
-        where: 'expenseAccountId = ?',
-        whereArgs: [id],
-      );
-      // Then delete the account itself
-      count = await txn.delete(
-        'expense_accounts',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      await txn.delete('expenses', where: 'expenseAccountId = ?', whereArgs: [id]);
+      count = await txn.delete('expense_accounts', where: 'id = ?', whereArgs: [id]);
     });
     return count;
   }
 
   Future<void> cleanupOrphanedExpenses() async {
     final db = await database;
-    // Delete any expense where expenseAccountId is not null but does not exist in expense_accounts table
-    await db.rawDelete('''
-      DELETE FROM expenses 
-      WHERE expenseAccountId IS NOT NULL 
-      AND expenseAccountId NOT IN (SELECT id FROM expense_accounts)
-    ''');
+    await db.rawDelete('DELETE FROM expenses WHERE expenseAccountId IS NOT NULL AND expenseAccountId NOT IN (SELECT id FROM expense_accounts)');
   }
 
-  Future<List<ExpenseModel>> getExpensesByAccountId(int expenseAccountId) async {
+  Future<List<ExpenseModel>> getExpensesByAccountId(int id) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'expenses',
-      where: 'expenseAccountId = ?',
-      whereArgs: [expenseAccountId],
-      orderBy: 'createdDate DESC',
-    );
+    final List<Map<String, dynamic>> maps = await db.query('expenses', where: 'expenseAccountId = ?', whereArgs: [id], orderBy: 'createdDate DESC');
     return compute(_parseExpenses, maps);
   }
 
   // Income resources operations
   Future<List<IncomeResourceModel>> getIncomeResources() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'income_resources',
-      orderBy: 'createdDate DESC',
-    );
+    final List<Map<String, dynamic>> maps = await db.query('income_resources', orderBy: 'createdDate DESC');
     return compute(_parseIncomeResources, maps);
   }
 
@@ -1418,54 +1024,25 @@ class DatabaseHelper {
 
   Future<int> updateIncomeResource(IncomeResourceModel resource) async {
     final db = await database;
-    return await db.update(
-      'income_resources',
-      resource.toMap(),
-      where: 'id = ?',
-      whereArgs: [resource.id],
-    );
+    return await db.update('income_resources', resource.toMap(), where: 'id = ?', whereArgs: [resource.id]);
   }
 
   Future<int> deleteIncomeResource(int id) async {
     final db = await database;
-    return await db.delete(
-      'income_resources',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('income_resources', where: 'id = ?', whereArgs: [id]);
   }
 
   // Income balances operations
   Future<List<IncomeBalanceModel>> getIncomeBalances() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'income_balances',
-      orderBy: 'createdDate DESC',
-    );
-    return compute(_parseIncomeBalances, maps);
-  }
-
-  Future<List<IncomeBalanceModel>> getIncomeBalancesByResource(int resourceId) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'income_balances',
-      where: 'resourceId = ?',
-      whereArgs: [resourceId],
-      orderBy: 'createdDate DESC',
-    );
+    final List<Map<String, dynamic>> maps = await db.query('income_balances', orderBy: 'createdDate DESC');
     return compute(_parseIncomeBalances, maps);
   }
 
   Future<IncomeBalanceModel?> getDefaultIncomeBalance() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'income_balances',
-      where: 'isDefault = ?',
-      whereArgs: [1],
-      limit: 1,
-    );
-    if (maps.isEmpty) return null;
-    return IncomeBalanceModel.fromMap(maps.first);
+    final maps = await db.query('income_balances', where: 'isDefault = ?', whereArgs: [1], limit: 1);
+    return maps.isNotEmpty ? IncomeBalanceModel.fromMap(maps.first) : null;
   }
 
   Future<int> insertIncomeBalance(IncomeBalanceModel balance) async {
@@ -1475,267 +1052,92 @@ class DatabaseHelper {
 
   Future<int> updateIncomeBalance(IncomeBalanceModel balance) async {
     final db = await database;
-    return await db.update(
-      'income_balances',
-      balance.toMap(),
-      where: 'id = ?',
-      whereArgs: [balance.id],
-    );
+    return await db.update('income_balances', balance.toMap(), where: 'id = ?', whereArgs: [balance.id]);
   }
 
   Future<int> deleteIncomeBalance(int id) async {
     final db = await database;
-    return await db.delete(
-      'income_balances',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('income_balances', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<Map<int, double>> getIncomeBalanceCurrentAmounts() async {
     final db = await database;
-
-    final List<Map<String, Object?>> rows = await db.rawQuery('''
-      SELECT
-        b.id AS id,
-        b.initialAmount
-          + IFNULL((
-              SELECT SUM(
-                       ta.allocatedAmount * CASE
-                         WHEN t.type = 'credit' THEN 1
-                         WHEN t.type = 'debit'  THEN -1
-                         ELSE 0
-                       END
-                     )
-              FROM transaction_balance_allocations ta
-              JOIN transactions t ON t.id = ta.transactionId
-              WHERE ta.balanceId = b.id
-            ), 0)
-          - IFNULL((
-              SELECT SUM(ea.allocatedAmount)
-              FROM expense_balance_allocations ea
-              WHERE ea.balanceId = b.id
-            ), 0) AS currentAmount
+    final rows = await db.rawQuery('''
+      SELECT b.id AS id, b.initialAmount + IFNULL((SELECT SUM(ta.allocatedAmount * CASE WHEN t.type = "credit" THEN 1 WHEN t.type = "debit" THEN -1 ELSE 0 END) FROM transaction_balance_allocations ta JOIN transactions t ON t.id = ta.transactionId WHERE ta.balanceId = b.id), 0) - IFNULL((SELECT SUM(ea.allocatedAmount) FROM expense_balance_allocations ea WHERE ea.balanceId = b.id), 0) AS currentAmount
       FROM income_balances b
     ''');
-
     final Map<int, double> result = {};
     for (final row in rows) {
-      final Object? idValue = row['id'];
-      if (idValue == null) continue;
-
-      int id;
-      if (idValue is int) {
-        id = idValue;
-      } else if (idValue is num) {
-        id = idValue.toInt();
-      } else {
-        continue;
-      }
-
-      final num? current = row['currentAmount'] as num?;
-      result[id] = current?.toDouble() ?? 0.0;
+      final id = (row['id'] as num).toInt();
+      result[id] = (row['currentAmount'] as num?)?.toDouble() ?? 0.0;
     }
-
     return result;
   }
 
-  Future<List<Map<String, Object?>>> getBalanceTransactionAllocationsWithDetails(
-      int balanceId) async {
+  Future<List<Map<String, Object?>>> getBalanceTransactionAllocationsWithDetails(int id) async {
     final db = await database;
-    final List<Map<String, Object?>> rows = await db.rawQuery('''
-      SELECT
-        ta.id AS allocationId,
-        t.id AS transactionId,
-        t.amount AS transactionAmount,
-        t.type AS transactionType,
-        t.date AS transactionDate,
-        t.description AS transactionDescription,
-        a.name AS accountName,
-        ta.allocatedAmount AS allocatedAmount
-      FROM transaction_balance_allocations ta
-      JOIN transactions t ON t.id = ta.transactionId
-      JOIN accounts a ON a.id = t.accountId
-      WHERE ta.balanceId = ?
-      ORDER BY t.date DESC, ta.id DESC
-    ''', [balanceId]);
-    return rows;
+    return await db.rawQuery('SELECT ta.id AS allocationId, t.id AS transactionId, t.amount AS transactionAmount, t.type AS transactionType, t.date AS transactionDate, t.description AS transactionDescription, a.name AS accountName, ta.allocatedAmount AS allocatedAmount FROM transaction_balance_allocations ta JOIN transactions t ON t.id = ta.transactionId JOIN accounts a ON a.id = t.accountId WHERE ta.balanceId = ? ORDER BY t.date DESC, ta.id DESC', [id]);
   }
 
-  Future<List<Map<String, Object?>>> getBalanceExpenseAllocationsWithDetails(
-      int balanceId) async {
+  Future<List<Map<String, Object?>>> getBalanceExpenseAllocationsWithDetails(int id) async {
     final db = await database;
-    final List<Map<String, Object?>> rows = await db.rawQuery('''
-      SELECT
-        ea.id AS allocationId,
-        e.id AS expenseId,
-        e.name AS expenseName,
-        e.amount AS expenseAmount,
-        e.createdDate AS expenseDate,
-        e.detail AS expenseDetail,
-        ea.allocatedAmount AS allocatedAmount
-      FROM expense_balance_allocations ea
-      JOIN expenses e ON e.id = ea.expenseId
-      WHERE ea.balanceId = ?
-      ORDER BY e.createdDate DESC, ea.id DESC
-    ''', [balanceId]);
-    return rows;
+    return await db.rawQuery('SELECT ea.id AS allocationId, e.id AS expenseId, e.name AS expenseName, e.amount AS expenseAmount, e.createdDate AS expenseDate, e.detail AS expenseDetail, ea.allocatedAmount AS allocatedAmount FROM expense_balance_allocations ea JOIN expenses e ON e.id = ea.expenseId WHERE ea.balanceId = ? ORDER BY e.createdDate DESC, ea.id DESC', [id]);
   }
 
-  Future<List<TransactionBalanceAllocation>> getTransactionAllocations(
-      int transactionId) async {
+  Future<List<TransactionBalanceAllocation>> getTransactionAllocations(int id) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'transaction_balance_allocations',
-      where: 'transactionId = ?',
-      whereArgs: [transactionId],
-    );
+    final maps = await db.query('transaction_balance_allocations', where: 'transactionId = ?', whereArgs: [id]);
     return compute(_parseTransactionAllocations, maps);
   }
 
-  Future<List<ExpenseBalanceAllocation>> getExpenseAllocations(
-      int expenseId) async {
+  Future<List<ExpenseBalanceAllocation>> getExpenseAllocations(int id) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'expense_balance_allocations',
-      where: 'expenseId = ?',
-      whereArgs: [expenseId],
-    );
+    final maps = await db.query('expense_balance_allocations', where: 'expenseId = ?', whereArgs: [id]);
     return compute(_parseExpenseAllocations, maps);
   }
 
-  Future<List<Map<String, Object?>>> getResourceTransactionAllocationsWithDetails(
-      int resourceId) async {
+  Future<List<Map<String, Object?>>> getResourceTransactionAllocationsWithDetails(int id) async {
     final db = await database;
-    final List<Map<String, Object?>> rows = await db.rawQuery('''
-      SELECT
-        ta.id AS allocationId,
-        t.id AS transactionId,
-        t.amount AS transactionAmount,
-        t.type AS transactionType,
-        t.date AS transactionDate,
-        t.description AS transactionDescription,
-        a.name AS accountName,
-        b.name AS balanceName,
-        ta.allocatedAmount AS allocatedAmount
-      FROM transaction_balance_allocations ta
-      JOIN transactions t ON t.id = ta.transactionId
-      JOIN accounts a ON a.id = t.accountId
-      JOIN income_balances b ON b.id = ta.balanceId
-      WHERE b.resourceId = ?
-      ORDER BY t.date DESC, ta.id DESC
-    ''', [resourceId]);
-    return rows;
+    return await db.rawQuery('SELECT ta.id AS allocationId, t.id AS transactionId, t.amount AS transactionAmount, t.type AS transactionType, t.date AS transactionDate, t.description AS transactionDescription, a.name AS accountName, b.name AS balanceName, ta.allocatedAmount AS allocatedAmount FROM transaction_balance_allocations ta JOIN transactions t ON t.id = ta.transactionId JOIN accounts a ON a.id = t.accountId JOIN income_balances b ON b.id = ta.balanceId WHERE b.resourceId = ? ORDER BY t.date DESC, ta.id DESC', [id]);
   }
 
-  Future<List<Map<String, Object?>>> getResourceExpenseAllocationsWithDetails(
-      int resourceId) async {
+  Future<List<Map<String, Object?>>> getResourceExpenseAllocationsWithDetails(int id) async {
     final db = await database;
-    final List<Map<String, Object?>> rows = await db.rawQuery('''
-      SELECT
-        ea.id AS allocationId,
-        e.id AS expenseId,
-        e.name AS expenseName,
-        e.amount AS expenseAmount,
-        e.createdDate AS expenseDate,
-        e.detail AS expenseDetail,
-        b.name AS balanceName,
-        ea.allocatedAmount AS allocatedAmount
-      FROM expense_balance_allocations ea
-      JOIN expenses e ON e.id = ea.expenseId
-      JOIN income_balances b ON b.id = ea.balanceId
-      WHERE b.resourceId = ?
-      ORDER BY e.createdDate DESC, ea.id DESC
-    ''', [resourceId]);
-    return rows;
+    return await db.rawQuery('SELECT ea.id AS allocationId, e.id AS expenseId, e.name AS expenseName, e.amount AS expenseAmount, e.createdDate AS expenseDate, e.detail AS expenseDetail, b.name AS balanceName, ea.allocatedAmount AS allocatedAmount FROM expense_balance_allocations ea JOIN expenses e ON e.id = ea.expenseId JOIN income_balances b ON b.id = ea.balanceId WHERE b.resourceId = ? ORDER BY e.createdDate DESC, ea.id DESC', [id]);
   }
 
-  Future<void> insertTransactionAllocations(
-      List<TransactionBalanceAllocation> allocations) async {
+  Future<void> insertTransactionAllocations(List<TransactionBalanceAllocation> list) async {
     final db = await database;
     final batch = db.batch();
-    for (final allocation in allocations) {
-      batch.insert('transaction_balance_allocations', allocation.toMap());
-    }
+    for (final a in list) batch.insert('transaction_balance_allocations', a.toMap());
     await batch.commit(noResult: true);
   }
 
-  Future<void> insertExpenseAllocations(List<ExpenseBalanceAllocation> allocations) async {
+  Future<void> insertExpenseAllocations(List<ExpenseBalanceAllocation> list) async {
     final db = await database;
     final batch = db.batch();
-    for (final allocation in allocations) {
-      batch.insert('expense_balance_allocations', allocation.toMap());
-    }
+    for (final a in list) batch.insert('expense_balance_allocations', a.toMap());
     await batch.commit(noResult: true);
   }
 
-  Future<void> deleteTransactionAllocations(int transactionId) async {
+  Future<void> deleteTransactionAllocations(int id) async {
     final db = await database;
-    await db.delete(
-      'transaction_balance_allocations',
-      where: 'transactionId = ?',
-      whereArgs: [transactionId],
-    );
+    await db.delete('transaction_balance_allocations', where: 'transactionId = ?', whereArgs: [id]);
   }
 
-  Future<void> deleteExpenseAllocations(int expenseId) async {
+  Future<void> deleteExpenseAllocations(int id) async {
     final db = await database;
-    await db.delete(
-      'expense_balance_allocations',
-      where: 'expenseId = ?',
-      whereArgs: [expenseId],
-    );
-  }
-
-  Future<void> vacuum() async {
-    final db = await database;
-    await db.execute('VACUUM');
-  }
-
-  Future<void> close() async {
-    final db = await database;
-    db.close();
-    // Reset instance so subsequent calls reopen a fresh connection
-    _database = null;
+    await db.delete('expense_balance_allocations', where: 'expenseId = ?', whereArgs: [id]);
   }
 }
 
-List<CategoryModel> _parseCategories(List<Map<String, dynamic>> maps) {
-  return maps.map((map) => CategoryModel.fromMap(map)).toList();
-}
-
-List<CurrencyModel> _parseCurrencies(List<Map<String, dynamic>> maps) {
-  return maps.map((map) => CurrencyModel.fromMap(map)).toList();
-}
-
-List<AccountModel> _parseAccounts(List<Map<String, dynamic>> maps) {
-  return maps.map((map) => AccountModel.fromMap(map)).toList();
-}
-
-List<TransactionModel> _parseTransactions(List<Map<String, dynamic>> maps) {
-  return maps.map((map) => TransactionModel.fromMap(map)).toList();
-}
-
-List<ExpenseModel> _parseExpenses(List<Map<String, dynamic>> maps) {
-  return maps.map((map) => ExpenseModel.fromMap(map)).toList();
-}
-
-List<ExpenseAccountModel> _parseExpenseAccounts(List<Map<String, dynamic>> maps) {
-  return maps.map((map) => ExpenseAccountModel.fromMap(map)).toList();
-}
-
-List<IncomeResourceModel> _parseIncomeResources(List<Map<String, dynamic>> maps) {
-  return maps.map((map) => IncomeResourceModel.fromMap(map)).toList();
-}
-
-List<IncomeBalanceModel> _parseIncomeBalances(List<Map<String, dynamic>> maps) {
-  return maps.map((map) => IncomeBalanceModel.fromMap(map)).toList();
-}
-
-List<TransactionBalanceAllocation> _parseTransactionAllocations(List<Map<String, dynamic>> maps) {
-  return maps.map((map) => TransactionBalanceAllocation.fromMap(map)).toList();
-}
-
-List<ExpenseBalanceAllocation> _parseExpenseAllocations(List<Map<String, dynamic>> maps) {
-  return maps.map((map) => ExpenseBalanceAllocation.fromMap(map)).toList();
-}
+List<CategoryModel> _parseCategories(List<Map<String, dynamic>> maps) => maps.map((m) => CategoryModel.fromMap(m)).toList();
+List<CurrencyModel> _parseCurrencies(List<Map<String, dynamic>> maps) => maps.map((m) => CurrencyModel.fromMap(m)).toList();
+List<AccountModel> _parseAccounts(List<Map<String, dynamic>> maps) => maps.map((m) => AccountModel.fromMap(m)).toList();
+List<TransactionModel> _parseTransactions(List<Map<String, dynamic>> maps) => maps.map((m) => TransactionModel.fromMap(m)).toList();
+List<ExpenseModel> _parseExpenses(List<Map<String, dynamic>> maps) => maps.map((m) => ExpenseModel.fromMap(m)).toList();
+List<ExpenseAccountModel> _parseExpenseAccounts(List<Map<String, dynamic>> maps) => maps.map((m) => ExpenseAccountModel.fromMap(m)).toList();
+List<IncomeResourceModel> _parseIncomeResources(List<Map<String, dynamic>> maps) => maps.map((m) => IncomeResourceModel.fromMap(m)).toList();
+List<IncomeBalanceModel> _parseIncomeBalances(List<Map<String, dynamic>> maps) => maps.map((m) => IncomeBalanceModel.fromMap(m)).toList();
+List<TransactionBalanceAllocation> _parseTransactionAllocations(List<Map<String, dynamic>> maps) => maps.map((m) => TransactionBalanceAllocation.fromMap(m)).toList();
+List<ExpenseBalanceAllocation> _parseExpenseAllocations(List<Map<String, dynamic>> maps) => maps.map((m) => ExpenseBalanceAllocation.fromMap(m)).toList();

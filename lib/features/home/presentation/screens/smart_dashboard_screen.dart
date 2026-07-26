@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -29,18 +30,44 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
   final Set<String> _newTransactionIds = {};
   bool _dialogOpen = false;
   List<Map<String, dynamic>> _transactions = [];
-  List<CategoryModel> _expenseCategories = [];
   bool _isLoading = true;
+  StreamSubscription? _txSubscription;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _loadData();
     _checkPermissionsAndShowDialog();
+    _startListeningToTransactions();
+  }
+
+  void _startListeningToTransactions() {
+    _txSubscription?.cancel();
+    _txSubscription = FinancialTrackerService.transactionStream.listen((newTx) {
+      if (!mounted) return;
+      final String newId = newTx['referenceId']?.toString() ?? newTx['timestamp']?.toString() ?? '';
+      if (newId.isEmpty) return;
+
+      final existingIndex = _transactions.indexWhere((t) {
+        final tId = t['referenceId']?.toString() ?? t['timestamp']?.toString();
+        return tId == newId;
+      });
+
+      if (existingIndex == -1) {
+        setState(() {
+          _transactions.insert(0, newTx);
+          _newTransactionIds.add(newId);
+          _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 500));
+        });
+        HapticFeedback.heavyImpact(); 
+      }
+    });
   }
 
   @override
   void dispose() {
+    _txSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -49,7 +76,7 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       if (_dialogOpen) {
-        Navigator.of(context, rootNavigator: true).pop(); // Force close dialog on resume
+        Navigator.of(context, rootNavigator: true).pop();
         _dialogOpen = false;
       }
       _checkPermissionsAndShowDialog();
@@ -86,7 +113,6 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
                     style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
                     onPressed: () async {
                       await FinancialTrackerService.requestNotificationPermission();
-                      // Keep dialog open, wait for resume
                     },
                     child: const Text('تفعيل الصلاحية', style: TextStyle(fontFamily: 'ArbFONTSIBMPlexArabicText', color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
@@ -96,38 +122,31 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
           },
         );
         _dialogOpen = false;
-        // Check again after dialog closes (if user cancelled)
         final recheck = await FinancialTrackerService.isNotificationPermissionGranted();
         if (recheck && mounted && _transactions.isEmpty) {
           _loadData();
         }
-      } else if (isGranted && _isLoading) {
-        _loadData();
       }
     }
   }
 
   Future<void> _loadData() async {
+    setState(() { _isLoading = true; });
     final transactions = await FinancialTrackerService.getAllTransactions();
-    // Filter out transactions that are already classified
     final unclassifiedTx = transactions.where((tx) {
       final isClassified = tx['isClassified'] == true || tx['isClassified'] == 1;
       return !isClassified;
     }).toList();
 
-    final dbHelper = DatabaseHelper();
-    final categories = await dbHelper.getCategories();
-    final expenses = categories.where((c) => c.type == 'expense' || c.type == 'general').toList();
-
-    setState(() {
-      _transactions = unclassifiedTx;
-      _expenseCategories = expenses.isNotEmpty ? expenses : CategoryModel.getDefaultCategories().where((c) => c.type == 'expense').toList();
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _transactions = unclassifiedTx;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _refreshData() async {
-    setState(() { _isLoading = true; });
     await _loadData();
   }
 
@@ -138,19 +157,14 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
       drawer: const AppDrawer(),
       onDrawerChanged: widget.onDrawerChanged,
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'الراصد',
-              style: TextStyle(
-                fontSize: 16,
-                color: AppTheme.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'ArbFONTSIBMPlexArabicText',
-              ),
-            ),
-          ],
+        title: const Text(
+          'الراصد',
+          style: TextStyle(
+            fontSize: 16,
+            color: AppTheme.textPrimary,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'ArbFONTSIBMPlexArabicText',
+          ),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -170,307 +184,286 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : StreamBuilder<Map<String, dynamic>>(
-              stream: FinancialTrackerService.transactionStream,
-              builder: (context, snapshot) {
-                // If there's new data in the stream, add it to our list
-                if (snapshot.hasData && snapshot.data != null) {
-                  final newTx = snapshot.data!;
-                  final String newId = newTx['referenceId']?.toString() ?? newTx['timestamp'].toString();
-                  final existingIndex = _transactions.indexWhere((t) {
-                    final tId = t['referenceId']?.toString() ?? t['timestamp'].toString();
-                    return tId == newId;
-                  });
-                  if (existingIndex == -1) {
-                    _transactions.insert(0, newTx);
-                    _newTransactionIds.add(newId);
-                    _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 500));
-                    HapticFeedback.heavyImpact(); 
-                  }
-                }
+          : _buildTransactionList(),
+    );
+  }
 
-                if (_transactions.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildTransactionList() {
+    if (_transactions.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.radar,
+              size: 80,
+              color: AppTheme.primaryColor,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'الراصد جاهز',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'ArbFONTSIBMPlexArabicText',
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                'أي عملية مالية تصلك عبر الإشعارات ستظهر هنا تلقائياً دون تدخل منك.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return AnimatedList(
+      key: _listKey,
+      padding: const EdgeInsets.all(16),
+      initialItemCount: _transactions.length,
+      itemBuilder: (context, index, animation) {
+        final tx = _transactions[index];
+        final String txId = tx['referenceId']?.toString() ?? tx['timestamp']?.toString() ?? '';
+        final bool isNewItem = _newTransactionIds.contains(txId);
+        
+        return SizeTransition(
+          sizeFactor: animation,
+          child: FadeTransition(
+            opacity: animation,
+            child: _buildTransactionItem(tx, index, isNewItem),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTransactionItem(Map<String, dynamic> tx, int index, bool isNew) {
+    final String txId = tx['referenceId']?.toString() ?? tx['timestamp']?.toString() ?? '';
+    final String counterpart = tx['counterpart']?.toString() ?? 'غير محدد';
+    final bool isParsed = tx['amount'] != null;
+    final double amount = (tx['amount'] as num?)?.toDouble() ?? 0.0;
+    final String bankName = tx['packageName']?.toString().contains('stc') == true ? 'STC Pay' : 'محفظة جيب';
+    final String currency = tx['currency']?.toString() ?? 'ر.س';
+    final int timestamp = tx['timestamp'] as int? ?? DateTime.now().millisecondsSinceEpoch;
+    final DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final String formattedDate = DateFormat('yyyy/MM/dd • hh:mm a').format(date);
+    final isOutbound = !tx['transactionType'].toString().contains('In');
+
+    return Dismissible(
+      key: Key(txId),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        decoration: BoxDecoration(
+          color: AppTheme.errorColor,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        alignment: Alignment.centerLeft,
+        child: const Icon(Icons.delete_outline, color: Colors.white, size: 32),
+      ),
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.endToStart) {
+          setState(() {
+            _transactions.removeAt(index);
+          });
+          _listKey.currentState?.removeItem(
+            index,
+            (context, animation) => const SizedBox(),
+            duration: const Duration(milliseconds: 300),
+          );
+          if (tx['referenceId'] != null) {
+            FinancialTrackerService.markAsClassified(tx['referenceId'].toString(), 'تجاهل');
+          }
+          return true;
+        }
+        return false;
+      },
+      child: Stack(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: bankName.contains('STC') ? const Color(0xFF4F008C).withOpacity(0.03) : const Color(0xFF00B4D8).withOpacity(0.03),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                )
+              ],
+              border: Border.all(
+                color: bankName.contains('STC') 
+                    ? const Color(0xFF4F008C).withOpacity(0.08) 
+                    : const Color(0xFF00B4D8).withOpacity(0.08),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(bankName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+                    Text(formattedDate, style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      height: 60,
+                      width: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: bankName.contains('STC') 
+                          ? const Icon(Icons.account_balance_wallet, size: 32, color: AppTheme.primaryColor)
+                          : Image.asset('assets/images/jaeeb.png', fit: BoxFit.contain, errorBuilder: (_,__,___) => const Icon(Icons.account_balance_wallet, color: AppTheme.primaryColor)),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            counterpart,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.textPrimary,
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: isOutbound ? AppTheme.errorColor.withOpacity(0.1) : AppTheme.successColor.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  isOutbound ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                  size: 12,
+                                  color: isOutbound ? AppTheme.errorColor : AppTheme.successColor,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isOutbound ? 'عملية دفع صادرة' : 'استلام أموال',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
                       children: [
-                        const Icon(
-                          Icons.radar,
-                          size: 80,
-                          color: AppTheme.primaryColor,
-                        ),
-                        const SizedBox(height: 24),
-                        const Text(
-                          'الراصد جاهز',
+                        Text(
+                          currency,
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'ArbFONTSIBMPlexArabicText',
-                            color: AppTheme.textPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: isOutbound ? AppTheme.errorColor.withOpacity(0.9) : AppTheme.successColor.withOpacity(0.9),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 32),
-                          child: Text(
-                            'أي عملية مالية تصلك عبر الإشعارات ستظهر هنا تلقائياً دون تدخل منك.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontFamily: 'ArbFONTSIBMPlexArabicText',
-                              height: 1.5,
-                            ),
+                        const SizedBox(width: 6),
+                        Text(
+                          NumberFormat("#,##0.##").format(amount),
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: isOutbound ? AppTheme.errorColor : AppTheme.successColor,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isOutbound ? '-' : '+',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: isOutbound ? AppTheme.errorColor : AppTheme.successColor,
                           ),
                         ),
                       ],
                     ),
-                  );
-                }
-
-                return AnimatedList(
-                  key: _listKey,
-                  padding: const EdgeInsets.all(16),
-                  initialItemCount: _transactions.length,
-                  itemBuilder: (context, index, animation) {
-                    final tx = _transactions[index];
-                    final String counterpart = tx['counterpart']?.toString() ?? 'غير محدد';
-                    final bool isParsed = tx['amount'] != null;
-                    final double amount = (tx['amount'] as num?)?.toDouble() ?? 0.0;
-                    final String bankName = tx['packageName']?.toString().contains('stc') == true ? 'STC Pay' : 'محفظة جيب';
-                    
-                    final String currency = tx['currency']?.toString() ?? 'ر.س';
-                    final int timestamp = tx['timestamp'] as int? ?? DateTime.now().millisecondsSinceEpoch;
-                    final DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-                    final String formattedDate = DateFormat('yyyy/MM/dd • hh:mm a').format(date);
-                    
-                    final isOutbound = !tx['transactionType'].toString().contains('In');
-                    
-                    final String txId = tx['referenceId']?.toString() ?? tx['timestamp'].toString();
-                    final bool isNew = _newTransactionIds.contains(txId);
-                    
-                    return SizeTransition(
-                      sizeFactor: animation,
-                      child: FadeTransition(
-                        opacity: animation,
-                        child: Dismissible(
-                          key: Key(txId),
-                          direction: DismissDirection.endToStart, // Swipe Left to dismiss
-                          background: Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            decoration: BoxDecoration(
-                              color: AppTheme.errorColor,
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            alignment: Alignment.centerLeft,
-                            child: const Icon(Icons.delete_outline, color: Colors.white, size: 32),
-                          ),
-                          confirmDismiss: (direction) async {
-                            if (direction == DismissDirection.endToStart) {
-                                // Dismiss
-                                final removedTx = _transactions.removeAt(index);
-                                _listKey.currentState?.removeItem(
-                                  index,
-                                  (context, animation) => const SizedBox(), // Simplified removal animation
-                                  duration: const Duration(milliseconds: 300),
-                                );
-                                if (tx['referenceId'] != null) {
-                                  FinancialTrackerService.markAsClassified(tx['referenceId'].toString(), 'تجاهل');
-                                }
-                                return true;
-                            }
-                            return false;
-                          },
-                          child: Stack(
-                            children: [
-                              Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: bankName.contains('STC') ? const Color(0xFF4F008C).withValues(alpha: 0.03) : const Color(0xFF00B4D8).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.02),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
-                          )
-                        ],
-                        border: Border.all(
-                          color: bankName.contains('STC') 
-                              ? const Color(0xFF4F008C).withValues(alpha: 0.08) 
-                              : const Color(0xFF00B4D8).withValues(alpha: 0.08),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Top Row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(bankName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                              Text(formattedDate, style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary, fontWeight: FontWeight.w500)),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          
-                          // Middle Section: Prominent Icon, Counterpart, Amount
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Prominent App Logo (Jaeeb/STC)
-                              Container(
-                                height: 60,
-                                width: 60,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.08),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
-                                  border: Border.all(color: Colors.grey.withOpacity(0.1)),
-                                ),
-                                padding: const EdgeInsets.all(12),
-                                child: bankName.contains('STC') 
-                                    ? Icon(Icons.account_balance_wallet, size: 32, color: AppTheme.primaryColor)
-                                    : Image.asset('assets/images/jaeeb.png', fit: BoxFit.contain),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      counterpart,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w900,
-                                        color: AppTheme.textPrimary,
-                                        height: 1.3,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(4),
-                                          decoration: BoxDecoration(
-                                            color: isOutbound ? AppTheme.errorColor.withOpacity(0.1) : AppTheme.successColor.withOpacity(0.1),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            isOutbound ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                                            size: 12,
-                                            color: isOutbound ? AppTheme.errorColor : AppTheme.successColor,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          isOutbound ? 'عملية دفع صادرة' : 'استلام أموال',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: AppTheme.textSecondary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              // Amount column
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
-                                children: [
-                                  Text(
-                                    currency,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                      color: isOutbound ? AppTheme.errorColor.withOpacity(0.9) : AppTheme.successColor.withOpacity(0.9),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    NumberFormat("#,##0.##").format(amount),
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w900,
-                                      color: isOutbound ? AppTheme.errorColor : AppTheme.successColor,
-                                      letterSpacing: -0.5,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    isOutbound ? '-' : '+',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w900,
-                                      color: isOutbound ? AppTheme.errorColor : AppTheme.successColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          
-                          // Quick Categorization (Step 5)
-                          if (isParsed && tx['category'] == null) ...[
-                            const SizedBox(height: 24),
-                            Divider(height: 1, color: Colors.grey.withValues(alpha: 0.15)),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'كيف نصنف هذه العملية؟',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
-                            ),
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: _buildDynamicCategoryChips(tx, isOutbound: isOutbound),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    if (isNew)
-                      Positioned(
-                        top: 12,
-                        right: 12,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.errorColor,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
                   ],
+                ),
+                if (isParsed && tx['category'] == null) ...[
+                  const SizedBox(height: 24),
+                  Divider(height: 1, color: Colors.grey.withOpacity(0.15)),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'كيف نصنف هذه العملية؟',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _buildDynamicCategoryChips(tx, isOutbound: isOutbound),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (isNew)
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: const BoxDecoration(
+                  color: AppTheme.errorColor,
+                  shape: BoxShape.circle,
                 ),
               ),
             ),
-          );
-                  },
-                );
-              },
-            ),
+        ],
+      ),
     );
   }
 
   List<Widget> _buildDynamicCategoryChips(Map<String, dynamic> tx, {required bool isOutbound}) {
     if (!isOutbound) {
-      // For inbound (إيراد)
       return [
         _buildQuickCategoryChip(CategoryModel(name: 'تسديد دين لي', type: 'general', iconCodePoint: Icons.account_balance_wallet.codePoint), tx, isDebt: true, isBestSuggestion: true),
       ];
@@ -485,7 +478,6 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
                            counterpart.contains('كهرباء') || 
                            counterpart.contains('مياه');
 
-    // For outbound (مصروف أو سداد دين)
     return [
       if (!isUtility)
         _buildQuickCategoryChip(CategoryModel(name: 'سداد دين علي', type: 'general', iconCodePoint: Icons.money_off.codePoint), tx, isDebt: true, isBestSuggestion: false),
@@ -497,7 +489,7 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
     final bool isPrimary = isBestSuggestion;
     final bgColor = isPrimary ? AppTheme.primaryColor : Colors.white;
     final textColor = isPrimary ? Colors.white : AppTheme.primaryColor;
-    final borderColor = isPrimary ? Colors.transparent : AppTheme.primaryColor.withValues(alpha: 0.2);
+    final borderColor = isPrimary ? Colors.transparent : AppTheme.primaryColor.withOpacity(0.2);
 
     return GestureDetector(
       onTap: () async {
@@ -524,12 +516,12 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
           if (result == true) {
             await FinancialTrackerService.markAsClassified(refId, isOutbound ? 'سداد دين' : 'استلام دين');
             setState(() {
-              _transactions.removeWhere((t) => t['referenceId'] == refId);
+              _transactions.removeWhere((t) => (t['referenceId']?.toString() ?? t['timestamp']?.toString()) == refId);
             });
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('تم تسديد الدين بنجاح!'),
+                  content: const Text('تم تسديد الدين بنجاح!'),
                   backgroundColor: AppTheme.successColor,
                   duration: const Duration(seconds: 2),
                 ),
@@ -592,12 +584,12 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
             
             await FinancialTrackerService.markAsClassified(refId, expenseResult.category);
             setState(() {
-              _transactions.removeWhere((t) => t['referenceId'] == refId);
+              _transactions.removeWhere((t) => (t['referenceId']?.toString() ?? t['timestamp']?.toString()) == refId);
             });
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('تم تسجيل المصروف وتحديث الأرصدة بنجاح!'),
+                  content: const Text('تم تسجيل المصروف وتحديث الأرصدة بنجاح!'),
                   backgroundColor: AppTheme.successColor,
                   duration: const Duration(seconds: 2),
                 ),
@@ -616,7 +608,7 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
           border: Border.all(color: borderColor),
           boxShadow: isPrimary ? [
             BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.25),
+              color: AppTheme.primaryColor.withOpacity(0.25),
               blurRadius: 8,
               offset: const Offset(0, 4),
             )
@@ -642,5 +634,4 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
       ),
     );
   }
-
 }

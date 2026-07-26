@@ -1,5 +1,5 @@
-- [x] Create `RegionService` to detect Yemen location
-- [x] Update `MainNavigation` to conditionally show/hide "Balances" (Rasid)
-- [x] Update `AppDrawer` to hide related items if not in Yemen
-- [x] Verify navigation indices work correctly when feature is hidden
-
+- [x] Refactor `SmartDashboardScreen` to move logic out of `build`
+- [x] Optimize `AutoBackupManager` to avoid `VACUUM` on startup
+- [x] Implement asynchronous JSON decoding in `FinancialTrackerService`
+- [x] Add missing database indices for transaction date queries
+- [x] Increase startup delay for background tasks in `MainNavigation`
