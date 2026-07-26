@@ -24,6 +24,8 @@ import 'package:debit_credit_app/features/balances/application/reports/all_incom
 
 import 'package:debit_credit_app/features/balances/application/reports/all_income_resources_report_generator.dart';
 
+import 'package:debit_credit_app/core/models/currency.dart';
+
 
 
 enum IncomeSection {
@@ -4014,6 +4016,98 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
     );
   }
 
+  Widget _buildGlobalSummary(Map<String, double> totalsByCurrency) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withOpacity(0.04),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.dividerColor.withOpacity(0.4),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.summarize_outlined,
+                size: 18,
+                color: AppTheme.primaryColor.withOpacity(0.8),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'إجمالي الأرصدة حسب العملة',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: totalsByCurrency.entries.map((entry) {
+                final symbol = CurrencyModel.symbolFor(entry.key);
+                return Container(
+                  margin: const EdgeInsets.only(left: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: AppTheme.dividerColor.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry.key,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textSecondary.withOpacity(0.8),
+                          fontFamily: 'ArbFONTSIBMPlexArabicText',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${_amountFormat.format(entry.value)} $symbol',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                          fontFamily: 'ArbFONTSIBMPlexArabicText',
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
     Widget _buildBalancesList() {
 
     if (_balances.isEmpty) {
@@ -4118,246 +4212,144 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
 
 
-    return ListView.builder(
+    // Calculate global totals
+    final Map<String, double> totalsByCurrency = {};
+    for (final balance in _balances) {
+      if (balance.id == null) continue;
+      final currentAmount =
+          _currentBalanceAmounts[balance.id!] ?? balance.initialAmount;
+      totalsByCurrency[balance.currencyName] =
+          (totalsByCurrency[balance.currencyName] ?? 0.0) + currentAmount;
+    }
 
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 88),
+    return Column(
+      children: [
+        if (totalsByCurrency.isNotEmpty)
+          _buildGlobalSummary(totalsByCurrency),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 88),
+            itemCount: _balances.length,
+            itemBuilder: (context, index) {
+              final balance = _balances[index];
+              final resource = resourceById[balance.resourceId];
 
-      itemCount: _balances.length,
+              final double currentAmount = balance.id != null
+                  ? (_currentBalanceAmounts[balance.id!] ?? balance.initialAmount)
+                  : balance.initialAmount;
 
-      itemBuilder: (context, index) {
-
-        final balance = _balances[index];
-
-        final resource = resourceById[balance.resourceId];
-
-
-
-        final double currentAmount = balance.id != null
-
-            ? (_currentBalanceAmounts[balance.id!] ?? balance.initialAmount)
-
-            : balance.initialAmount;
-
-
-
-        return Container(
-
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-
-          decoration: BoxDecoration(
-
-            color: Colors.white,
-
-            borderRadius: BorderRadius.circular(18),
-
-            boxShadow: AppTheme.cardShadow,
-
-            border: Border.all(
-
-              color: AppTheme.dividerColor.withOpacity(0.6),
-
-              width: 1,
-
-            ),
-
-          ),
-
-          child: ClipRRect(
-
-            borderRadius: BorderRadius.circular(18),
-
-            child: Container(
-
-              decoration: const BoxDecoration(
-
-                border: Border(
-
-                  right: BorderSide(
-
-                    color: AppTheme.primaryColor,
-
-                    width: 5,
-
+              return Container(
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: AppTheme.cardShadow,
+                  border: Border.all(
+                    color: AppTheme.dividerColor.withOpacity(0.6),
+                    width: 1,
                   ),
-
                 ),
-
-              ),
-
-              child: Padding(
-
-                padding: const EdgeInsets.all(16),
-
-                child: Column(
-
-                  crossAxisAlignment: CrossAxisAlignment.start,
-
-                  children: [
-
-                    Text(
-
-                      resource?.name ?? 'مصدر غير معروف',
-
-                      style: const TextStyle(
-
-                        fontSize: 14,
-
-                        color: AppTheme.primaryColor,
-
-                        fontWeight: FontWeight.bold,
-
-                        fontFamily: 'ArbFONTSIBMPlexArabicText',
-
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        right: BorderSide(
+                          color: AppTheme.primaryColor,
+                          width: 5,
+                        ),
                       ),
-
                     ),
-
-                    const SizedBox(height: 8),
-
-                    Row(
-
-                      crossAxisAlignment: CrossAxisAlignment.center,
-
-                      children: [
-
-                        Expanded(
-
-                          child: Column(
-
-                            crossAxisAlignment: CrossAxisAlignment.start,
-
-                            children: [
-
-                              Text(
-
-                                balance.name,
-
-                                style: const TextStyle(
-
-                                  fontSize: 15,
-
-                                  color: AppTheme.textPrimary,
-
-                                  fontWeight: FontWeight.w600,
-
-                                  fontFamily: 'ArbFONTSIBMPlexArabicText',
-
-                                ),
-
-                              ),
-
-                              const SizedBox(height: 4),
-
-                              Text(
-
-                                balance.currencyName,
-
-                                style: const TextStyle(
-
-                                  fontSize: 12,
-
-                                  color: AppTheme.textSecondary,
-
-                                  fontFamily: 'ArbFONTSIBMPlexArabicText',
-
-                                ),
-
-                              ),
-
-                            ],
-
-                          ),
-
-                        ),
-
-                        const SizedBox(width: 8),
-
-                        Column(
-
-                          crossAxisAlignment: CrossAxisAlignment.end,
-
-                          children: [
-
-                            Text(
-
-                              _amountFormat.format(currentAmount),
-
-                              style: const TextStyle(
-
-                                fontSize: 16,
-
-                                color: AppTheme.textPrimary,
-
-                                fontWeight: FontWeight.w700,
-
-                                fontFamily: 'ArbFONTSIBMPlexArabicText',
-
-                              ),
-
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            resource?.name ?? 'مصدر غير معروف',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'ArbFONTSIBMPlexArabicText',
                             ),
-
-                            if (balance.isDefault) ...[
-
-                              const SizedBox(height: 4),
-
-                              Container(
-
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-
-                                decoration: BoxDecoration(
-
-                                  color: AppTheme.primaryColor.withOpacity(0.1),
-
-                                  borderRadius: BorderRadius.circular(6),
-
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      balance.name,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        color: AppTheme.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      balance.currencyName,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textSecondary,
+                                        fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                      ),
+                                    ),
+                                  ],
                                 ),
-
-                                child: const Text(
-
-                                  'افتراضي',
-
-                                  style: TextStyle(
-
-                                    fontSize: 10,
-
-                                    color: AppTheme.primaryColor,
-
-                                    fontWeight: FontWeight.w600,
-
-                                    fontFamily: 'ArbFONTSIBMPlexArabicText',
-
-                                  ),
-
-                                ),
-
                               ),
-
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    _amountFormat.format(currentAmount),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: AppTheme.textPrimary,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                    ),
+                                  ),
+                                  if (balance.isDefault) ...[
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primaryColor.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Text(
+                                        'افتراضي',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: AppTheme.primaryColor,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'ArbFONTSIBMPlexArabicText',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ],
-
-                          ],
-
-                        ),
-
-                      ],
-
+                          ),
+                        ],
+                      ),
                     ),
-
-                  ],
-
+                  ),
                 ),
-
-              ),
-
-            ),
-
+              );
+            },
           ),
-
-        );
-
-      },
-
+        ),
+      ],
     );
-
   }
 
 

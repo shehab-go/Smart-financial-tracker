@@ -17,6 +17,7 @@ import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/models/user_profile.dart';
 import 'package:debit_credit_app/core/services/google_drive_backup_service.dart';
 import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
+import 'package:debit_credit_app/core/services/region_service.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -30,6 +31,7 @@ class _AppDrawerState extends State<AppDrawer> {
   String? _googlePhotoUrl;
   String? _googleEmail;
   bool _isLoading = true;
+  final RegionService _regionService = RegionService();
 
   @override
   void initState() {
@@ -360,20 +362,22 @@ class _AppDrawerState extends State<AppDrawer> {
                 // Drawer Items list
                 SliverList(
                   delegate: SliverChildListDelegate([
-                    _buildSectionDivider('المحفظة الذكية (الآلية)'),
-                    _buildDrawerItem(
-                      context,
-                      icon: Icons.account_balance_wallet_rounded,
-                      title: 'لوحة القيادة اللحظية',
-                      subtitle: 'مراقبة الرصيد وحركة الإشعارات',
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const SmartDashboardScreen()),
-                        );
-                      },
-                    ),
+                    if (_regionService.isRadarEnabled) ...[
+                      _buildSectionDivider('المحفظة الذكية (الآلية)'),
+                      _buildDrawerItem(
+                        context,
+                        icon: Icons.account_balance_wallet_rounded,
+                        title: 'لوحة القيادة اللحظية',
+                        subtitle: 'مراقبة الرصيد وحركة الإشعارات',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const SmartDashboardScreen()),
+                          );
+                        },
+                      ),
+                    ],
                     _buildSectionDivider('إدارة البيانات'),
                     _buildDrawerItem(
                       context,

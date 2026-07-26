@@ -1,26 +1,28 @@
-# Android 16 (API 36) Target Upgrade Walkthrough
+# Region-Based Restriction (Radar Only) & Bug Fixes Walkthrough
 
-The app build configuration was reviewed and updated to ensure compliance with Google Play's requirement to target Android 16 (API 36).
+The region-based restriction has been successfully implemented and refined to target ONLY the **"الراصد" (Radar)** feature. Additionally, several compilation errors introduced during the implementation were fixed.
 
 ## Changes Made
 
-### Android Build Configuration
-- Verified that `compileSdk` and `targetSdk` are already set to **36** in `android/app/build.gradle`.
-- Attempted to update Android-specific dependencies (`androidx.core`, `activity-ktx`, etc.) to their latest versions.
-- Attempted to increment the app version in `local.properties`.
+### Core Logic
+- **[MODIFY] [region_service.dart](file:///E:/hemmah/debit_credit_app/lib/core/services/region_service.dart)**: Renamed `isRasidEnabled` to `isRadarEnabled` to accurately reflect its scope.
 
-> [!WARNING]
-> **Build Environment Issues Detected**
-> During verification, a Gradle environment conflict was encountered:
-> `Several environment variables and/or system properties contain different paths to the Android Preferences folder.`
-> This appears to be a local configuration issue on the build machine (conflicting `ANDROID_PREFS_ROOT` and `ANDROID_USER_HOME`).
->
-> Because of this, I have **reverted** the dependency and version changes to keep the project in a known working state, as I cannot guarantee build stability in this environment.
+### UI Navigation & Location Restriction
+- **[MODIFY] [main_navigation.dart](file:///E:/hemmah/debit_credit_app/lib/core/widgets/main_navigation.dart)**:
+    - The "الراصد" tab is now the ONLY conditionally hidden tab.
+    - The "الأرصدة" (Balances) tab is available for all users.
+    - Navigation indexing logic was updated to handle the dynamic shifting of tabs when Radar is hidden.
+- **[MODIFY] [app_drawer.dart](file:///E:/hemmah/debit_credit_app/lib/core/widgets/app_drawer.dart)**: The "لوحة القيادة اللحظية" (Radar Dashboard) item is now hidden for users outside of Yemen.
+
+### Bug Fixes (Compilation Errors)
+- **[FIX] [add_transaction_dialog.dart](file:///E:/hemmah/debit_credit_app/lib/features/accounts/presentation/dialogs/add_transaction_dialog.dart)**: Fixed "Directives must appear before any declarations" error by moving the `RegionService` import to the top of the file.
+- **[FIX] [add_expense_dialog.dart](file:///E:/hemmah/debit_credit_app/lib/features/expenses/presentation/dialogs/add_expense_dialog.dart)**: Fixed misplaced import error.
+- **[FIX] [income_balances_screen.dart](file:///E:/hemmah/debit_credit_app/lib/features/balances/presentation/screens/income_balances_screen.dart)**: Fixed "CurrencyModel isn't defined" error by adding the missing import.
 
 ## Verification Results
-- `targetSdk` is confirmed to be **36** (Android 16).
-- Build environment issues prevented local APK verification of updated dependencies.
+- **Radar Restriction**: Confirmed that "الراصد" is hidden for non-Yemen users.
+- **Balances Restored**: Confirmed that "الأرصدة" is visible to all users.
+- **Compilation**: All reported syntax and import errors are resolved.
 
-## Next Steps
-1. **Fix Build Environment:** Ensure your environment variables `ANDROID_USER_HOME` and `ANDROID_PREFS_ROOT` point to the same location (or unset `ANDROID_PREFS_ROOT`).
-2. **Re-apply Updates:** Once the environment is fixed, you can safely update the dependencies in `android/app/build.gradle`.
+> [!TIP]
+> The app now correctly handles both local (Yemen) and international contexts while keeping the liquid asset management (Balances) accessible to everyone.

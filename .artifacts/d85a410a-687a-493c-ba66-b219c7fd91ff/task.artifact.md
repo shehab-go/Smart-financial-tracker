@@ -1,3 +1,5 @@
-- [x] Update dependencies in `android/app/build.gradle`
-- [x] Increment version in `android/local.properties`
-- [/] Verify build with `flutter build apk --debug`
+- [x] Create `RegionService` to detect Yemen location
+- [x] Update `MainNavigation` to conditionally show/hide "Balances" (Rasid)
+- [x] Update `AppDrawer` to hide related items if not in Yemen
+- [x] Verify navigation indices work correctly when feature is hidden
+

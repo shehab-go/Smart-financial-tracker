@@ -6,6 +6,7 @@ import 'package:debit_credit_app/features/home/presentation/screens/smart_dashbo
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:debit_credit_app/core/services/region_service.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -18,11 +19,17 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
   int _currentIndex = 0;
   bool _isDrawerOpen = false;
   int _balancesTabVersion = 0;
+  final RegionService _regionService = RegionService();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Ensure index is valid if Radar is disabled
+    if (!_regionService.isRadarEnabled && _currentIndex == 0) {
+      // Default to "Debts" (which becomes index 0)
+      _currentIndex = 0;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Delay auto backup to avoid ANR on startup
       Future.delayed(const Duration(seconds: 2), () {
@@ -52,23 +59,35 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
     });
   }
 
-  List<Widget> get _screens => [
-    SmartDashboardScreen(onDrawerChanged: _onDrawerChanged),
-    HomeScreen(onDrawerChanged: _onDrawerChanged),
-    ExpenseScreen(onDrawerChanged: _onDrawerChanged),
-    IncomeBalancesScreen(
-      key: ValueKey<int>(_balancesTabVersion),
-      onDrawerChanged: _onDrawerChanged,
-    ),
-  ];
+  List<Widget> get _screens {
+    final List<Widget> screens = [];
+    
+    if (_regionService.isRadarEnabled) {
+      screens.add(SmartDashboardScreen(onDrawerChanged: _onDrawerChanged));
+    }
+
+    screens.add(HomeScreen(onDrawerChanged: _onDrawerChanged));
+    screens.add(ExpenseScreen(onDrawerChanged: _onDrawerChanged));
+
+    screens.add(
+      IncomeBalancesScreen(
+        key: ValueKey<int>(_balancesTabVersion),
+        onDrawerChanged: _onDrawerChanged,
+      ),
+    );
+
+    return screens;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final bool radarEnabled = _regionService.isRadarEnabled;
+    
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         body: IndexedStack(
-          index: _currentIndex,
+          index: _currentIndex >= _screens.length ? 0 : _currentIndex,
           children: _screens,
         ),
         bottomNavigationBar: _isDrawerOpen
@@ -92,23 +111,24 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
                     padding: const EdgeInsets.all(4),
                     child: Row(
                       children: [
+                        if (radarEnabled)
+                          _buildNavItem(
+                            index: 0,
+                            label: 'الراصد',
+                            icon: Icons.radar,
+                          ),
                         _buildNavItem(
-                          index: 0,
-                          label: 'الراصد',
-                          icon: Icons.radar,
-                        ),
-                        _buildNavItem(
-                          index: 1,
+                          index: radarEnabled ? 1 : 0,
                           label: 'الديون',
                           assetPath: 'assets/images/money-borrow.svg',
                         ),
                         _buildNavItem(
-                          index: 2,
+                          index: radarEnabled ? 2 : 1,
                           label: 'المصروفات',
                           assetPath: 'assets/images/trend-down-expense.svg',
                         ),
                         _buildNavItem(
-                          index: 3,
+                          index: radarEnabled ? 3 : 2,
                           label: 'الأرصدة',
                           assetPath: 'assets/images/trend-up-income.svg',
                         ),
@@ -135,7 +155,9 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
         onTap: () {
           setState(() {
             _currentIndex = index;
-            if (index == 3) {
+            // The index of Balances tab depends on whether Radar is enabled
+            final int balancesIndex = _regionService.isRadarEnabled ? 3 : 2;
+            if (index == balancesIndex) {
               // Force IncomeBalancesScreen to rebuild and reload balances
               _balancesTabVersion++;
             }

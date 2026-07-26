@@ -1,33 +1,34 @@
-# Upgrade Target API to Android 16 (API 36)
+# Restrict "Rasid" (Balances) Feature by Region
 
-The goal is to ensure the app complies with Google Play's requirement to target Android 16 (API level 36) or higher by August 31, 2026.
+The goal is to hide the "Rasid" (Balances/Income Balances) feature for users located outside of Yemen.
 
-## Current Status
-- `compileSdk` is already set to **36** in `android/app/build.gradle`.
-- `targetSdk` is already set to **36** in `android/app/build.gradle`.
-- Android core dependencies are outdated (e.g., `androidx.core:core-ktx:1.12.0`).
+## User Review Required
+
+> [!IMPORTANT]
+> I will use the device's system locale (Country Code) to detect if the user is in Yemen. If the device country code is not 'YE', the feature will be hidden.
+>
+> **Clarification needed**: Do you mean the "الراصد" (Smart Dashboard/Radar) feature or the "الأرصدة" (Income Balances) feature? I will assume you mean the "الأرصدة" (Balances) feature as we were just working on it, but I can apply this to both if needed.
 
 ## Proposed Changes
 
-### [Component Name] Android Build Configuration
+### [Component] Core Services
 
-#### [MODIFY] [app/build.gradle](file:///E:/hemmah/debit_credit_app/android/app/build.gradle)
-- Update dependencies to more recent versions compatible with Android 16.
-- (Optional) Increment `versionCode` and `versionName` if requested, though these are typically managed via `local.properties` or Flutter commands.
+#### [NEW] [region_service.dart](file:///E:/hemmah/debit_credit_app/lib/core/services/region_service.dart)
+- Implement `RegionService` with a getter `isInYemen` using `PlatformDispatcher.instance.locale.countryCode`.
 
-#### [MODIFY] [local.properties](file:///E:/hemmah/debit_credit_app/android/local.properties)
-- Increment `flutter.versionCode` and `flutter.versionName` to prepare for a new release.
+### [Component] UI Navigation
 
-### [Component Name] Android Manifest
+#### [MODIFY] [main_navigation.dart](file:///E:/hemmah/debit_credit_app/lib/core/widgets/main_navigation.dart)
+- Conditionally include the "Balances" (الأرصدة) tab in the `_screens` list.
+- Conditionally show the "Balances" item in the bottom navigation bar.
+- Adjust index handling to ensure navigation remains consistent even when the item is hidden.
 
-#### [MODIFY] [AndroidManifest.xml](file:///E:/hemmah/debit_credit_app/android/app/src/main/AndroidManifest.xml)
-- Ensure `android:enableOnBackInvokedCallback="true"` is set (or explicitly handled) if there are any native custom back behaviors, although Flutter usually handles this.
+#### [MODIFY] [app_drawer.dart](file:///E:/hemmah/debit_credit_app/lib/core/widgets/app_drawer.dart)
+- (If applicable) Hide any drawer items related to the restricted feature.
 
 ## Verification Plan
 
-### Automated Tests
-- Run `flutter build apk` to ensure the project still compiles correctly with the new SDK and dependency versions.
-
 ### Manual Verification
-- Verify that the app still runs on an Android 16 emulator (if available) or at least on a recent Android version.
-- Check that basic functionality (database, UI, notifications) remains intact.
+1.  **Mock Region**: Temporarily hardcode `isInYemen` to `false` and verify the feature is hidden.
+2.  **Verify Indices**: Ensure that clicking other tabs still works correctly when one tab is removed.
+3.  **Check Persistence**: Ensure that if a user has data in that feature, it's not deleted, just hidden from the UI.

@@ -18,11 +18,15 @@ class IncomeBalanceModel {
   });
 
   Map<String, dynamic> toMap() {
+    String normalizedCurrency = currencyName;
+    if (normalizedCurrency.trim() == 'ريلح يمني') {
+      normalizedCurrency = 'ريال يمني';
+    }
     return {
       'id': id,
       'resourceId': resourceId,
       'name': name,
-      'currencyName': currencyName,
+      'currencyName': normalizedCurrency,
       'initialAmount': initialAmount,
       'isDefault': isDefault ? 1 : 0,
       'createdDate': createdDate.millisecondsSinceEpoch,
@@ -30,11 +34,15 @@ class IncomeBalanceModel {
   }
 
   factory IncomeBalanceModel.fromMap(Map<String, dynamic> map) {
+    String normalizedCurrency = (map['currencyName'] ?? 'محلي').toString();
+    if (normalizedCurrency.trim() == 'ريلح يمني') {
+      normalizedCurrency = 'ريال يمني';
+    }
     return IncomeBalanceModel(
       id: map['id'],
       resourceId: map['resourceId'],
       name: map['name'] ?? '',
-      currencyName: map['currencyName'] ?? 'محلي',
+      currencyName: normalizedCurrency,
       initialAmount: (map['initialAmount'] as num?)?.toDouble() ?? 0.0,
       isDefault: (map['isDefault'] ?? 0) == 1,
       createdDate: DateTime.fromMillisecondsSinceEpoch(map['createdDate'] as int),
