@@ -17,6 +17,7 @@ import 'package:debit_credit_app/features/expenses/domain/expense_repository.dar
 import 'package:debit_credit_app/core/events/financial_events.dart';
 import 'package:debit_credit_app/features/expenses/application/expense_controller.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/smart_radar_screen.dart';
+import 'package:debit_credit_app/features/installments/presentation/screens/installments_screen.dart';
 import 'package:debit_credit_app/services/financial_tracker_service.dart';
 
 class MainDashboardScreen extends StatefulWidget {
@@ -225,7 +226,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   Widget _buildExecutiveOverviewCard(NumberFormat formatter) {
-    final double netBalance = _totalDebit - _totalCredit;
+    final double netBalance = _totalCredit - _totalDebit;
     final bool isPositiveNet = netBalance >= 0;
 
     return Container(
@@ -293,7 +294,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               Expanded(
                 child: _buildSummarySubItem(
                   title: 'إجمالي ما لك (ديون)',
-                  amount: '${formatter.format(_totalDebit)} ر.ي',
+                  amount: '${formatter.format(_totalCredit)} ر.ي',
                   icon: Icons.arrow_downward_rounded,
                   iconColor: const Color(0xFF81C784),
                 ),
@@ -302,7 +303,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               Expanded(
                 child: _buildSummarySubItem(
                   title: 'إجمالي ما عليك',
-                  amount: '${formatter.format(_totalCredit)} ر.ي',
+                  amount: '${formatter.format(_totalDebit)} ر.ي',
                   icon: Icons.arrow_upward_rounded,
                   iconColor: const Color(0xFFE57373),
                 ),
@@ -430,9 +431,21 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
                   },
                 ),
               ),
-              if (widget.onOpenRadar != null) ...[
-                // Radar button removed from quick actions as per user request
-              ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildActionButton(
+                  title: 'الأقساط',
+                  icon: Icons.calendar_month_rounded,
+                  color: AppTheme.secondaryColor,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const InstallmentsScreen()),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ],

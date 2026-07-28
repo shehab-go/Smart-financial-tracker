@@ -14,6 +14,7 @@ import 'package:debit_credit_app/features/home/presentation/screens/home_screen.
 import 'package:debit_credit_app/features/home/presentation/screens/smart_dashboard_screen.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/smart_radar_screen.dart';
 import 'package:debit_credit_app/features/balances/presentation/screens/income_balances_screen.dart';
+import 'package:debit_credit_app/features/installments/presentation/screens/installments_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/models/user_profile.dart';
@@ -380,6 +381,20 @@ class _AppDrawerState extends State<AppDrawer> {
                         },
                       ),
                     ],
+                    _buildSectionDivider('الالتزامات والتنبيهات 📅'),
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.calendar_month_rounded,
+                      title: 'الأقساط والالتزامات المجدولة',
+                      subtitle: 'إدارة وتنبيهات الأقساط الشهرية والفواتير',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const InstallmentsScreen()),
+                        );
+                      },
+                    ),
                     _buildSectionDivider('إدارة البيانات'),
                     _buildDrawerItem(
                       context,

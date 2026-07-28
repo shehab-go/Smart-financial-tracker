@@ -162,6 +162,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
   bool get _isNewAccount => widget.accountId == null;
   bool get _isEditing => widget.transaction != null;
+  bool get _isSubsequentTransaction => widget.accountId != null || _selectedAccount != null || widget.transaction != null;
 
   @override
   void dispose() {
@@ -1797,7 +1798,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      _isNewAccount ? 'ديون لك' : 'لك',
+                                      _isSubsequentTransaction ? 'دفع لك' : 'لك',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -1883,7 +1884,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      _isNewAccount ? 'ديون عليك' : 'عليك',
+                                      _isSubsequentTransaction ? 'أخذ منك' : 'عليك',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,

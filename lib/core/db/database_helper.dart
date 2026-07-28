@@ -14,6 +14,7 @@ import '../models/income_resource.dart';
 import '../models/income_balance.dart';
 import '../models/transaction_balance_allocation.dart';
 import '../models/expense_balance_allocation.dart';
+import '../models/installment_plan.dart';
 import 'migration_helper.dart';
 import 'package:debit_credit_app/core/events/financial_events.dart';
 import 'package:debit_credit_app/features/home/application/home_controller.dart';
@@ -45,6 +46,45 @@ class DatabaseHelper {
       CREATE TABLE IF NOT EXISTS app_meta (
         key TEXT PRIMARY KEY,
         value TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS installment_plans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        planType TEXT NOT NULL,
+        accountId INTEGER,
+        accountName TEXT,
+        expenseCategory TEXT,
+        totalAmount REAL,
+        installmentAmount REAL NOT NULL,
+        currencyName TEXT NOT NULL,
+        totalCount INTEGER,
+        paidCount INTEGER DEFAULT 0,
+        frequency TEXT NOT NULL,
+        firstDueDate INTEGER NOT NULL,
+        nextDueDate INTEGER NOT NULL,
+        remindDaysBefore INTEGER DEFAULT 3,
+        status TEXT NOT NULL DEFAULT 'active',
+        notes TEXT,
+        createdDate INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS installment_payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        planId INTEGER NOT NULL,
+        installmentNumber INTEGER NOT NULL,
+        dueDate INTEGER NOT NULL,
+        paidDate INTEGER,
+        amount REAL NOT NULL,
+        currencyName TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        transactionId INTEGER,
+        expenseId INTEGER,
+        notes TEXT
       )
     ''');
 
@@ -1145,6 +1185,67 @@ class DatabaseHelper {
   Future<void> deleteExpenseAllocations(int id) async {
     final db = await database;
     await db.delete('expense_balance_allocations', where: 'expenseId = ?', whereArgs: [id]);
+  }
+
+  // Installment Plans & Payments CRUD Operations
+  Future<int> insertInstallmentPlan(InstallmentPlanModel plan) async {
+    final db = await database;
+    return await db.insert('installment_plans', plan.toMap());
+  }
+
+  Future<int> updateInstallmentPlan(InstallmentPlanModel plan) async {
+    final db = await database;
+    return await db.update(
+      'installment_plans',
+      plan.toMap(),
+      where: 'id = ?',
+      whereArgs: [plan.id],
+    );
+  }
+
+  Future<int> deleteInstallmentPlan(int id) async {
+    final db = await database;
+    await db.delete('installment_payments', where: 'planId = ?', whereArgs: [id]);
+    return await db.delete('installment_plans', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<InstallmentPlanModel>> getInstallmentPlans() async {
+    final db = await database;
+    final maps = await db.query('installment_plans', orderBy: 'nextDueDate ASC');
+    return maps.map((m) => InstallmentPlanModel.fromMap(m)).toList();
+  }
+
+  Future<InstallmentPlanModel?> getInstallmentPlanById(int id) async {
+    final db = await database;
+    final maps = await db.query('installment_plans', where: 'id = ?', whereArgs: [id], limit: 1);
+    if (maps.isEmpty) return null;
+    return InstallmentPlanModel.fromMap(maps.first);
+  }
+
+  Future<int> insertInstallmentPayment(InstallmentPaymentModel payment) async {
+    final db = await database;
+    return await db.insert('installment_payments', payment.toMap());
+  }
+
+  Future<int> updateInstallmentPayment(InstallmentPaymentModel payment) async {
+    final db = await database;
+    return await db.update(
+      'installment_payments',
+      payment.toMap(),
+      where: 'id = ?',
+      whereArgs: [payment.id],
+    );
+  }
+
+  Future<List<InstallmentPaymentModel>> getInstallmentPaymentsByPlanId(int planId) async {
+    final db = await database;
+    final maps = await db.query(
+      'installment_payments',
+      where: 'planId = ?',
+      whereArgs: [planId],
+      orderBy: 'installmentNumber ASC',
+    );
+    return maps.map((m) => InstallmentPaymentModel.fromMap(m)).toList();
   }
 }
 
