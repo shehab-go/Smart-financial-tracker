@@ -25,6 +25,8 @@ import 'package:debit_credit_app/features/balances/application/reports/all_incom
 import 'package:debit_credit_app/features/balances/application/reports/all_income_resources_report_generator.dart';
 
 import 'package:debit_credit_app/core/models/currency.dart';
+import 'package:debit_credit_app/core/events/financial_events.dart';
+import 'dart:async';
 
 
 
@@ -77,6 +79,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
   IncomeSection _selectedSection = IncomeSection.resources;
 
   late final PageController _pageController;
+  StreamSubscription<FinancialEvent>? _financialEventSubscription;
 
 
 
@@ -94,6 +97,15 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
 
     _loadBalances();
 
+    _financialEventSubscription = FinancialEventBus().events.listen((event) {
+      if (event.type == FinancialEventType.balanceUpdated ||
+          event.type == FinancialEventType.radarClassified ||
+          event.type == FinancialEventType.expenseAdded ||
+          event.type == FinancialEventType.expenseDeleted) {
+        _loadBalances();
+      }
+    });
+
   }
 
 
@@ -103,6 +115,7 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
   void dispose() {
 
     _pageController.dispose();
+    _financialEventSubscription?.cancel();
 
     super.dispose();
 
@@ -5255,60 +5268,49 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
   @override
 
   Widget build(BuildContext context) {
-
-    return Directionality(
-
-      textDirection: TextDirection.rtl,
-
-      child: Scaffold(
-
-        backgroundColor: AppTheme.backgroundColor,
-
-        appBar: AppBar(
-
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'الأرصدة',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppTheme.textPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'ArbFONTSIBMPlexArabicText',
+    return PopScope(
+      canPop: true,
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: AppTheme.backgroundColor,
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.primaryColor),
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
+            ),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'الأرصدة',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'ArbFONTSIBMPlexArabicText',
+                  ),
                 ),
+              ],
+            ),
+            centerTitle: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            iconTheme: const IconThemeData(color: AppTheme.primaryColor),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.assessment_rounded),
+                tooltip: 'تقرير مصادر وأرصدة الدخل',
+                onPressed: _showReportOptions,
               ),
+              const SizedBox(width: 4),
             ],
           ),
-          centerTitle: true,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          iconTheme: const IconThemeData(color: AppTheme.primaryColor),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.assessment_rounded),
-              tooltip: 'تقرير مصادر وأرصدة الدخل',
-              onPressed: _showReportOptions,
-            ),
-            const SizedBox(width: 4),
-          ],
-
-        ),
-
-        drawer: const AppDrawer(),
-
-        onDrawerChanged: (isOpened) {
-
-          setState(() {
-
-            _isDrawerOpen = isOpened;
-
-          });
-
-          widget.onDrawerChanged?.call(isOpened);
-
-        },
 
         floatingActionButton: FloatingActionButton(
 
@@ -5555,14 +5557,11 @@ class _IncomeBalancesScreenState extends State<IncomeBalancesScreen> {
             ),
 
           ],
-
         ),
-
       ),
-
-    );
-
-  }
+    ),
+  );
+}
 
 }
 

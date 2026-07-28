@@ -116,6 +116,34 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
         t
     }
 
+    suspend fun isRecentDuplicate(amount: Double, counterpart: String, type: String, timestamp: Long): Boolean = withContext(Dispatchers.IO) {
+        val db = readableDatabase
+        val timeWindowStart = timestamp - 120_000 // 2 minutes window
+        val cursor = db.rawQuery("SELECT * FROM transactions WHERE timestamp >= ?", arrayOf(timeWindowStart.toString()))
+        var isDup = false
+        if (cursor.moveToFirst()) {
+            do {
+                try {
+                    val amountStr = AESEncryptionHelper.decrypt(cursor.getString(cursor.getColumnIndexOrThrow("amount")))
+                    val existingAmount = amountStr.toDoubleOrNull() ?: 0.0
+                    val existingCounterpart = AESEncryptionHelper.decrypt(cursor.getString(cursor.getColumnIndexOrThrow("counterpart")))
+                    val existingType = cursor.getString(cursor.getColumnIndexOrThrow("transactionType"))
+
+                    if (Math.abs(existingAmount - amount) < 0.01 &&
+                        existingCounterpart.trim().equals(counterpart.trim(), ignoreCase = true) &&
+                        existingType == type) {
+                        isDup = true
+                        break
+                    }
+                } catch (e: Exception) {
+                    // Ignore decryption error on corrupted rows
+                }
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        isDup
+    }
+
     suspend fun getAll(): List<FinancialTransaction> = withContext(Dispatchers.IO) {
         val list = mutableListOf<FinancialTransaction>()
         val db = readableDatabase

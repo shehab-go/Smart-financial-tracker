@@ -23,6 +23,7 @@ class HomeController {
   String _effectiveCurrencyName = 'محلي';
 
   HomeState get state => _state;
+  static HomeState? get cachedState => _cachedState;
   String get effectiveCurrencyName => _effectiveCurrencyName;
 
   void _debugPerf(String label, Stopwatch sw, {int thresholdMs = 16}) {
@@ -37,6 +38,10 @@ class HomeController {
     if (cached != null) {
       _state = cached;
     }
+  }
+
+  static void clearCache() {
+    _cachedState = null;
   }
 
   Future<HomeState> load({String currencyFilter = 'all'}) async {

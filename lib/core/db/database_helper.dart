@@ -15,6 +15,8 @@ import '../models/income_balance.dart';
 import '../models/transaction_balance_allocation.dart';
 import '../models/expense_balance_allocation.dart';
 import 'migration_helper.dart';
+import 'package:debit_credit_app/core/events/financial_events.dart';
+import 'package:debit_credit_app/features/home/application/home_controller.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -893,17 +895,26 @@ class DatabaseHelper {
 
   Future<int> insertTransaction(TransactionModel transaction) async {
     final db = await database;
-    return await db.insert('transactions', transaction.copyWith(type: _normalizeTransactionType(transaction.type)).toMap());
+    final id = await db.insert('transactions', transaction.copyWith(type: _normalizeTransactionType(transaction.type)).toMap());
+    HomeController.clearCache();
+    FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.transactionAdded));
+    return id;
   }
 
   Future<int> updateTransaction(TransactionModel transaction) async {
     final db = await database;
-    return await db.update('transactions', transaction.copyWith(type: _normalizeTransactionType(transaction.type)).toMap(), where: 'id = ?', whereArgs: [transaction.id]);
+    final count = await db.update('transactions', transaction.copyWith(type: _normalizeTransactionType(transaction.type)).toMap(), where: 'id = ?', whereArgs: [transaction.id]);
+    HomeController.clearCache();
+    FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.transactionUpdated));
+    return count;
   }
 
   Future<int> deleteTransaction(int id) async {
     final db = await database;
-    return await db.delete('transactions', where: 'id = ?', whereArgs: [id]);
+    final count = await db.delete('transactions', where: 'id = ?', whereArgs: [id]);
+    HomeController.clearCache();
+    FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.transactionDeleted));
+    return count;
   }
 
   Future<Map<String, double>> getOverallTotals() async {
@@ -947,17 +958,23 @@ class DatabaseHelper {
 
   Future<int> insertExpense(ExpenseModel expense) async {
     final db = await database;
-    return await db.insert('expenses', expense.toMap());
+    final id = await db.insert('expenses', expense.toMap());
+    FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.expenseAdded));
+    return id;
   }
 
   Future<int> updateExpense(ExpenseModel expense) async {
     final db = await database;
-    return await db.update('expenses', expense.toMap(), where: 'id = ?', whereArgs: [expense.id]);
+    final count = await db.update('expenses', expense.toMap(), where: 'id = ?', whereArgs: [expense.id]);
+    FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.expenseUpdated));
+    return count;
   }
 
   Future<int> deleteExpense(int id) async {
     final db = await database;
-    return await db.delete('expenses', where: 'id = ?', whereArgs: [id]);
+    final count = await db.delete('expenses', where: 'id = ?', whereArgs: [id]);
+    FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.expenseDeleted));
+    return count;
   }
 
   Future<double> getTotalExpenses() async {

@@ -61,6 +61,12 @@ class MainActivity : FlutterFragmentActivity() {
                         result.error("INVALID_ARGS", "Missing referenceId or category", null)
                     }
                 }
+                "reloadRules" -> {
+                    scope.launch {
+                        com.financial.tracker.module.config.WalletConfigManager.reload(applicationContext)
+                        result.success(true)
+                    }
+                }
                 else -> result.notImplemented()
             }
         }

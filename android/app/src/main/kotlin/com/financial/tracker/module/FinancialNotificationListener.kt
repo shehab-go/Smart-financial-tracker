@@ -37,19 +37,22 @@ class FinancialNotificationListener : NotificationListenerService() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        // Helps sometimes to restart the service
-        val restartServiceIntent = Intent(applicationContext, this.javaClass)
-        restartServiceIntent.setPackage(packageName)
-        val restartServicePendingIntent = PendingIntent.getService(
-            applicationContext, 1, restartServiceIntent, 
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-        )
-        val alarmService = applicationContext.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
-        alarmService.set(
-            android.app.AlarmManager.ELAPSED_REALTIME,
-            android.os.SystemClock.elapsedRealtime() + 1000,
-            restartServicePendingIntent
-        )
+        try {
+            val restartServiceIntent = Intent(applicationContext, this.javaClass)
+            restartServiceIntent.setPackage(packageName)
+            val restartServicePendingIntent = PendingIntent.getService(
+                applicationContext, 1, restartServiceIntent, 
+                PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val alarmService = applicationContext.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+            alarmService.set(
+                android.app.AlarmManager.ELAPSED_REALTIME,
+                android.os.SystemClock.elapsedRealtime() + 1000,
+                restartServicePendingIntent
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("WalletTracker", "Could not set restart alarm: ${e.message}")
+        }
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -78,13 +81,22 @@ class FinancialNotificationListener : NotificationListenerService() {
         val dao = DatabaseClient.getDatabase(applicationContext)
 
         if (transaction != null) {
-            // Deduplication Check
+            // Smart Deduplication Check: Check by referenceId and by recent amount/counterpart window
             val existing = dao.checkDuplicate(transaction.referenceId)
-            if (existing == null) {
+            val isRecentDup = dao.isRecentDuplicate(
+                transaction.amount,
+                transaction.counterpart,
+                transaction.transactionType,
+                transaction.timestamp
+            )
+
+            if (existing == null && !isRecentDup) {
                 dao.insertTransaction(transaction)
                 FinancialTrackerClient.sendEventToUI(transaction)
                 triggerHapticFeedback()
                 showLocalNotification(transaction)
+            } else {
+                android.util.Log.d("WalletTracker", "⚠️ Ignored duplicate notification from $packageName (ref: ${transaction.referenceId})")
             }
         } else {
             // Error Analytics: Log the unparsed notification

@@ -15,6 +15,7 @@ import '../../../accounts/presentation/dialogs/add_transaction_dialog.dart';
 import '../../../expenses/presentation/dialogs/add_expense_dialog.dart';
 import '../../../expenses/domain/expense_repository.dart';
 import '../../../expenses/application/expense_controller.dart';
+import '../../../../core/events/financial_events.dart';
 
 class SmartDashboardScreen extends StatefulWidget {
   final Function(bool)? onDrawerChanged;
@@ -515,6 +516,8 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
 
           if (result == true) {
             await FinancialTrackerService.markAsClassified(refId, isOutbound ? 'سداد دين' : 'استلام دين');
+            FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.transactionAdded, referenceId: refId));
+            FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.radarClassified, referenceId: refId));
             setState(() {
               _transactions.removeWhere((t) => (t['referenceId']?.toString() ?? t['timestamp']?.toString()) == refId);
             });
@@ -583,6 +586,10 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> with Widget
             await controller.addExpense(expenseResult, allocations: allocations);
             
             await FinancialTrackerService.markAsClassified(refId, expenseResult.category);
+            FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.expenseAdded, referenceId: refId));
+            FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.balanceUpdated));
+            FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.radarClassified, referenceId: refId));
+
             setState(() {
               _transactions.removeWhere((t) => (t['referenceId']?.toString() ?? t['timestamp']?.toString()) == refId);
             });

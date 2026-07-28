@@ -12,6 +12,8 @@ import 'package:debit_credit_app/features/backup/presentation/screens/enhanced_b
 import 'package:debit_credit_app/features/profile/presentation/screens/user_profile_screen.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/smart_dashboard_screen.dart';
+import 'package:debit_credit_app/features/home/presentation/screens/smart_radar_screen.dart';
+import 'package:debit_credit_app/features/balances/presentation/screens/income_balances_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'package:debit_credit_app/core/models/user_profile.dart';
@@ -363,22 +365,35 @@ class _AppDrawerState extends State<AppDrawer> {
                 SliverList(
                   delegate: SliverChildListDelegate([
                     if (_regionService.isRadarEnabled) ...[
-                      _buildSectionDivider('المحفظة الذكية (الآلية)'),
+                      _buildSectionDivider('الراصد والذكاء المالي 📡'),
                       _buildDrawerItem(
                         context,
-                        icon: Icons.account_balance_wallet_rounded,
-                        title: 'لوحة القيادة اللحظية',
-                        subtitle: 'مراقبة الرصيد وحركة الإشعارات',
+                        icon: Icons.radar_rounded,
+                        title: 'الراصد والذكاء المالي',
+                        subtitle: 'مراقبة الإشعارات البنكية والتنبهات الذكية',
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const SmartDashboardScreen()),
+                            MaterialPageRoute(builder: (context) => const SmartRadarScreen()),
                           );
                         },
                       ),
                     ],
                     _buildSectionDivider('إدارة البيانات'),
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.account_balance_rounded,
+                      title: 'الأرصدة والسيولة',
+                      subtitle: 'إدارة وتتبع أرصدة الخزن والصناديق',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const IncomeBalancesScreen()),
+                        );
+                      },
+                    ),
                     _buildDrawerItem(
                       context,
                       icon: Icons.backup_table_rounded,

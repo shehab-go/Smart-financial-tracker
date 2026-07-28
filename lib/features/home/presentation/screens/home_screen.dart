@@ -15,6 +15,7 @@ import 'package:debit_credit_app/features/home/application/home_controller.dart'
 import 'package:debit_credit_app/features/home/application/home_state.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/events/category_events.dart';
+import 'package:debit_credit_app/core/events/financial_events.dart';
 import 'package:debit_credit_app/core/db/database_helper.dart';
 import 'search_screen.dart';
 
@@ -58,11 +59,15 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => HomeScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   static const double _categoryItemWidth = 120.0;
   final HomeController _controller = HomeController();
   HomeState _state = HomeState.initial();
   StreamSubscription<CategoryEvent>? _categoryEventSubscription;
+  StreamSubscription<FinancialEvent>? _financialEventSubscription;
   String _localCurrencyName = 'محلي';
   
   // State for category navigation
@@ -217,12 +222,24 @@ class HomeScreenState extends State<HomeScreen> {
       // Refresh data when categories change
       loadDataPreservingCategory();
     });
+
+    // Listen for financial events (debts/transactions updates)
+    _financialEventSubscription = FinancialEventBus().events.listen((event) {
+      if (event.type == FinancialEventType.transactionAdded ||
+          event.type == FinancialEventType.transactionUpdated ||
+          event.type == FinancialEventType.transactionDeleted ||
+          event.type == FinancialEventType.radarClassified) {
+        loadDataPreservingCategory();
+      }
+    });
   }
 
 
 
   Future<void> loadData() async {
-    setState(() => _state = _state.copyWith(isLoading: true));
+    if (_state.categories.isEmpty) {
+      setState(() => _state = _state.copyWith(isLoading: true));
+    }
     try {
       final defaultCurrency = await DatabaseHelper().getDefaultCurrencyName();
       final newState = await _controller.load().timeout(const Duration(seconds: 10));
@@ -246,7 +263,9 @@ class HomeScreenState extends State<HomeScreen> {
       currentCategoryName = _state.categories[_selectedCategoryIndex].name;
     }
     
-    setState(() => _state = _state.copyWith(isLoading: true));
+    if (_state.categories.isEmpty) {
+      setState(() => _state = _state.copyWith(isLoading: true));
+    }
     try {
       final defaultCurrency = await DatabaseHelper().getDefaultCurrencyName();
       final newState = await _controller.load().timeout(const Duration(seconds: 10));
@@ -304,6 +323,7 @@ class HomeScreenState extends State<HomeScreen> {
     _pageController.dispose();
     _categoryScrollController?.dispose();
     _categoryEventSubscription?.cancel();
+    _financialEventSubscription?.cancel();
     super.dispose();
   }
 
@@ -319,7 +339,8 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_state.isLoading) {
+    super.build(context);
+    if (_state.isLoading && _state.categories.isEmpty) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -1836,17 +1857,7 @@ class _CategoryAccountsTabState extends State<CategoryAccountsTab> {
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // 1. SliverPersistentHeader containing CategoryStatsCard
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: _CategoryStatsHeaderDelegate(
-            accounts: widget.accounts,
-            isSmall: MediaQuery.of(context).size.width < 360,
-            localCurrencyName: widget.localCurrencyName,
-          ),
-        ),
-
-        // 2. Table Header Label + Filter Button
+        // Table Header Label + Filter Button
         if (!isOriginalListEmpty)
           SliverToBoxAdapter(
             child: Padding(

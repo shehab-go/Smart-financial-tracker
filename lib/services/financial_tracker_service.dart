@@ -46,6 +46,17 @@ class FinancialTrackerService {
     return list.cast<Map<String, dynamic>>();
   }
 
+  /// Reload native financial tracker rules from local custom JSON file
+  static Future<bool> reloadRules() async {
+    try {
+      final bool result = await _methodChannel.invokeMethod('reloadRules');
+      return result;
+    } on PlatformException catch (e) {
+      print("Failed to reload rules: '${e.message}'.");
+      return false;
+    }
+  }
+
   /// Mark a transaction as classified to hide it from the inbox
   static Future<bool> markAsClassified(String referenceId, String category) async {
     try {

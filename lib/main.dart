@@ -8,6 +8,7 @@ import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
 import 'package:debit_credit_app/services/smart_debt_settlement_service.dart';
+import 'package:debit_credit_app/services/dynamic_rules_service.dart';
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -58,6 +59,9 @@ void main() async {
   
   // Initialize Smart Debt Settlement Service to listen for background transactions
   SmartDebtSettlementService().initialize();
+
+  // Sync dynamic bank rules if available
+  DynamicRulesService().syncRulesIfOnline();
 
   runApp(Phoenix(child: const PersonalFinanceApp()));
 }

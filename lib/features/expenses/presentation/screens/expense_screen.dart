@@ -23,6 +23,7 @@ import 'package:debit_credit_app/features/profile/presentation/screens/user_prof
 import 'package:debit_credit_app/features/expenses/application/reports/all_expense_accounts_report_generator.dart';
 import 'package:debit_credit_app/features/expenses/application/reports/expense_category_report_generator.dart';
 import 'package:debit_credit_app/features/categories/presentation/dialogs/category_dialog.dart';
+import 'package:debit_credit_app/core/events/financial_events.dart';
 
 class ExpenseScreen extends StatefulWidget {
   final Function(bool)? onDrawerChanged;
@@ -51,6 +52,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   bool _isDashboardExpanded = true;
   Timer? _highlightTimer;
   int? _currentHighlightId;
+  StreamSubscription<FinancialEvent>? _financialEventSubscription;
 
   @override
   void initState() {
@@ -58,6 +60,16 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     _currentHighlightId = widget.highlightExpenseId;
     _loadExpenses();
     _loadFiltersData();
+
+    // Listen for financial events (expenses/radar updates)
+    _financialEventSubscription = FinancialEventBus().events.listen((event) {
+      if (event.type == FinancialEventType.expenseAdded ||
+          event.type == FinancialEventType.expenseUpdated ||
+          event.type == FinancialEventType.expenseDeleted ||
+          event.type == FinancialEventType.radarClassified) {
+        _loadExpenses();
+      }
+    });
     
     // Set up timer to clear highlighting after 5 seconds
     if (_currentHighlightId != null) {
@@ -74,6 +86,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   @override
   void dispose() {
     _highlightTimer?.cancel();
+    _financialEventSubscription?.cancel();
     super.dispose();
   }
 
@@ -802,14 +815,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
             : CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  // Unified Dashboard Card
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _ExpenseDashboardHeaderDelegate(
-                      state: this,
-                    ),
-                  ),
-
                   // Capsule Filters Scroll Row
                   SliverToBoxAdapter(
                     child: Padding(

@@ -17,13 +17,22 @@ object WalletConfigManager {
 
     suspend fun reload(context: Context) = withContext(Dispatchers.IO) {
         val newConfigs = mutableMapOf<String, WalletConfig>()
+        val gson = Gson()
         try {
-            context.assets.open("financial_tracker_config.json").use { inputStream ->
-                InputStreamReader(inputStream).use { reader ->
-                    val gson = Gson()
+            val customFile = java.io.File(context.filesDir, "custom_tracker_config.json")
+            val inputStream = if (customFile.exists() && customFile.length() > 0) {
+                java.io.FileInputStream(customFile)
+            } else {
+                context.assets.open("financial_tracker_config.json")
+            }
+
+            inputStream.use { stream ->
+                InputStreamReader(stream).use { reader ->
                     val configList = gson.fromJson(reader, Array<WalletConfig>::class.java)
-                    for (config in configList) {
-                        newConfigs[config.packageName] = config
+                    if (configList != null) {
+                        for (config in configList) {
+                            newConfigs[config.packageName] = config
+                        }
                     }
                 }
             }
@@ -32,7 +41,9 @@ object WalletConfigManager {
                 configs.putAll(newConfigs)
                 isInitialized = true
             }
+            android.util.Log.i("WalletTracker", "✅ WalletConfigManager reloaded ${newConfigs.size} package configs successfully.")
         } catch (e: Exception) {
+            android.util.Log.e("WalletTracker", "❌ Failed to load wallet configs", e)
             e.printStackTrace()
         }
     }

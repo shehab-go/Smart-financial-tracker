@@ -1,12 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:debit_credit_app/features/dashboard/presentation/screens/main_dashboard_screen.dart';
 import 'package:debit_credit_app/features/home/presentation/screens/home_screen.dart';
 import 'package:debit_credit_app/features/expenses/presentation/screens/expense_screen.dart';
-import 'package:debit_credit_app/features/balances/presentation/screens/income_balances_screen.dart';
-import 'package:debit_credit_app/features/home/presentation/screens/smart_dashboard_screen.dart';
 import 'package:debit_credit_app/core/theme/app_theme.dart';
 import 'package:debit_credit_app/core/services/auto_backup_manager.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:debit_credit_app/core/services/region_service.dart';
+import 'package:debit_credit_app/services/financial_tracker_service.dart';
+import 'package:debit_credit_app/core/events/financial_events.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -16,20 +18,18 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObserver {
-  int _currentIndex = 0;
+  int _currentIndex = 0; // Default to 0 (الرئيسية)
   bool _isDrawerOpen = false;
-  int _balancesTabVersion = 0;
+  StreamSubscription? _txSubscription;
+  StreamSubscription<FinancialEvent>? _financialEventSubscription;
   final RegionService _regionService = RegionService();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Ensure index is valid if Radar is disabled
-    if (!_regionService.isRadarEnabled && _currentIndex == 0) {
-      // Default to "Debts" (which becomes index 0)
-      _currentIndex = 0;
-    }
+    _startListeningToTransactions();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Delay auto backup to avoid ANR on startup (Increased to 10s)
       Future.delayed(const Duration(seconds: 10), () {
@@ -40,8 +40,15 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
     });
   }
 
+  void _startListeningToTransactions() {
+    _txSubscription?.cancel();
+    _txSubscription = FinancialTrackerService.transactionStream.listen((_) {});
+  }
+
   @override
   void dispose() {
+    _txSubscription?.cancel();
+    _financialEventSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -59,30 +66,20 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
     });
   }
 
-  List<Widget> get _screens {
-    final List<Widget> screens = [];
-    
-    if (_regionService.isRadarEnabled) {
-      screens.add(SmartDashboardScreen(onDrawerChanged: _onDrawerChanged));
-    }
-
-    screens.add(HomeScreen(onDrawerChanged: _onDrawerChanged));
-    screens.add(ExpenseScreen(onDrawerChanged: _onDrawerChanged));
-
-    screens.add(
-      IncomeBalancesScreen(
-        key: ValueKey<int>(_balancesTabVersion),
-        onDrawerChanged: _onDrawerChanged,
-      ),
-    );
-
-    return screens;
-  }
+  late final List<Widget> _screens = [
+    MainDashboardScreen(
+      onDrawerChanged: _onDrawerChanged,
+    ),
+    HomeScreen(
+      onDrawerChanged: _onDrawerChanged,
+    ),
+    ExpenseScreen(
+      onDrawerChanged: _onDrawerChanged,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final bool radarEnabled = _regionService.isRadarEnabled;
-    
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -99,7 +96,7 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
                   border: Border.all(color: Colors.grey.shade200),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.08),
+                      color: Colors.grey.withValues(alpha: 0.08),
                       blurRadius: 4,
                       offset: const Offset(0, -1),
                     ),
@@ -111,26 +108,20 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
                     padding: const EdgeInsets.all(4),
                     child: Row(
                       children: [
-                        if (radarEnabled)
-                          _buildNavItem(
-                            index: 0,
-                            label: 'الراصد',
-                            icon: Icons.radar,
-                          ),
                         _buildNavItem(
-                          index: radarEnabled ? 1 : 0,
+                          index: 0,
+                          label: 'الرئيسية',
+                          icon: Icons.grid_view_rounded,
+                        ),
+                        _buildNavItem(
+                          index: 1,
                           label: 'الديون',
                           assetPath: 'assets/images/money-borrow.svg',
                         ),
                         _buildNavItem(
-                          index: radarEnabled ? 2 : 1,
+                          index: 2,
                           label: 'المصروفات',
                           assetPath: 'assets/images/trend-down-expense.svg',
-                        ),
-                        _buildNavItem(
-                          index: radarEnabled ? 3 : 2,
-                          label: 'الأرصدة',
-                          assetPath: 'assets/images/trend-up-income.svg',
                         ),
                       ],
                     ),
@@ -146,8 +137,42 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
     required String label,
     String? assetPath,
     IconData? icon,
+    int badgeCount = 0,
   }) {
     final bool isSelected = _currentIndex == index;
+
+    Widget iconWidget = assetPath != null
+        ? SvgPicture.asset(
+            assetPath,
+            width: isSelected ? 25 : 23,
+            height: isSelected ? 25 : 23,
+            colorFilter: ColorFilter.mode(
+              isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+              BlendMode.srcIn,
+            ),
+          )
+        : Icon(
+            icon,
+            size: isSelected ? 25 : 23,
+            color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+          );
+
+    if (badgeCount > 0) {
+      iconWidget = Badge(
+        label: Text(
+          badgeCount > 99 ? '99+' : '$badgeCount',
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontFamily: 'ArbFONTSIBMPlexArabicText',
+          ),
+        ),
+        backgroundColor: Colors.redAccent,
+        offset: const Offset(6, -4),
+        child: iconWidget,
+      );
+    }
 
     return Expanded(
       child: GestureDetector(
@@ -155,13 +180,8 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
         onTap: () {
           setState(() {
             _currentIndex = index;
-            // The index of Balances tab depends on whether Radar is enabled
-            final int balancesIndex = _regionService.isRadarEnabled ? 3 : 2;
-            if (index == balancesIndex) {
-              // Force IncomeBalancesScreen to rebuild and reload balances
-              _balancesTabVersion++;
-            }
           });
+          FinancialEventBus().emit(FinancialEvent(type: FinancialEventType.transactionUpdated));
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
@@ -176,22 +196,7 @@ class _MainNavigationState extends State<MainNavigation> with WidgetsBindingObse
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (assetPath != null)
-                SvgPicture.asset(
-                  assetPath,
-                  width: isSelected ? 25 : 23,
-                  height: isSelected ? 25 : 23,
-                  colorFilter: ColorFilter.mode(
-                    isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
-                    BlendMode.srcIn,
-                  ),
-                )
-              else if (icon != null)
-                Icon(
-                  icon,
-                  size: isSelected ? 25 : 23,
-                  color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
-                ),
+              iconWidget,
               const SizedBox(height: 1),
               Text(
                 label,
