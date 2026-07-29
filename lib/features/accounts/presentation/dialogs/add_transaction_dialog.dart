@@ -1731,7 +1731,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 ),
                 child: Row(
                   children: [
-                    // Credit "ديون لك" Button
+                    // Credit "ديون لك / دفع لك" Button (Green - 🟢)
                     Expanded(
                       child: GestureDetector(
                         onTap: (_isLoading || !_isFormReady)
@@ -1817,7 +1817,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                     ),
                     const SizedBox(width: 12),
 
-                    // Debit "ديون عليك" Button
+                    // Debit "ديون عليك / أخذ منك" Button (Red - 🔴)
                     Expanded(
                       child: GestureDetector(
                         onTap: (_isLoading || !_isFormReady)

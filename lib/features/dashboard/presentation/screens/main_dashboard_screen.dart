@@ -78,11 +78,16 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         unclassified = txs.where((tx) => !(tx['isClassified'] == true || tx['isClassified'] == 1)).length;
       } catch (_) {}
 
-      double debitSum = 0.0;
-      double creditSum = 0.0;
+      double debitSum = 0.0;   // ما عليك الصافي
+      double creditSum = 0.0;  // ما لك الصافي
       for (var acc in accountsList) {
-        debitSum += acc.totalDebit;
-        creditSum += acc.totalCredit;
+        // صافي كل حساب = ما لك - ما عليك
+        final double netForAccount = acc.totalCredit - acc.totalDebit;
+        if (netForAccount > 0) {
+          creditSum += netForAccount;       // ما لك (لصالحك)
+        } else if (netForAccount < 0) {
+          debitSum += netForAccount.abs();  // ما عليك
+        }
       }
 
       final now = DateTime.now();
@@ -226,6 +231,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   Widget _buildExecutiveOverviewCard(NumberFormat formatter) {
+    // صافي المركز المالي = إجمالي ما لك - إجمالي ما عليك
     final double netBalance = _totalCredit - _totalDebit;
     final bool isPositiveNet = netBalance >= 0;
 
@@ -295,7 +301,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
                 child: _buildSummarySubItem(
                   title: 'إجمالي ما لك (ديون)',
                   amount: '${formatter.format(_totalCredit)} ر.ي',
-                  icon: Icons.arrow_downward_rounded,
+                  icon: Icons.arrow_upward_rounded,
                   iconColor: const Color(0xFF81C784),
                 ),
               ),
@@ -304,7 +310,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
                 child: _buildSummarySubItem(
                   title: 'إجمالي ما عليك',
                   amount: '${formatter.format(_totalDebit)} ر.ي',
-                  icon: Icons.arrow_upward_rounded,
+                  icon: Icons.arrow_downward_rounded,
                   iconColor: const Color(0xFFE57373),
                 ),
               ),
