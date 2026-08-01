@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "com.financial.tracker.module.financial_tracker-release-31:/color-night-v8/material_timepicker_modebutton_tint.xml",
+        "source": "com.financial.tracker.module.financial_tracker-material-1.12.0-9:/color-night-v8/material_timepicker_modebutton_tint.xml"
+    },
+    {
+        "merged": "com.financial.tracker.module.financial_tracker-release-31:/color-night-v8/material_timepicker_clockface.xml",
+        "source": "com.financial.tracker.module.financial_tracker-material-1.12.0-9:/color-night-v8/material_timepicker_clockface.xml"
+    },
+    {
+        "merged": "com.financial.tracker.module.financial_tracker-release-31:/color-night-v8/material_timepicker_button_stroke.xml",
+        "source": "com.financial.tracker.module.financial_tracker-material-1.12.0-9:/color-night-v8/material_timepicker_button_stroke.xml"
+    }
+]
