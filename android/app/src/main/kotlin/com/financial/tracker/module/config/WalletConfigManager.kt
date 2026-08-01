@@ -54,7 +54,7 @@ object WalletConfigManager {
         }
     }
 
-    internal fun getConfigForPackage(packageName: String): WalletConfig? {
+    fun getConfigForPackage(packageName: String): WalletConfig? {
         return synchronized(configs) {
             configs[packageName]
         }
@@ -63,6 +63,7 @@ object WalletConfigManager {
 
 internal data class WalletConfig(
     val packageName: String,
+    val walletName: String? = null,
     val rules: List<TransactionRule>
 )
 

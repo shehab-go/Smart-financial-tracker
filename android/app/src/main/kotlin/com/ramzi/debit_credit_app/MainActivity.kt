@@ -63,7 +63,7 @@ class MainActivity : FlutterFragmentActivity() {
                 }
                 "reloadRules" -> {
                     scope.launch {
-                        com.financial.tracker.module.config.WalletConfigManager.reload(applicationContext)
+                        FinancialTrackerClient.reprocessUnparsedLogs(applicationContext)
                         result.success(true)
                     }
                 }

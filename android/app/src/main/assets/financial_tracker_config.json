@@ -1,6 +1,7 @@
 [
   {
     "packageName": "com.ahd.jaib",
+    "walletName": "جيب",
     "rules": [
       {
         "transactionType": "Transfer Out",
@@ -205,6 +206,32 @@
           "currency": "(?:اضيف|أضيف|إيداع|ايداع|مبلغ)?\\s*[0-9.,]+\\s*(ر\\.ي|ريال|د\\.أ|دولار|ر\\.س|سعودي)",
           "counterpart": "(?:من|بحساب|حوالة من)\\s+([^-.\n]+)",
           "balance": "(?:رص|رصيد|الرصيد)[:\\s]*([0-9.,]+)"
+        }
+      }
+    ]
+  },
+  {
+    "packageName": "com.stcpay.apps",
+    "walletName": "STC Pay",
+    "rules": [
+      {
+        "transactionType": "Transfer In",
+        "identifierRegex": "تم استلام|وصلك مبلغ|إيداع",
+        "parsers": {
+          "amount": "مبلغ ([0-9.,]+)",
+          "currency": "مبلغ [0-9.,]+ (ريال|ر\\.س|SAR)",
+          "counterpart": "من (?<value>[^\\.]+)",
+          "referenceId": "رقم العملية (\\d+)"
+        }
+      },
+      {
+        "transactionType": "Transfer Out",
+        "identifierRegex": "خصم|شراء|تحويل صادق",
+        "parsers": {
+          "amount": "بقيمة ([0-9.,]+)",
+          "currency": "بقيمة [0-9.,]+ (ريال|ر\\.س|SAR)",
+          "counterpart": "إلى (?<value>[^\\.]+)",
+          "referenceId": "الرقم المرجعي (\\d+)"
         }
       }
     ]

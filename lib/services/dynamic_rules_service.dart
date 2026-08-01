@@ -6,6 +6,8 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:debit_credit_app/services/financial_tracker_service.dart';
 
 class DynamicRulesService {
+
+
   static final DynamicRulesService _instance = DynamicRulesService._internal();
   factory DynamicRulesService() => _instance;
   DynamicRulesService._internal();

@@ -46,13 +46,24 @@ class FinancialTrackerService {
     return list.cast<Map<String, dynamic>>();
   }
 
-  /// Reload native financial tracker rules from local custom JSON file
+  /// Reload native financial tracker rules and re-process any unparsed logs
   static Future<bool> reloadRules() async {
     try {
       final bool result = await _methodChannel.invokeMethod('reloadRules');
       return result;
     } on PlatformException catch (e) {
-      print("Failed to reload rules: '${e.message}'.");
+      print("Failed to reload rules and re-process: '${e.message}'.");
+      return false;
+    }
+  }
+
+  /// Re-processes all unparsed logs using the current configuration
+  static Future<bool> reprocessUnparsedLogs() async {
+    try {
+      final bool result = await _methodChannel.invokeMethod('reloadRules');
+      return result;
+    } on PlatformException catch (e) {
+      print("Failed to re-process unparsed logs: '${e.message}'.");
       return false;
     }
   }

@@ -65,10 +65,12 @@ internal object DynamicParser {
         try {
             val matcher = Pattern.compile(regexPattern).matcher(text)
             if (matcher.find()) {
-                return if (matcher.groupCount() >= 1) {
+                return try {
+                    matcher.group("value")
+                } catch (e: IllegalArgumentException) {
                     matcher.group(1)
-                } else {
-                    matcher.group(0)
+                } catch (e: UnsupportedOperationException) {
+                    matcher.group(1)
                 }
             }
         } catch (e: Exception) {

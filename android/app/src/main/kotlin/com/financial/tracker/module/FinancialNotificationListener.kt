@@ -151,7 +151,8 @@ class FinancialNotificationListener : NotificationListenerService() {
         )
 
         val amountStr = transaction.amount.toString()
-        val walletName = if (transaction.packageName.contains("stcpay")) "STC Pay" else "جيب"
+        val config = WalletConfigManager.getConfigForPackage(transaction.packageName)
+        val walletName = config?.walletName ?: if (transaction.packageName.contains("stcpay")) "STC Pay" else "جيب"
 
         val builder = NotificationCompat.Builder(applicationContext, channelId)
             .setSmallIcon(R.mipmap.ic_launcher) // Using default launcher icon
