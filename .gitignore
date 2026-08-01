@@ -1,3 +1,4 @@
+# Android/Gradle
 .gradle
 /local.properties
 /.idea/caches
@@ -12,3 +13,31 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+
+# Flutter/Dart (keeping just in case history had them)
+**/doc/api/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+
+# Symbolication/Obfuscation
+app.*.symbols
+app.*.map.json
