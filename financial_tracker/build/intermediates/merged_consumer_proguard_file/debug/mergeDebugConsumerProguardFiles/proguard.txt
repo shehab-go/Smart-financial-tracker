@@ -1,0 +1,2 @@
+-keep class com.financial.tracker.module.data.FinancialTransaction { *; }
+-keep class com.financial.tracker.module.FinancialTrackerClient { *; }
