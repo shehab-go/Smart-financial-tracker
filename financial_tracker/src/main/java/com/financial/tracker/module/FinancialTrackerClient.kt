@@ -51,6 +51,10 @@ object FinancialTrackerClient {
         com.financial.tracker.module.data.DatabaseClient.getDatabase(context).markAsSettled(refId, settlementRef)
     }
 
+    suspend fun markAsClassified(context: android.content.Context, refId: String, category: String) {
+        com.financial.tracker.module.data.DatabaseClient.getDatabase(context).markAsClassified(refId, category)
+    }
+
     /**
      * Get all notifications that failed to parse (Error Analytics).
      */
