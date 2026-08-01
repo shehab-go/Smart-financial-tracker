@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "com.financial.tracker.module.financial_tracker-release-31:/layout-sw٦٠٠dp-v13/mtrl_layout_snackbar.xml",
+        "source": "com.financial.tracker.module.financial_tracker-material-1.12.0-9:/layout-sw600dp-v13/mtrl_layout_snackbar.xml"
+    },
+    {
+        "merged": "com.financial.tracker.module.financial_tracker-release-31:/layout-sw٦٠٠dp-v13/design_layout_snackbar.xml",
+        "source": "com.financial.tracker.module.financial_tracker-material-1.12.0-9:/layout-sw600dp-v13/design_layout_snackbar.xml"
+    }
+]
