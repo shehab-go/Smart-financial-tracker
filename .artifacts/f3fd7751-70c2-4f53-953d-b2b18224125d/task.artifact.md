@@ -1,0 +1,5 @@
+- [x] Stash local changes
+- [x] Merge `origin/fix-the-proplem` with `--allow-unrelated-histories`
+- [x] Resolve merge conflicts (if any)
+- [x] Pop the stash and resolve local conflicts
+- [x] Verify project state

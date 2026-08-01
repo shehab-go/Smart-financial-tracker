@@ -1,5 +1,6 @@
 package com.financial.tracker.module.parser
 
+import android.os.Build
 import com.financial.tracker.module.data.FinancialTransaction
 import com.financial.tracker.module.config.WalletConfigManager
 import java.util.regex.Pattern
@@ -65,7 +66,11 @@ internal object DynamicParser {
             val matcher = Pattern.compile(regexPattern).matcher(text)
             if (matcher.find()) {
                 return try {
-                    matcher.group("value")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        matcher.group("value")
+                    } else {
+                        TODO("VERSION.SDK_INT < O")
+                    }
                 } catch (e: IllegalArgumentException) {
                     matcher.group(1)
                 } catch (e: UnsupportedOperationException) {

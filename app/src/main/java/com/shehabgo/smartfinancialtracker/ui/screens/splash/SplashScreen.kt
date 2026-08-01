@@ -28,6 +28,7 @@ import com.shehabgo.smartfinancialtracker.ui.theme.AppShapes
 import com.shehabgo.smartfinancialtracker.ui.theme.AppSpacing
 import kotlinx.coroutines.delay
 import kotlin.math.*
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SplashScreen(
@@ -46,13 +47,13 @@ fun SplashScreen(
     var phase6 by remember { mutableStateOf(false) } // خروج
 
     LaunchedEffect(Unit) {
-        delay(80);   phase1 = true
-        delay(350);  phase2 = true
-        delay(500);  phase3 = true
-        delay(550);  phase4 = true
-        delay(450);  phase5 = true
-        delay(1100); phase6 = true
-        delay(350)
+        delay(80.milliseconds);   phase1 = true
+        delay(350.milliseconds);  phase2 = true
+        delay(500.milliseconds);  phase3 = true
+        delay(550.milliseconds);  phase4 = true
+        delay(450.milliseconds);  phase5 = true
+        delay(1100.milliseconds); phase6 = true
+        delay(350.milliseconds)
         if (isOnboardingDone) onNavigate("dashboard")
         else                  onNavigate("onboarding_pager")
     }
