@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;family=IBM+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', sans-serif;
+            background-color: #f6faff;
+            color: #141d23;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: #ffffff;
+            border: 1px solid #dbe4ed;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .tech-glow:hover {
+            box-shadow: 0 10px 15px -3px rgba(189, 0, 27, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 5px rgba(189, 0, 27, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(189, 0, 27, 0.4); }
+            100% { box-shadow: 0 0 5px rgba(189, 0, 27, 0.2); }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#454749",
+                        "surface-container-highest": "#dbe4ed",
+                        "primary-fixed-dim": "#ffb3ad",
+                        "on-secondary-container": "#636467",
+                        "surface-variant": "#dbe4ed",
+                        "surface-bright": "#f6faff",
+                        "tertiary-container": "#737678",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#c6c6c9",
+                        "on-secondary-fixed": "#1a1c1e",
+                        "on-primary-fixed": "#410004",
+                        "on-primary-container": "#ffffff",
+                        "primary": "#bd001b",
+                        "background": "#f6faff",
+                        "on-surface": "#141d23",
+                        "surface": "#f6faff",
+                        "on-tertiary-fixed": "#191c1e",
+                        "on-tertiary-container": "#ffffff",
+                        "on-surface-variant": "#5d3f3d",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "on-primary-fixed-variant": "#930012",
+                        "tertiary": "#5a5d5f",
+                        "inverse-surface": "#293138",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#c0001b",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#d2dbe4",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#e6eff8",
+                        "outline-variant": "#e7bdb9",
+                        "secondary-container": "#e2e2e5",
+                        "on-background": "#141d23",
+                        "inverse-on-surface": "#e9f2fb",
+                        "secondary-fixed": "#e2e2e5",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#e61d2b",
+                        "surface-container-low": "#ecf5fe",
+                        "secondary": "#5d5e61",
+                        "outline": "#926e6b",
+                        "primary-fixed": "#ffdad7",
+                        "tertiary-fixed-dim": "#c4c7c9"
+                    },
+                    spacing: {
+                        "lg": "40px", "md": "24px", "xs": "4px", "gutter": "16px", "margin-mobile": "16px", "sm": "12px", "base": "8px", "xl": "64px", "margin-desktop": "32px"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Be Vietnam Pro"],
+                        "headline-md": ["Be Vietnam Pro"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "label-md": ["IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"]
+                    },
+                    fontSize: {
+                        "headline-lg": ["32px", { lineHeight: "40px", fontWeight: "700" }],
+                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+                        "body-lg": ["18px", { lineHeight: "26px", fontWeight: "400" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "label-md": ["14px", { lineHeight: "20px", letterSpacing: "0.02em", fontWeight: "600" }],
+                        "label-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="flex justify-between items-center w-full px-margin-mobile h-16 sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-surface-container-highest shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden border border-primary/10">
+<img alt="Admin Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzBRth38Ska9rwpb8RycOzycU3eAo68xPU9wdzi1pCZGzFnMPSmHmAoJ4ejxxzEy24qeSeEg2QDhY6RuMD2KvODr-56pnDThkJ5fuI9pD1YOpjPYInaG_WhdS9xd9djhw5-uGhUMPZ6USAojN6QoRTCoQVo8jngsPy7SH4mAl15f4ffhYFqZlhnU0TM9Npt9tvjSYbrxBIwo1EVFRelIQKOGNXKBjSevnzjhxY9LLpqPLQKjlCz6cdiD1YsG2WY2VOC2N2pY_xL7c"/>
+</div>
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">CapitalCore</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<span class="font-label-md text-label-md text-primary bg-primary-fixed px-3 py-1 rounded-full">المسؤول</span>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-lg">
+<!-- Dashboard Header -->
+<div class="mb-lg">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">مركز الإدارة والمرونة</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">مراقبة سلامة البيانات ومعالجة الحالات الاستثنائية لضمان الدقة المالية.</p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md">
+<!-- Fallback Trap Section (Left Column) -->
+<section class="md:col-span-8 flex flex-col gap-md">
+<div class="glass-panel p-md">
+<div class="flex justify-between items-center mb-md">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary font-bold">report</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">إشعارات غير معالجة</h2>
+</div>
+<span class="bg-error-container text-on-error-container px-3 py-1 rounded-full font-label-sm text-label-sm font-bold">١٤ سجل مفقود</span>
+</div>
+<!-- Log List -->
+<div class="space-y-sm">
+<!-- Log Item 1 -->
+<div class="flex items-center justify-between p-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors border border-surface-container-highest">
+<div class="flex items-center gap-base">
+<span class="material-symbols-outlined text-outline">sms</span>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface">Bank Muscat: SMS_REF_9921</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">نص غير مفهوم: "تحويل داخلي معلق بموجب..."</p>
+</div>
+</div>
+<div class="text-left">
+<p class="font-label-md text-label-md text-on-surface">١٢:٤٥ م</p>
+<p class="font-label-sm text-label-sm text-primary font-semibold">فشل المطابقة</p>
+</div>
+</div>
+<!-- Log Item 2 -->
+<div class="flex items-center justify-between p-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors border border-surface-container-highest">
+<div class="flex items-center gap-base">
+<span class="material-symbols-outlined text-outline">alternate_email</span>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface">Al-Rajhi: EML_4402_STMT</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">تنسيق PDF غير مدعوم في النسخة الحالية</p>
+</div>
+</div>
+<div class="text-left">
+<p class="font-label-md text-label-md text-on-surface">أمس</p>
+<p class="font-label-sm text-label-sm text-primary font-semibold">فشل الاستخراج</p>
+</div>
+</div>
+<!-- Log Item 3 -->
+<div class="flex items-center justify-between p-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors border border-surface-container-highest">
+<div class="flex items-center gap-base">
+<span class="material-symbols-outlined text-outline">account_balance</span>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface">QNB: API_WEBHOOK_ERR</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">حمولة JSON تحتوي على حقول مجهولة</p>
+</div>
+</div>
+<div class="text-left">
+<p class="font-label-md text-label-md text-on-surface">٠٢ مايو</p>
+<p class="font-label-sm text-label-sm text-primary font-semibold">خطأ منطقي</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-md py-3 border border-dashed border-primary/40 rounded-xl text-primary font-label-md text-label-md hover:bg-primary-fixed transition-all font-bold">
+                    عرض جميع السجلات الفاشلة
+                </button>
+</div>
+<!-- Privacy Export Tools -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+<div class="glass-panel p-md flex flex-col items-start gap-sm tech-glow transition-all cursor-pointer group hover:border-primary/30">
+<div class="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center text-primary group-hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">file_download</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">تصدير البيانات</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">تنسيق CSV مشفر AES-256</p>
+</div>
+<button class="mt-base text-primary font-label-md text-label-md flex items-center gap-1 font-bold group-hover:translate-x-[-4px] transition-transform">
+                        بدء التصدير <span class="material-symbols-outlined">chevron_left</span>
+</button>
+</div>
+<div class="glass-panel p-md flex flex-col items-start gap-sm tech-glow transition-all cursor-pointer group hover:border-primary/30">
+<div class="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center text-primary group-hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">cloud_upload</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">نسخ احتياطي للسحابة</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">تخزين آمن في خوادم مشفرة</p>
+</div>
+<button class="mt-base text-primary font-label-md text-label-md flex items-center gap-1 font-bold group-hover:translate-x-[-4px] transition-transform">
+                        تفعيل المزامنة <span class="material-symbols-outlined">chevron_left</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Reprocess & Progress Section (Right Column) -->
+<section class="md:col-span-4">
+<div class="glass-panel p-md relative overflow-hidden h-full flex flex-col border-t-4 border-t-primary">
+<div class="mb-md">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2">إعادة معالجة الذكاء</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">تحديث قواعد Regex ومطابقة الأنماط على السجلات العالقة.</p>
+</div>
+<div class="flex-grow flex flex-col items-center justify-center py-xl">
+<div class="w-32 h-32 rounded-full border-4 border-surface-container-highest flex items-center justify-center relative mb-md" id="reprocessCircle">
+<span class="material-symbols-outlined text-4xl text-primary" id="reprocessIcon">sync</span>
+<svg class="absolute inset-0 w-full h-full -rotate-90">
+<circle class="text-primary transition-all duration-300" cx="64" cy="64" fill="transparent" id="progressCircle" r="60" stroke="currentColor" stroke-width="4" style="stroke-dasharray: 377; stroke-dashoffset: 377;"></circle>
+</svg>
+</div>
+<div class="text-center">
+<p class="font-headline-md text-headline-md text-on-surface" id="progressStatus">جاهز للبدء</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant" id="progressSub">١٤ سجل في الانتظار</p>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-primary-container transition-all active:scale-95 shadow-lg shadow-primary/20" id="reprocessBtn" onclick="startReprocessing()">
+<span class="material-symbols-outlined">auto_fix_high</span>
+                    تشغيل معالج النصوص
+                </button>
+</div>
+</section>
+</div>
+<!-- System Health visualization -->
+<section class="mt-lg glass-panel p-md overflow-hidden relative min-h-[300px]">
+<div class="flex justify-between items-start mb-md relative z-10">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">سلامة تدفق البيانات</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">معدل تحويل السجلات الخام إلى معاملات مالية</p>
+</div>
+<div class="text-left">
+<span class="text-primary font-headline-md text-headline-md">٩٨.٤٪</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">دقة التشغيل الآلي</p>
+</div>
+</div>
+<div class="h-48 w-full relative">
+<!-- Abstract Graph Pattern -->
+<div class="absolute inset-0 flex items-end gap-1 px-base">
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[60%] hover:bg-primary/20 transition-all"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[65%] hover:bg-primary/20 transition-all"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[75%] hover:bg-primary/20 transition-all"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[70%] hover:bg-primary/20 transition-all"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[85%] hover:bg-primary/20 transition-all"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[90%] hover:bg-primary/20 transition-all"></div>
+<div class="flex-1 bg-primary/40 rounded-t-sm h-[95%] hover:bg-primary/60 transition-all"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[80%] hover:bg-primary/20 transition-all"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[85%] hover:bg-primary/20 transition-all"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[75%] hover:bg-primary/20 transition-all"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm h-[90%] hover:bg-primary/20 transition-all"></div>
+<div class="flex-1 bg-primary/20 rounded-t-sm h-[98%] hover:bg-primary/40 transition-all"></div>
+</div>
+<div class="absolute bottom-0 left-0 w-full h-[1px] bg-surface-container-highest"></div>
+</div>
+<div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-white/40 to-transparent"></div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-base h-20 bg-white/90 backdrop-blur-2xl border-t border-surface-container-highest shadow-lg rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm mt-1">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">المحافظ</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="font-label-sm text-label-sm mt-1">السجل</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold bg-primary-fixed rounded-full px-4 py-1 active:scale-90 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+<span class="font-label-sm text-label-sm mt-1">الإدارة</span>
+</a>
+</nav>
+<script>
+    function startReprocessing() {
+        const btn = document.getElementById('reprocessBtn');
+        const icon = document.getElementById('reprocessIcon');
+        const circle = document.getElementById('progressCircle');
+        const status = document.getElementById('progressStatus');
+        const sub = document.getElementById('progressSub');
+        
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+        icon.classList.add('animate-spin');
+        
+        status.innerText = "جاري المعالجة...";
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 2;
+            const offset = 377 - (progress / 100 * 377);
+            circle.style.strokeDashoffset = offset;
+            
+            if (progress >= 100) {
+                clearInterval(interval);
+                completeReprocessing();
+            }
+        }, 50);
+    }
+
+    function completeReprocessing() {
+        const icon = document.getElementById('reprocessIcon');
+        const status = document.getElementById('progressStatus');
+        const sub = document.getElementById('progressSub');
+        const btn = document.getElementById('reprocessBtn');
+        
+        icon.classList.remove('animate-spin');
+        icon.innerText = "check_circle";
+        icon.classList.add('text-primary');
+        
+        status.innerText = "اكتملت المعالجة";
+        status.classList.add('text-primary');
+        sub.innerText = "تم تحويل ١٢ من أصل ١٤ سجل بنجاح";
+        
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            icon.innerText = "sync";
+            icon.classList.remove('text-primary');
+            status.innerText = "جاهز للبدء";
+            status.classList.remove('text-primary');
+            sub.innerText = "٢ سجل متبقي في الانتظار";
+            document.getElementById('progressCircle').style.strokeDashoffset = 377;
+        }, 3000);
+    }
+</script>
+</body></html>

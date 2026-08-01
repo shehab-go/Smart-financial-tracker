@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CapitalCore - Smart Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #f6faff;
+            color: #141d23;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e6eff8;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+        .glass-card-primary {
+            background: linear-gradient(135deg, #bd001b 0%, #e61d2b 100%);
+            border: 1px solid rgba(189, 0, 27, 0.1);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glow-red {
+            box-shadow: 0 10px 25px rgba(189, 0, 27, 0.2);
+        }
+        .chart-glow {
+            filter: drop-shadow(0 0 4px rgba(189, 0, 27, 0.3));
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 4s infinite ease-in-out;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#454749",
+                        "surface-container-highest": "#dbe4ed",
+                        "primary-fixed-dim": "#ffb3ad",
+                        "on-secondary-container": "#636467",
+                        "surface-variant": "#dbe4ed",
+                        "surface-bright": "#f6faff",
+                        "tertiary-container": "#737678",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#c6c6c9",
+                        "on-secondary-fixed": "#1a1c1e",
+                        "on-primary-fixed": "#410004",
+                        "on-primary-container": "#fffdff",
+                        "primary": "#bd001b",
+                        "background": "#f6faff",
+                        "on-surface": "#141d23",
+                        "surface": "#f6faff",
+                        "on-tertiary-fixed": "#191c1e",
+                        "on-tertiary-container": "#fffeff",
+                        "on-surface-variant": "#5d3f3d",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "on-primary-fixed-variant": "#930012",
+                        "tertiary": "#5a5d5f",
+                        "inverse-surface": "#293138",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#c0001b",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#d2dbe4",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#e6eff8",
+                        "outline-variant": "#e7bdb9",
+                        "secondary-container": "#e2e2e5",
+                        "on-background": "#141d23",
+                        "inverse-on-surface": "#e9f2fb",
+                        "secondary-fixed": "#e2e2e5",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#e61d2b",
+                        "surface-container-low": "#ecf5fe",
+                        "secondary": "#5d5e61",
+                        "outline": "#926e6b",
+                        "primary-fixed": "#ffdad7",
+                        "tertiary-fixed-dim": "#c4c7c9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "12px",
+                        "margin-mobile": "20px",
+                        "stack-md": "24px",
+                        "gutter": "16px",
+                        "margin-desktop": "40px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["Be Vietnam Pro", "IBM Plex Sans Arabic"],
+                        "headline-sm": ["Be Vietnam Pro", "IBM Plex Sans Arabic"],
+                        "headline-lg-mobile": ["Be Vietnam Pro", "IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["Be Vietnam Pro", "IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background selection:bg-primary selection:text-on-primary">
+<!-- Top App Bar -->
+<header class="flex justify-between items-center w-full px-margin-mobile h-16 sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-surface-container shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1XJV8mbw2E5ZUTXAfDxvZD5pTD6Y955-eW_remwBcpVoWixCoJboqPL0n1kxhilYRibMweE67cyOQCLc4icfXPgzK36Rpux1Fp16OW3Y3qFiTrrEcz-zWjwwfwQgPykkBcjVfV_tvpWruyd5jwWWi74kgl-iEz8QSXfiY8t2UDaiqZgMKAzvbh6UaJOgXQpfZ6E_9XX8O-cRJyiy0do8HrzbvVd41A5-yWjOyS4CX6V3CHz69wHHhUWvTHAHPH1DF57AejZ5p_Ho"/>
+</div>
+<div>
+<p class="font-label-lg text-label-lg text-secondary">مرحباً، سامي</p>
+</div>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-primary">CapitalCore</h1>
+<button class="material-symbols-outlined text-primary hover:bg-primary/5 transition-colors p-2 rounded-full active:scale-95">
+        notifications
+    </button>
+</header>
+<main class="pb-24 pt-6">
+<!-- Dashboard Header -->
+<section class="px-margin-mobile mb-8">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">لوحة التحكم الذكية</h2>
+<div class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+<span class="font-label-sm text-label-sm">تحديث مباشر بدون سحب</span>
+</div>
+</section>
+<!-- Horizontal Wallet Carousel -->
+<section class="mb-10 relative overflow-hidden">
+<div class="flex overflow-x-auto gap-4 px-margin-mobile pb-4 hide-scrollbar snap-x snap-mandatory">
+<!-- Card 1: Vibrant Red (New Accent) -->
+<div class="snap-center shrink-0 w-[85%] md:w-96 glass-card-primary p-6 rounded-2xl relative overflow-hidden glow-red">
+<div class="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-3xl animate-pulse-slow"></div>
+<div class="flex justify-between items-start mb-10">
+<span class="material-symbols-outlined text-white text-3xl">account_balance_wallet</span>
+<span class="font-label-lg text-label-lg bg-white/20 text-white px-3 py-1 rounded-full">تلقائي</span>
+</div>
+<p class="font-label-lg text-label-lg text-white/80 mb-1">رصيد جيب التلقائي</p>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-white">450,230</span>
+<span class="font-label-lg text-label-lg text-white/60">ر.ي</span>
+</div>
+</div>
+<!-- Card 2: Clean White with Red Accents -->
+<div class="snap-center shrink-0 w-[85%] md:w-96 glass-card p-6 rounded-2xl border-primary-fixed bg-white">
+<div class="flex justify-between items-start mb-10">
+<span class="material-symbols-outlined text-primary text-3xl">payments</span>
+<span class="font-label-lg text-label-lg bg-surface-container text-secondary px-3 py-1 rounded-full">يدوي</span>
+</div>
+<p class="font-label-lg text-label-lg text-secondary mb-1">رصيد الكاش اليدوي</p>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-on-surface">12,500</span>
+<span class="font-label-lg text-label-lg text-outline">ر.ي</span>
+</div>
+</div>
+<!-- Card 3: Light Surface Container -->
+<div class="snap-center shrink-0 w-[85%] md:w-96 glass-card p-6 rounded-2xl bg-surface-container/50 border-surface-container-highest">
+<div class="flex justify-between items-start mb-10">
+<span class="material-symbols-outlined text-secondary text-3xl">account_balance</span>
+<span class="font-label-lg text-label-lg bg-surface-container text-secondary px-3 py-1 rounded-full">شامل</span>
+</div>
+<p class="font-label-lg text-label-lg text-secondary mb-1">الرؤية الموحدة - الإجمالي</p>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-on-surface">462,730</span>
+<span class="font-label-lg text-label-lg text-outline">ر.ي</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Reactive Analytics Section -->
+<section class="px-margin-mobile mb-10">
+<div class="glass-card p-6 rounded-3xl bg-white overflow-hidden relative shadow-sm border border-surface-container">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-on-surface">تحليل المصروفات</h3>
+<div class="flex gap-2">
+<span class="w-3 h-3 rounded-full bg-primary chart-glow"></span>
+<span class="w-3 h-3 rounded-full bg-secondary"></span>
+</div>
+</div>
+<!-- Updated Chart Mockup to match new palette -->
+<div class="h-48 flex items-end justify-between gap-2 mb-6">
+<div class="flex-1 bg-surface-container-highest rounded-t-lg relative group transition-all" style="height: 40%;">
+<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-on-surface text-white px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">15%</div>
+</div>
+<div class="flex-1 bg-secondary/30 rounded-t-lg relative group" style="height: 65%;">
+<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-secondary text-white px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">28%</div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t-lg relative group" style="height: 85%;">
+<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-primary text-white px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">42%</div>
+<div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(189,0,27,0.5)]"></div>
+</div>
+<div class="flex-1 bg-tertiary/20 rounded-t-lg relative group" style="height: 30%;">
+<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-tertiary text-white px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">12%</div>
+</div>
+<div class="flex-1 bg-primary-fixed-dim rounded-t-lg relative group" style="height: 50%;">
+<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-primary text-white px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">22%</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-error animate-pulse"></div>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-medium">تنبيه: إنفاق عالي (تعليم)</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-medium">نمو الدخل: +12%</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Transaction Feed -->
+<section class="px-margin-mobile">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-on-surface">آخر المعاملات</h3>
+<button class="text-primary font-label-lg text-label-lg">عرض الكل</button>
+</div>
+<div class="space-y-4">
+<!-- Transaction Item 1 -->
+<div class="glass-card p-4 rounded-2xl flex items-center justify-between hover:bg-surface-container-low transition-colors cursor-pointer bg-white border border-surface-container">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">smartphone</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface">Yemen Mobile</p>
+<p class="font-label-sm text-label-sm text-outline">شحن رصيد - تلقائي</p>
+</div>
+</div>
+<div class="text-left">
+<p class="font-body-md text-body-md font-bold text-error">- 2,500</p>
+<p class="font-label-sm text-label-sm text-outline">١٢:٤٠ م</p>
+</div>
+</div>
+<!-- Transaction Item 2 -->
+<div class="glass-card p-4 rounded-2xl flex items-center justify-between hover:bg-surface-container-low transition-colors cursor-pointer bg-white border border-surface-container border-r-4 border-r-error">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-error-container flex items-center justify-center text-error">
+<span class="material-symbols-outlined">school</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface">University Fees</p>
+<p class="font-label-sm text-label-sm text-outline">رسوم دراسية - يدوي</p>
+</div>
+</div>
+<div class="text-left">
+<p class="font-body-md text-body-md font-bold text-error">- 85,000</p>
+<p class="font-label-sm text-label-sm text-outline">أمس</p>
+</div>
+</div>
+<!-- Transaction Item 3 -->
+<div class="glass-card p-4 rounded-2xl flex items-center justify-between hover:bg-surface-container-low transition-colors cursor-pointer bg-white border border-surface-container border-r-4 border-r-secondary">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">south_west</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface">حوالة واردة</p>
+<p class="font-label-sm text-label-sm text-outline">من: محمد العبسي</p>
+</div>
+</div>
+<div class="text-left">
+<p class="font-body-md text-body-md font-bold text-secondary">+ 150,000</p>
+<p class="font-label-sm text-label-sm text-outline">أمس</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-base h-20 bg-white/95 backdrop-blur-2xl border-t border-surface-container shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-primary font-bold bg-primary-fixed/30 rounded-full px-4 py-1 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary px-4 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallets</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary px-4 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+<span class="font-label-sm text-label-sm">Ledger</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary px-4 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="font-label-sm text-label-sm">Admin</span>
+</a>
+</nav>
+<!-- Interactive Layer -->
+<script>
+    // Simulate real-time data pulses
+    setInterval(() => {
+        const chartBars = document.querySelectorAll('.group div[style]');
+        chartBars.forEach(bar => {
+            const currentHeight = parseInt(bar.style.height);
+            const variance = Math.floor(Math.random() * 5) - 2;
+            bar.style.height = Math.max(10, Math.min(95, currentHeight + variance)) + '%';
+        });
+    }, 3000);
+
+    // Visual feedback for glass cards
+    document.querySelectorAll('.glass-card').forEach(card => {
+        card.addEventListener('touchstart', () => {
+            card.style.transform = 'scale(0.98)';
+            card.style.transition = 'transform 0.1s ease';
+        });
+        card.addEventListener('touchend', () => {
+            card.style.transform = 'scale(1)';
+        });
+    });
+</script>
+</body></html>

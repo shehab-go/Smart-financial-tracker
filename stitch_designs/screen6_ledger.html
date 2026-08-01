@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', 'Be Vietnam Pro', sans-serif;
+            background-color: #f6faff;
+            color: #141d23;
+        }
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e0e9f2;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+        }
+        .glass-card-bright {
+            background: #ffffff;
+            border: 1px solid #bd001b33;
+            box-shadow: 0 8px 32px rgba(189, 0, 27, 0.08);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glow-green { box-shadow: 0 4px 20px rgba(74, 163, 72, 0.1); }
+        .glow-red { box-shadow: 0 4px 20px rgba(189, 0, 27, 0.1); }
+        .drag-handle:active { cursor: grabbing; scale: 0.98; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#454749",
+                        "surface-container-highest": "#dbe4ed",
+                        "primary-fixed-dim": "#ffb3ad",
+                        "on-secondary-container": "#636467",
+                        "surface-variant": "#dbe4ed",
+                        "surface-bright": "#f6faff",
+                        "tertiary-container": "#737678",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#c6c6c9",
+                        "on-secondary-fixed": "#1a1c1e",
+                        "on-primary-fixed": "#410004",
+                        "on-primary-container": "#fffdff",
+                        "primary": "#bd001b",
+                        "background": "#f6faff",
+                        "on-surface": "#141d23",
+                        "surface": "#f6faff",
+                        "on-tertiary-fixed": "#191c1e",
+                        "on-tertiary-container": "#fffeff",
+                        "on-surface-variant": "#5d3f3d",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "on-primary-fixed-variant": "#930012",
+                        "tertiary": "#2e7d32",
+                        "inverse-surface": "#293138",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#c0001b",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#d2dbe4",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#e6eff8",
+                        "outline-variant": "#e7bdb9",
+                        "secondary-container": "#e2e2e5",
+                        "on-background": "#141d23",
+                        "inverse-primary": "#ffb3ad",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#e0e3e5",
+                        "surface-container-high": "#e0e9f2",
+                        "inverse-on-surface": "#e9f2fb",
+                        "secondary-fixed": "#e2e2e5",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#e61d2b",
+                        "surface-container-low": "#ecf5fe",
+                        "secondary": "#5d5e61",
+                        "outline": "#926e6b",
+                        "primary-fixed": "#ffdad7",
+                        "tertiary-fixed-dim": "#c4c7c9"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "stack-sm": "12px",
+                        "margin-mobile": "20px",
+                        "stack-md": "24px",
+                        "gutter": "16px",
+                        "margin-desktop": "40px",
+                        "base": "8px"
+                    },
+                    fontFamily: {
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["Be Vietnam Pro", "IBM Plex Sans Arabic"],
+                        "headline-sm": ["Be Vietnam Pro", "IBM Plex Sans Arabic"],
+                        "headline-lg-mobile": ["Be Vietnam Pro", "IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["Be Vietnam Pro", "IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"]
+                    },
+                    fontSize: {
+                        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen overflow-x-hidden">
+<!-- Top AppBar -->
+<nav class="flex justify-between items-center w-full px-margin-mobile h-16 sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container-high shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-primary/20">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzwnAmFoq5Ce03q9bCVIkOHTJrC8k3dnwDgJeHazuH3W5uKzPUOoTUnklJilYGV-VyY6qZN7rNfg8AmpmzSRyzoyKdXmr-fZ2H1njKTxlgHLfh5WnP8f6h0RUbpwdof2AWSj-BLbpkzPqCxI0ABsUP_CWZoIfPkhZ6rKTLJ1pUGFSTXW2ouzsiEZH7vm8KTTyiMV3IRz1pV54U6NxaixNEk6osaw_WmIifMuvYWW4R2TQf0mOK-GE_eyR1NQTfilGc8INrvGKNn04"/>
+</div>
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">CapitalCore</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors">search</button>
+</div>
+</nav>
+<main class="px-margin-mobile pt-6 pb-32 max-w-4xl mx-auto space-y-8">
+<!-- Debt Equilibrium Index -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Receivable (لي عند الناس) -->
+<div class="glass-card p-6 rounded-xl glow-green relative overflow-hidden group transition-transform hover:translate-y-[-2px]">
+<div class="absolute top-0 right-0 w-32 h-32 bg-tertiary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-tertiary/10 transition-all"></div>
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-lg text-label-lg text-tertiary">مستحقات (لي)</span>
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">arrow_downward</span>
+</div>
+<div class="font-headline-lg text-headline-lg-mobile text-on-surface mb-1">12,450.00 ر.س</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">من 8 أشخاص</div>
+<div class="mt-4 h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-3/4"></div>
+</div>
+<div class="mt-4 text-left">
+<span class="font-label-sm text-label-sm text-on-tertiary bg-tertiary px-3 py-1 rounded-full">لي عند الناس</span>
+</div>
+</div>
+<!-- Payable (عليّ للناس) -->
+<div class="glass-card p-6 rounded-xl glow-red relative overflow-hidden group transition-transform hover:translate-y-[-2px]">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary/10 transition-all"></div>
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-lg text-label-lg text-primary">التزامات (علي)</span>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">arrow_upward</span>
+</div>
+<div class="font-headline-lg text-headline-lg-mobile text-on-surface mb-1">4,200.00 ر.س</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">لـ 3 أشخاص</div>
+<div class="mt-4 h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-1/4"></div>
+</div>
+<div class="mt-4 text-left">
+<span class="font-label-sm text-label-sm text-on-primary bg-primary px-3 py-1 rounded-full">عَليّ للناس</span>
+</div>
+</div>
+</section>
+<!-- Intent-Aware Prompt (Floating) -->
+<section class="glass-card-bright p-5 rounded-2xl border-primary/20 relative z-40 transition-all duration-500 shadow-xl" id="intent-prompt">
+<div class="flex items-start gap-4">
+<div class="bg-primary/10 p-3 rounded-xl">
+<span class="material-symbols-outlined text-primary text-3xl">psychology_alt</span>
+</div>
+<div class="flex-1 space-y-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">اكتشاف معاملة جديدة</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">تحويل Jeeb بقيمة <span class="text-primary font-bold">500 ر.س</span> إلى <span class="text-on-surface font-bold">سلطان أحمد</span>.</p>
+<p class="font-label-lg text-label-lg text-primary pt-2">هل هذه الحوالة سلف أم سداد؟</p>
+<div class="flex gap-3 pt-4">
+<button class="flex-1 bg-primary text-on-primary font-label-lg text-label-lg py-3 rounded-lg hover:bg-primary/90 transition-all active:scale-95 shadow-sm" onclick="dismissPrompt()">إقراض (سلف)</button>
+<button class="flex-1 bg-surface-container-high text-on-surface font-label-lg text-label-lg py-3 rounded-lg hover:bg-surface-variant transition-all active:scale-95" onclick="dismissPrompt()">سداد دين</button>
+</div>
+</div>
+<button class="material-symbols-outlined text-outline hover:text-on-surface p-1" onclick="dismissPrompt()">close</button>
+</div>
+</section>
+<!-- Timeline / Ledger -->
+<section class="space-y-4">
+<div class="flex justify-between items-end px-1">
+<h2 class="font-headline-md text-headline-md text-on-surface">سجل المعاملات الموحد</h2>
+<button class="font-label-lg text-label-lg text-primary flex items-center gap-1 hover:underline">
+<span>فلترة</span>
+<span class="material-symbols-outlined text-base">filter_list</span>
+</button>
+</div>
+<div class="space-y-3">
+<!-- Date Header -->
+<div class="font-label-sm text-label-sm text-outline px-1">اليوم، 24 أكتوبر</div>
+<!-- Timeline Item 1 -->
+<div class="glass-card p-4 rounded-xl flex items-center gap-4 group hover:bg-surface-container-low transition-colors cursor-pointer drag-handle">
+<div class="w-12 h-12 rounded-full flex items-center justify-center bg-tertiary/10">
+<span class="material-symbols-outlined text-tertiary">attach_money</span>
+</div>
+<div class="flex-1">
+<div class="font-label-lg text-label-lg text-on-surface">سعود فهد</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">دين نقدي يدوي</div>
+</div>
+<div class="text-left">
+<div class="font-label-lg text-label-lg text-tertiary font-bold">+1,200 ر.س</div>
+<div class="font-label-sm text-label-sm text-outline">مستحق لي</div>
+</div>
+<div class="px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-outline">drag_indicator</span>
+</div>
+</div>
+<!-- Timeline Item 2 -->
+<div class="glass-card p-4 rounded-xl flex items-center gap-4 group hover:bg-surface-container-low transition-colors cursor-pointer drag-handle">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-surface-container-high">
+<img alt="Contact" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTx_ggq6aOyUeu5_cW6cKhJPT1_vUJV_wiTf53ZryQb-pFbnfb9F7XercwTH7N-Ubyc2BaVe-XT4WORDojohZy1jBaqm5jPrZyI3fJtl9I6NtOFZVFXnn_Dou3hlFAKkxt3amWnf_AVLEH9QHcaOSBgm8-uNIxNf9oBgkOKvwMkyqwqG_R-jWbP60Yocjh7z_SvsIB_mhIDdxSLbIqrONZfEmj_XEqgFC_KTyM8YWUHKWSikfrtnvkG_X5jTlLwfOa82Tug0xdtww"/>
+</div>
+<div class="flex-1">
+<div class="font-label-lg text-label-lg text-on-surface">نورة الشمري</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary/40"></span>
+                            حوالة Jeeb
+                        </div>
+</div>
+<div class="text-left">
+<div class="font-label-lg text-label-lg text-primary font-bold">-350 ر.س</div>
+<div class="font-label-sm text-label-sm text-outline">عليّ سدادها</div>
+</div>
+<div class="px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-outline">drag_indicator</span>
+</div>
+</div>
+<!-- Date Header -->
+<div class="font-label-sm text-label-sm text-outline px-1 mt-6">أمس، 23 أكتوبر</div>
+<!-- Timeline Item 3 -->
+<div class="glass-card p-4 rounded-xl flex items-center gap-4 group hover:bg-surface-container-low transition-colors cursor-pointer drag-handle">
+<div class="w-12 h-12 rounded-full flex items-center justify-center bg-secondary-container">
+<span class="material-symbols-outlined text-secondary">payments</span>
+</div>
+<div class="flex-1">
+<div class="font-label-lg text-label-lg text-on-surface">أحمد منصور</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">قطية عشاء - نقد</div>
+</div>
+<div class="text-left">
+<div class="font-label-lg text-label-lg text-tertiary font-bold">+85 ر.س</div>
+<div class="font-label-sm text-label-sm text-outline">تم الاستلام</div>
+</div>
+<div class="px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Settlement Visualization (Drag & Drop Mock) -->
+<section class="glass-card p-6 rounded-2xl border-dashed border-outline/30 text-center bg-surface-container-low/50">
+<div class="mb-6">
+<span class="material-symbols-outlined text-4xl text-outline mb-2">handshake</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">تسوية سريعة</h3>
+<p class="font-label-lg text-label-lg text-on-surface-variant max-w-xs mx-auto">اسحب معاملة من السجل هنا لإغلاقها أو مطابقتها مع تحويل بنكي</p>
+</div>
+<div class="h-24 border-2 border-dashed border-primary/20 rounded-xl flex items-center justify-center bg-primary/5 group hover:bg-primary/10 transition-all cursor-pointer">
+<span class="font-label-lg text-label-lg text-primary/60 group-hover:text-primary">أفلت المعاملة هنا للتسوية</span>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 h-20 bg-white/90 backdrop-blur-2xl border-t border-surface-container-high shadow-lg rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">المحفظة</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold bg-primary/10 rounded-xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<span class="font-label-sm text-label-sm">الدفتر</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span class="font-label-sm text-label-sm">الإدارة</span>
+</a>
+</nav>
+<script>
+        function dismissPrompt() {
+            const prompt = document.getElementById('intent-prompt');
+            prompt.style.opacity = '0';
+            prompt.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                prompt.style.display = 'none';
+            }, 500);
+        }
+
+        // Basic Drag Visualization simulation
+        const draggables = document.querySelectorAll('.drag-handle');
+        draggables.forEach(item => {
+            item.addEventListener('touchstart', () => {
+                item.style.scale = '0.98';
+                item.style.backgroundColor = '#ecf5fe';
+            });
+            item.addEventListener('touchend', () => {
+                item.style.scale = '1';
+                item.style.backgroundColor = '';
+            });
+        });
+    </script>
+</body></html>
