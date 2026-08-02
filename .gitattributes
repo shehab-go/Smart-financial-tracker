@@ -1,0 +1,7 @@
+# Mark documentation and assets to be excluded from language statistics
+docs/* linguist-documentation
+.github/assets/* linguist-vendored
+*.svg linguist-vendored
+*.md linguist-documentation
+*.yml linguist-vendored
+*.kts linguist-vendored
