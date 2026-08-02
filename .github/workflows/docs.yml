@@ -27,6 +27,9 @@ jobs:
       - name: Build Documentation (Dokka)
         run: ./gradlew dokkaHtml
 
+      - name: Disable Jekyll
+        run: touch build/dokka/html/.nojekyll
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:

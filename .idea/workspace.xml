@@ -9,13 +9,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5b9c2e71-03ab-4fe7-a28e-7e4928bea6b4" name="Changes" comment="Update IDE workspace configuration and switch active branch to master.&#10;&#10;- Updated the `git-widget-placeholder` in `.idea/workspace.xml` to reflect a switch from the `add-new-feat` branch to `master`.&#10;- Cleaned up internal IDE change list metadata and pending file states in the workspace configuration.">
-      <change afterPath="$PROJECT_DIR$/.github/ISSUE_TEMPLATE/bug_report.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/ISSUE_TEMPLATE/config.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/ISSUE_TEMPLATE/feature_request.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.artifacts/108864c8-2c34-42be-ad1c-10fd1eff109c/implementation_plan.artifact.md" beforeDir="false" afterPath="$PROJECT_DIR$/.artifacts/108864c8-2c34-42be-ad1c-10fd1eff109c/implementation_plan.artifact.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.artifacts/108864c8-2c34-42be-ad1c-10fd1eff109c/task.artifact.md" beforeDir="false" afterPath="$PROJECT_DIR$/.artifacts/108864c8-2c34-42be-ad1c-10fd1eff109c/task.artifact.md" afterDir="false" />
-    </list>
+    <list default="true" id="5b9c2e71-03ab-4fe7-a28e-7e4928bea6b4" name="Changes" comment="Update IDE workspace configuration and switch active branch to master.&#10;&#10;- Updated the `git-widget-placeholder` in `.idea/workspace.xml` to reflect a switch from the `add-new-feat` branch to `master`.&#10;- Cleaned up internal IDE change list metadata and pending file states in the workspace configuration." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
