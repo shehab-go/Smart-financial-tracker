@@ -9,5 +9,5 @@ data class UnparsedNotification(
     val packageName: String,
     val title: String,
     val text: String,
-    val timestamp: Long
+    val timestamp: Long,
 )

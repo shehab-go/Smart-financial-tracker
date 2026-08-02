@@ -20,15 +20,15 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
-    
+
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
-    
+
     publishing {
         singleVariant("release") {
             withSourcesJar()

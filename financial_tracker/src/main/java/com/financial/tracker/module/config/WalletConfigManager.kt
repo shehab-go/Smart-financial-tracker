@@ -39,13 +39,13 @@ object WalletConfigManager {
 
 internal data class WalletConfig(
     val packageName: String,
-    val rules: List<TransactionRule>
+    val rules: List<TransactionRule>,
 )
 
 internal data class TransactionRule(
     val transactionType: String,
     val identifierRegex: String,
-    val parsers: TransactionParsers
+    val parsers: TransactionParsers,
 )
 
 internal data class TransactionParsers(
@@ -53,5 +53,5 @@ internal data class TransactionParsers(
     val currency: String,
     val counterpart: String,
     val referenceId: String,
-    val balance: String? = null
+    val balance: String? = null,
 )

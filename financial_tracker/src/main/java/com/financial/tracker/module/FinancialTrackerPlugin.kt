@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.collectLatest
  * Exposes MethodChannel and EventChannel for seamless Flutter integration.
  */
 class FinancialTrackerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, EventChannel.StreamHandler {
-
     private companion object {
         const val METHOD_CHANNEL_NAME = "com.ramzi.debit_credit_app/financial_tracker"
         const val EVENT_CHANNEL_NAME = "com.ramzi.debit_credit_app/financial_tracker_events"
@@ -49,7 +48,10 @@ class FinancialTrackerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, E
         scope.cancel()
     }
 
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+    override fun onMethodCall(
+        call: MethodCall,
+        result: MethodChannel.Result,
+    ) {
         val currentContext = context
         if (currentContext == null) {
             result.error("NO_CONTEXT", "Application context is null", null)
@@ -58,9 +60,10 @@ class FinancialTrackerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, E
 
         when (call.method) {
             "requestNotificationPermission" -> {
-                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
+                val intent =
+                    Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
                 currentContext.startActivity(intent)
                 result.success(true)
             }
@@ -72,9 +75,10 @@ class FinancialTrackerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, E
             "getAllTransactions" -> {
                 scope.launch {
                     val transactions = FinancialTrackerClient.getAllTransactions(currentContext)
-                    val json = withContext(Dispatchers.Default) {
-                        gson.toJson(transactions)
-                    }
+                    val json =
+                        withContext(Dispatchers.Default) {
+                            gson.toJson(transactions)
+                        }
                     result.success(json)
                 }
             }
@@ -101,7 +105,7 @@ class FinancialTrackerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, E
                 val title = call.argument<String>("title") ?: ""
                 val text = call.argument<String>("text") ?: ""
                 val customConfig = call.argument<String>("customConfigJson")
-                
+
                 val parsedTx = FinancialTrackerClient.testParser(packageName, title, text, customConfig)
                 if (parsedTx != null) {
                     result.success(gson.toJson(parsedTx))
@@ -113,16 +117,21 @@ class FinancialTrackerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, E
         }
     }
 
-    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+    override fun onListen(
+        arguments: Any?,
+        events: EventChannel.EventSink?,
+    ) {
         streamJob?.cancel()
-        streamJob = scope.launch {
-            FinancialTrackerClient.transactionFlow.collectLatest { transaction ->
-                val json = withContext(Dispatchers.Default) {
-                    gson.toJson(transaction)
+        streamJob =
+            scope.launch {
+                FinancialTrackerClient.transactionFlow.collectLatest { transaction ->
+                    val json =
+                        withContext(Dispatchers.Default) {
+                            gson.toJson(transaction)
+                        }
+                    events?.success(json)
                 }
-                events?.success(json)
             }
-        }
     }
 
     override fun onCancel(arguments: Any?) {
