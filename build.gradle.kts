@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
     alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.dokka)
 }
 
 allprojects {

@@ -9,6 +9,7 @@
   <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/Version-1.1.0-green.svg" alt="Version">
   <img src="https://img.shields.io/badge/Platform-Android-orange.svg" alt="Platform">
+  <a href="https://shehab-go.github.io/smart-financial-tracker"><img src="https://img.shields.io/badge/API-Reference-blue" alt="API Reference"></a>
 </p>
 
 <p align="center">
@@ -75,6 +76,7 @@ client.startListening()
 
 ### 📚 Documentation
 For more detailed information, check our technical guides:
+- [📖 API Reference](https://shehab-go.github.io/smart-financial-tracker)
 - [Technical Architecture](docs/architecture.md)
 - [Security Deep Dive](docs/security-deep-dive.md)
 - [Regional Support (Yemen & Gulf)](docs/regional-support.md)
@@ -112,6 +114,7 @@ client.startListening()
 
 ### 📚 التوثيق التقني
 لمزيد من المعلومات التفصيلية، يرجى مراجعة الأدلة التقنية التالية:
+- [📖 مرجع الـ API (التوثيق البرمجي)](https://shehab-go.github.io/smart-financial-tracker)
 - [الهندسة البرمجية للمشروع](docs/architecture.md)
 - [دليل الأمان المتعمق](docs/security-deep-dive.md)
 - [الدعم الإقليمي (اليمن والخليج)](docs/regional-support.md)

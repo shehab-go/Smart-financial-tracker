@@ -1,11 +1,11 @@
-- [ ] **Gradle Modernization & Detekt Setup**
-    - [ ] Update `libs.versions.toml` (centralized versioning + Detekt)
-    - [ ] Configure Detekt in root `build.gradle.kts`
-    - [ ] Update library `build.gradle.kts` metadata
-    - [ ] Create `config/detekt/detekt.yml`
-- [ ] **Mock Transaction Simulator**
-    - [ ] Implement `MockTransactionSimulator.kt` logic
-    - [ ] Update `DashboardScreen.kt` UI with Simulator FAB
+- [ ] **Dokka Setup & Configuration**
+    - [ ] Update `libs.versions.toml` with Dokka
+    - [ ] Apply Dokka in root `build.gradle.kts`
+    - [ ] Configure Dokka in `financial_tracker/build.gradle.kts`
+- [ ] **Documentation Automation**
+    - [ ] Create `.github/workflows/docs.yml` for GitHub Pages deployment
+- [ ] **Integration**
+    - [ ] Update `README.md` with API Reference link
 - [ ] **Verification**
-    - [ ] Run `./gradlew detekt`
-    - [ ] Build and verify sample app simulator
+    - [ ] Run `./gradlew dokkaHtml` locally
+    - [ ] Git push

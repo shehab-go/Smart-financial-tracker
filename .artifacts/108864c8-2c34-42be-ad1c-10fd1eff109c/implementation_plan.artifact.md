@@ -1,37 +1,37 @@
-# Final Mastery: Simulation & Advanced Quality Plan
+# Professional Documentation Site (Dokka) Implementation Plan
 
-This plan aims to reach "Absolute Perfection" by adding a transaction simulator for developers and advanced code analysis tools.
+Transform the library's KDoc comments into a professional, searchable, and interactive HTML documentation site using **Dokka** (the official documentation engine for Kotlin).
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Simulator Behavior**: The simulator will generate "Fake" transaction events that look like real bank notifications (STC Pay, mFloos, etc.) to showcase how the library parses and displays them instantly.
+> **GitHub Pages Integration**: The documentation will be automatically generated and hosted on **GitHub Pages**. This means anyone can access your library's API reference via a URL like `https://shehab-go.github.io/smart-financial-tracker`.
+
+> [!NOTE]
+> **KDoc Standard**: I will perform a final review of the KDoc in the `:financial_tracker` module to ensure the generated site looks complete and professional.
 
 ## Proposed Changes
 
-### 1. Developer Experience: Mock Simulator
-- **[MODIFY] [app/src/main/java/com/shehabgo/sample/ui/DashboardScreen.kt](file:///E:/Smartfinancialtracker/app/src/main/java/com/shehabgo/sample/ui/DashboardScreen.kt)**:
-    - Add a Floating Action Button (FAB) with a "Magic Wand" icon.
-    - When clicked, it opens a small menu to choose a "Mock Bank" (e.g., STC Pay, Alkuraimi).
-- **[NEW] [app/src/main/java/com/shehabgo/sample/simulator/MockTransactionSimulator.kt](file:///E:/Smartfinancialtracker/app/src/main/java/com/shehabgo/sample/simulator/MockTransactionSimulator.kt)**:
-    - Logic to trigger `FinancialTrackerClient.testParser()` with hardcoded bank SMS strings and emit them to the UI flow.
+### 1. Build Configuration
+- **[MODIFY] [libs.versions.toml](file:///E:/Smartfinancialtracker/gradle/libs.versions.toml)**: Add Dokka plugin version (`2.2.0`) and alias.
+- **[MODIFY] [build.gradle.kts](file:///E:/Smartfinancialtracker/build.gradle.kts)**: Apply the Dokka plugin globally to enable multi-module documentation support.
+- **[MODIFY] [financial_tracker/build.gradle.kts](file:///E:/Smartfinancialtracker/financial_tracker/build.gradle.kts)**: Configure Dokka specifically for the library module (set module name, output directory, etc.).
 
-### 2. Advanced Code Quality: Detekt
-- **[MODIFY] [libs.versions.toml](file:///E:/Smartfinancialtracker/gradle/libs.versions.toml)**: Add `detekt` version and plugin.
-- **[MODIFY] [build.gradle.kts](file:///E:/Smartfinancialtracker/build.gradle.kts)**:
-    - Apply Detekt plugin to all projects.
-    - Configure Detekt to fail on complex code or security smells.
-- **[NEW] [config/detekt/detekt.yml](file:///E:/Smartfinancialtracker/config/detekt/detekt.yml)**: Custom rules for the project.
+### 2. Automation (CI/CD)
+- **[NEW] [.github/workflows/docs.yml](file:///E:/Smartfinancialtracker/.github/workflows/docs.yml)**: A new GitHub Action that:
+    - Triggers on every push to `master`.
+    - Generates the Dokka HTML documentation.
+    - Deploys the result to the `gh-pages` branch.
 
-### 3. Gradle Modernization
-- **[MODIFY] [libs.versions.toml](file:///E:/Smartfinancialtracker/gradle/libs.versions.toml)**: Add `libraryVersion = "1.1.0"` and `libraryGroup = "com.github.shehab-go"`.
-- **[MODIFY] [financial_tracker/build.gradle.kts](file:///E:/Smartfinancialtracker/financial_tracker/build.gradle.kts)**: Use the centralized versioning from TOML.
+### 3. Discoverability
+- **[MODIFY] [README.md](file:///E:/Smartfinancialtracker/README.md)**: Add a "API Reference" link at the top and in the Documentation section pointing to the GitHub Pages URL.
 
 ## Verification Plan
 
 ### Automated Tests
-- Run `./gradlew detekt` to find logic flaws.
-- Run `./gradlew build` to ensure the new simulator code compiles correctly.
+- Run `./gradlew dokkaHtml` locally to verify that the HTML files are generated correctly in the `build/dokka/html` directory.
+- Verify the syntax of the new `docs.yml` workflow.
 
 ### Manual Verification
-- Open the Sample App, click the FAB, and verify that selecting a bank adds a "Success" transaction to the list instantly.
+- Open the generated `index.html` in a browser to check the visual quality and navigation.
+- Ensure all public classes (`FinancialTrackerClient`, `FinancialTransaction`) are properly documented.
