@@ -1,31 +1,32 @@
-# GitHub Packages Integration Plan
+# Visual Branding & Professional Presentation Plan
 
-Enable automated publishing of the library to **GitHub Packages**, allowing developers to include your library in their projects using a standard Maven dependency.
+This plan focuses on the "visual appeal" of the repository, adding logos, banners, and structured demo sections to the README to make it look like a top-tier open-source project.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Dependency ID**: The library will be published under:
-> `com.github.shehab-go:wallet-events:1.1.0`
-> This means other developers will need to authenticate with GitHub to download it, which is standard for GitHub Packages.
+> **Recording the Demo**: I cannot record your screen or generate real GIFs of the app running. I will provide the **placeholders** and the **technical guide** on how to record your app and save the GIF into the folder I will create.
 
 ## Proposed Changes
 
-### 1. Build Configuration
-- **[MODIFY] [financial_tracker/build.gradle.kts](file:///E:/Smartfinancialtracker/financial_tracker/build.gradle.kts)**:
-    - Add a `repositories` block inside `publishing`.
-    - Configure the GitHub Maven repository with environment variables for credentials.
+### 1. Repository Assets
+- **[NEW] Directory `.github/assets/`**: A dedicated place for logos, screenshots, and GIFs.
+- **[NEW] [logo.svg](file:///E:/Smartfinancialtracker/.github/assets/logo.svg)**: A professional, minimalist vector logo for the project.
+- **[NEW] [banner.png placeholder]**: I will create a guide for creating a professional banner.
 
-### 2. Workflow Automation
-- **[MODIFY] [.github/workflows/release.yml](file:///E:/Smartfinancialtracker/.github/workflows/release.yml)**:
-    - Add `packages: write` permission to the job.
-    - Add a step to execute `./gradlew publish` during the release process.
-    - Pass `GITHUB_ACTOR` and `GITHUB_TOKEN` to the Gradle environment.
+### 2. README Visual Overhaul
+- **[MODIFY] [README.md](file:///E:/Smartfinancialtracker/README.md)**:
+    - Add a centered **Header** with the logo.
+    - Add a **Screenshots** section using a responsive grid (Markdown tables) for:
+        - Permission Screen.
+        - Dashboard (Light/Dark mode).
+    - Add an **Animated Demo** section for the transition from notification to app.
+
+### 3. Social Media Optimization
+- **Guide**: How to set the "Social Preview" image so that when you share the link on Twitter/LinkedIn, it looks professional with the project banner.
 
 ## Verification Plan
 
-### Automated Tests
-- Run `./gradlew :financial_tracker:publishReleasePublicationToGitHubPackagesRepository` (locally it might fail without local ENV vars, but the syntax will be checked).
-
 ### Manual Verification
-- Once a new tag is pushed, verify that the "Packages" section on the GitHub repository home page shows the new package.
+- View the `README.md` preview to ensure the layout is clean and professional.
+- Verify that all asset paths are correct and will work once pushed to GitHub.

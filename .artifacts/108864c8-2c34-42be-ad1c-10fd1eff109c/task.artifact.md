@@ -1,6 +1,11 @@
-- [x] **GitHub Packages Integration**
-    - [x] Update `financial_tracker/build.gradle.kts` with repository info
-    - [x] Update `.github/workflows/release.yml` with publish step
+- [x] **Repository Assets**
+    - [x] Create `.github/assets/` directory
+    - [x] Create `logo.svg`
+- [x] **README Visual Overhaul**
+    - [x] Add centered header with logo
+    - [x] Add screenshots grid section
+    - [x] Add animated demo placeholder
+- [x] **User Guide**
+    - [x] Create `visual_guide.md` in `.github/assets/` for screenshots/GIFs
 - [x] **Verification**
-    - [x] Final build check (syntax check)
-    - [x] Git push
+    - [x] Verify README preview and links

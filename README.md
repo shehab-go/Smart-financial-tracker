@@ -1,10 +1,46 @@
-# Smart Financial Tracker
+<p align="center">
+  <img src=".github/assets/logo.svg" width="120" alt="Smart Financial Tracker Logo">
+</p>
 
-![Android CI](https://github.com/shehab-go/smart-financial-tracker/actions/workflows/android.yml/badge.svg)
-![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.1.0-green.svg)
+<h1 align="center">Smart Financial Tracker</h1>
+
+<p align="center">
+  <img src="https://github.com/shehab-go/smart-financial-tracker/actions/workflows/android.yml/badge.svg" alt="Android CI">
+  <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License">
+  <img src="https://img.shields.io/badge/Version-1.1.0-green.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Platform-Android-orange.svg" alt="Platform">
+</p>
+
+<p align="center">
+  <b>Professional Android library for secure, dynamic transaction parsing.</b><br>
+  Designed for speed, privacy, and extensive regional support (Yemen & Gulf).
+</p>
+
+---
 
 [English](#english) | [العربية](#arabic)
+
+---
+
+## 📱 Showcase
+
+<table align="center">
+  <tr>
+    <td align="center"><b>Dashboard (Light)</b></td>
+    <td align="center"><b>Dashboard (Dark)</b></td>
+    <td align="center"><b>Permission Guide</b></td>
+  </tr>
+  <tr>
+    <td><img src=".github/assets/dashboard_light.png" width="200" alt="Dashboard Light"></td>
+    <td><img src=".github/assets/dashboard_dark.png" width="200" alt="Dashboard Dark"></td>
+    <td><img src=".github/assets/permission_guide.png" width="200" alt="Permission Guide"></td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src=".github/assets/demo.gif" width="600" alt="Animated Demo">
+  <br><i>Real-time notification parsing in action.</i>
+</p>
 
 ---
 
@@ -71,6 +107,14 @@ dependencies {
 val client = FinancialTrackerClient(context)
 client.startListening()
 ```
+
+### 📚 التوثيق التقني
+لمزيد من المعلومات التفصيلية، يرجى مراجعة الأدلة التقنية التالية:
+- [الهندسة البرمجية للمشروع](docs/architecture.md)
+- [دليل الأمان المتعمق](docs/security-deep-dive.md)
+- [الدعم الإقليمي (اليمن والخليج)](docs/regional-support.md)
+- [دليل المساهمة التقنية للمطورين](docs/CONTRIBUTING_GUIDE.md)
+- [خارطة طريق المشروع](ROADMAP.md)
 
 ## 📄 License
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
