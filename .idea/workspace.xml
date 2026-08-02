@@ -9,20 +9,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5b9c2e71-03ab-4fe7-a28e-7e4928bea6b4" name="Changes" comment="Expand project documentation and establish a long-term roadmap.&#10;&#10;- Added `architecture.md` to document the library's event-driven flow, covering the notification listener service, dynamic parser engine, and reactive client API.&#10;- Created `security-deep-dive.md` detailing the implementation of AES-256 GCM encryption, Android KeyStore integration, and SHA-256 hashing for PII anonymization.&#10;- Introduced `ROADMAP.md` to outline future development phases, including AI-powered transaction classification, multi-bank presets, and cross-platform support.&#10;- Added `CONTRIBUTING_GUIDE.md` providing technical instructions for repository setup, adding new bank parser configurations, and enforcing code style via ktlint.&#10;- Updated `README.md` with a dedicated documentation section linking to the new technical guides and the project roadmap.&#10;- Refined internal project artifacts and task lists to reflect the completion of community engagement and technical documentation milestones.">
-      <change afterPath="$PROJECT_DIR$/.github/workflows/release.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/NOTICE" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/regional-support.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.artifacts/108864c8-2c34-42be-ad1c-10fd1eff109c/implementation_plan.artifact.md" beforeDir="false" afterPath="$PROJECT_DIR$/.artifacts/108864c8-2c34-42be-ad1c-10fd1eff109c/implementation_plan.artifact.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.artifacts/108864c8-2c34-42be-ad1c-10fd1eff109c/task.artifact.md" beforeDir="false" afterPath="$PROJECT_DIR$/.artifacts/108864c8-2c34-42be-ad1c-10fd1eff109c/task.artifact.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ROADMAP.md" beforeDir="false" afterPath="$PROJECT_DIR$/ROADMAP.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/financial_tracker/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/financial_tracker/src/main/java/com/financial/tracker/module/FinancialNotificationListener.kt" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/src/main/java/com/financial/tracker/module/FinancialNotificationListener.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/financial_tracker/src/main/java/com/financial/tracker/module/FinancialTrackerClient.kt" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/src/main/java/com/financial/tracker/module/FinancialTrackerClient.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/financial_tracker/src/main/java/com/financial/tracker/module/parser/DynamicParser.kt" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/src/main/java/com/financial/tracker/module/parser/DynamicParser.kt" afterDir="false" />
-    </list>
+    <list default="true" id="5b9c2e71-03ab-4fe7-a28e-7e4928bea6b4" name="Changes" comment="Expand project documentation and establish a long-term roadmap.&#10;&#10;- Added `architecture.md` to document the library's event-driven flow, covering the notification listener service, dynamic parser engine, and reactive client API.&#10;- Created `security-deep-dive.md` detailing the implementation of AES-256 GCM encryption, Android KeyStore integration, and SHA-256 hashing for PII anonymization.&#10;- Introduced `ROADMAP.md` to outline future development phases, including AI-powered transaction classification, multi-bank presets, and cross-platform support.&#10;- Added `CONTRIBUTING_GUIDE.md` providing technical instructions for repository setup, adding new bank parser configurations, and enforcing code style via ktlint.&#10;- Updated `README.md` with a dedicated documentation section linking to the new technical guides and the project roadmap.&#10;- Refined internal project artifacts and task lists to reflect the completion of community engagement and technical documentation milestones." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -114,7 +101,7 @@
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "add-new-feat",
+    "git-widget-placeholder": "master",
     "git.auto.fetch.suggestion.counter": "2",
     "io.flutter.project.isFirstOpen": "true",
     "kotlin-language-version-configured": "true",
