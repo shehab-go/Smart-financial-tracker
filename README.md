@@ -22,6 +22,7 @@
 
 ---
 
+<!--
 ## 📱 Showcase
 
 <table align="center">
@@ -43,6 +44,7 @@
 </p>
 
 ---
+-->
 
 <a name="english"></a>
 ## English
