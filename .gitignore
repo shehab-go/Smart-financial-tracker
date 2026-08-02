@@ -1,0 +1,28 @@
+# Built artifacts
+**/build/
+*.apk
+*.aar
+*.jks
+*.keystore
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.gradle/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+cmake-build-debug/
+cmake-build-release/
+output.json
+
+# Kotlin
+.kotlin/
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# Project specific
+.artifacts/
