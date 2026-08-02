@@ -61,7 +61,8 @@ internal object DynamicParser {
                 if (com.financial.tracker.module.FinancialTrackerClient.loggingEnabled) {
                     android.util.Log.i(
                         "WalletTracker",
-                        "✅ Parsed Successfully: \nAmount: $amount $currency\nType: ${rule.transactionType}\nCounterpart: $counterpart\nRef: $referenceId",
+                        "✅ Parsed Successfully: \nAmount: $amount $currency\n" +
+                            "Type: ${rule.transactionType}\nCounterpart: $counterpart\nRef: $referenceId",
                     )
                 }
 
@@ -70,7 +71,10 @@ internal object DynamicParser {
         }
 
         if (com.financial.tracker.module.FinancialTrackerClient.loggingEnabled) {
-            android.util.Log.w("WalletTracker", "❌ Failed to parse notification from $packageName. No matching rule found.")
+            android.util.Log.w(
+                "WalletTracker",
+                "❌ Failed to parse notification from $packageName. No matching rule found.",
+            )
         }
         return null
     }

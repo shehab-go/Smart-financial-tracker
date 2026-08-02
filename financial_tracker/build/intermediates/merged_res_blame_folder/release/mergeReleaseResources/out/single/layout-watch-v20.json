@@ -1,10 +1,10 @@
 [
     {
         "merged": "com.financial.tracker.module.financial_tracker-release-31:/layout-watch-v20/abc_alert_dialog_title_material.xml",
-        "source": "com.financial.tracker.module.financial_tracker-appcompat-1.7.0-25:/layout-watch-v20/abc_alert_dialog_title_material.xml"
+        "source": "com.financial.tracker.module.financial_tracker-appcompat-1.7.0-17:/layout-watch-v20/abc_alert_dialog_title_material.xml"
     },
     {
         "merged": "com.financial.tracker.module.financial_tracker-release-31:/layout-watch-v20/abc_alert_dialog_button_bar_material.xml",
-        "source": "com.financial.tracker.module.financial_tracker-appcompat-1.7.0-25:/layout-watch-v20/abc_alert_dialog_button_bar_material.xml"
+        "source": "com.financial.tracker.module.financial_tracker-appcompat-1.7.0-17:/layout-watch-v20/abc_alert_dialog_button_bar_material.xml"
     }
 ]

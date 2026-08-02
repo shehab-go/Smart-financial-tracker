@@ -4,7 +4,7 @@
             "outputFile": "com.financial.tracker.module.financial_tracker-mergeReleaseResources-29:/values-sw٦٠٠dp-v13/values-sw٦٠٠dp-v13.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\e9889310a1ddeb4ba7dafe36406417c7\\transformed\\appcompat-1.7.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
+                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\a66e52ee366d9800391cf724eb8e5a59\\transformed\\appcompat-1.7.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -14,7 +14,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\4be86b0b66d9e726504bc05237d1eca9\\transformed\\material-1.12.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
+                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\f5ec09bfdb86a2eec9a805b13548814a\\transformed\\material-1.12.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,10,11,12,13,14",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4",
@@ -38,7 +38,7 @@
             "outputFile": "com.financial.tracker.module.financial_tracker-release-31:/values-sw٦٠٠dp-v13/values-sw٦٠٠dp-v13.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\e9889310a1ddeb4ba7dafe36406417c7\\transformed\\appcompat-1.7.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
+                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\a66e52ee366d9800391cf724eb8e5a59\\transformed\\appcompat-1.7.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -48,7 +48,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\4be86b0b66d9e726504bc05237d1eca9\\transformed\\material-1.12.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
+                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\f5ec09bfdb86a2eec9a805b13548814a\\transformed\\material-1.12.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,10,11,12,13,14",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4",

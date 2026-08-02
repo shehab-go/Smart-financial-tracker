@@ -4,7 +4,7 @@
             "outputFile": "com.financial.tracker.module.financial_tracker-mergeReleaseResources-29:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\e9889310a1ddeb4ba7dafe36406417c7\\transformed\\appcompat-1.7.0\\res\\values-v16\\values-v16.xml",
+                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\a66e52ee366d9800391cf724eb8e5a59\\transformed\\appcompat-1.7.0\\res\\values-v16\\values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -20,7 +20,7 @@
             "outputFile": "com.financial.tracker.module.financial_tracker-release-31:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\e9889310a1ddeb4ba7dafe36406417c7\\transformed\\appcompat-1.7.0\\res\\values-v16\\values-v16.xml",
+                    "source": "C:\\Users\\hp\\.gradle\\caches\\8.11.1\\transforms\\a66e52ee366d9800391cf724eb8e5a59\\transformed\\appcompat-1.7.0\\res\\values-v16\\values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

@@ -1,10 +1,10 @@
 [
     {
         "merged": "com.financial.tracker.module.financial_tracker-release-31:/animator-v21/design_appbar_state_list_animator.xml",
-        "source": "com.financial.tracker.module.financial_tracker-material-1.12.0-9:/animator-v21/design_appbar_state_list_animator.xml"
+        "source": "com.financial.tracker.module.financial_tracker-material-1.12.0-26:/animator-v21/design_appbar_state_list_animator.xml"
     },
     {
         "merged": "com.financial.tracker.module.financial_tracker-release-31:/animator-v21/m3_appbar_state_list_animator.xml",
-        "source": "com.financial.tracker.module.financial_tracker-material-1.12.0-9:/animator-v21/m3_appbar_state_list_animator.xml"
+        "source": "com.financial.tracker.module.financial_tracker-material-1.12.0-26:/animator-v21/m3_appbar_state_list_animator.xml"
     }
 ]
