@@ -1,11 +1,11 @@
-- [x] **Repository Assets**
-    - [x] Create `.github/assets/` directory
-    - [x] Create `logo.svg`
-- [x] **README Visual Overhaul**
-    - [x] Add centered header with logo
-    - [x] Add screenshots grid section
-    - [x] Add animated demo placeholder
-- [x] **User Guide**
-    - [x] Create `visual_guide.md` in `.github/assets/` for screenshots/GIFs
-- [x] **Verification**
-    - [x] Verify README preview and links
+- [ ] **Gradle Modernization & Detekt Setup**
+    - [ ] Update `libs.versions.toml` (centralized versioning + Detekt)
+    - [ ] Configure Detekt in root `build.gradle.kts`
+    - [ ] Update library `build.gradle.kts` metadata
+    - [ ] Create `config/detekt/detekt.yml`
+- [ ] **Mock Transaction Simulator**
+    - [ ] Implement `MockTransactionSimulator.kt` logic
+    - [ ] Update `DashboardScreen.kt` UI with Simulator FAB
+- [ ] **Verification**
+    - [ ] Run `./gradlew detekt`
+    - [ ] Build and verify sample app simulator

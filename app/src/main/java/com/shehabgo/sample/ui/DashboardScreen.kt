@@ -16,9 +16,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,16 +30,22 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.financial.tracker.module.data.FinancialTransaction
+import com.shehabgo.sample.simulator.MockTransactionSimulator
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +53,9 @@ fun DashboardScreen(
     transactions: List<FinancialTransaction>,
     onOpenSettings: () -> Unit,
 ) {
+    val context = LocalContext.current
+    var showSimulatorMenu by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -53,6 +66,39 @@ fun DashboardScreen(
                     }
                 },
             )
+        },
+        floatingActionButton = {
+            Box {
+                FloatingActionButton(onClick = { showSimulatorMenu = true }) {
+                    Icon(Icons.Default.Star, contentDescription = "Simulate")
+                }
+                DropdownMenu(
+                    expanded = showSimulatorMenu,
+                    onDismissRequest = { showSimulatorMenu = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Simulate STC Pay") },
+                        onClick = {
+                            MockTransactionSimulator.simulateSTCPay(context)
+                            showSimulatorMenu = false
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Simulate mFloos") },
+                        onClick = {
+                            MockTransactionSimulator.simulateAlkuraimi(context)
+                            showSimulatorMenu = false
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Simulate UrPay") },
+                        onClick = {
+                            MockTransactionSimulator.simulateUrPay(context)
+                            showSimulatorMenu = false
+                        },
+                    )
+                }
+            }
         },
     ) { padding ->
         if (transactions.isEmpty()) {
