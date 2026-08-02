@@ -1,11 +1,12 @@
 plugins {
-    id("com.android.library")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     id("maven-publish")
 }
 
 android {
     namespace = "com.financial.tracker.module"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24
@@ -24,14 +25,21 @@ android {
         }
     }
     
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+    
     publishing {
         singleVariant("release") {
             withSourcesJar()
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 
@@ -48,6 +56,9 @@ dependencies {
 
     // Gson
     implementation(libs.gson)
+
+    // Flutter Embedding (compileOnly so host app provides it at runtime)
+    compileOnly(libs.flutter.embedding.release.v1008bf2090718fea3655f466049a757f823898f0ad1)
 }
 
 afterEvaluate {

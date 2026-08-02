@@ -1,5 +1,13 @@
-- [x] Stash local changes
-- [x] Merge `origin/fix-the-proplem` with `--allow-unrelated-histories`
-- [x] Resolve merge conflicts (if any)
-- [x] Pop the stash and resolve local conflicts
-- [x] Verify project state
+- [x] Setup Sample App Module
+    - [x] Update `libs.versions.toml` with `android-application` plugin
+    - [x] Update root `build.gradle.kts` to include application plugin
+    - [x] Update `settings.gradle.kts` to include `:app`
+    - [x] Create `app/build.gradle.kts`
+    - [x] Create `app/src/main/AndroidManifest.xml`
+    - [x] Create `app/src/main/java/com/shehabgo/sample/MainActivity.kt`
+- [x] Build and Verify
+    - [x] Run `:app:assembleDebug`
+    - [x] Fix any build errors (SDK 37 missing, icons missing)
+- [x] Test and Fix Logic
+    - [x] Run unit tests for `:financial_tracker`
+    - [x] Verify `FinancialNotificationListener` logic (fixed `DynamicParser` for SDK < O and unit tests)

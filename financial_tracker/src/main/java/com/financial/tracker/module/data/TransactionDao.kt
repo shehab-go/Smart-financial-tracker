@@ -174,6 +174,15 @@ internal class TransactionDao(context: Context) : SQLiteOpenHelper(context, "fin
         db.update("transactions", values, "referenceId = ?", arrayOf(refId))
     }
 
+    suspend fun markAsClassified(refId: String, category: String) = withContext(Dispatchers.IO) {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("isClassified", 1)
+            put("category", category)
+        }
+        db.update("transactions", values, "referenceId = ?", arrayOf(refId))
+    }
+
     suspend fun insertUnparsedNotification(notification: UnparsedNotification) = withContext(Dispatchers.IO) {
         val db = writableDatabase
         val values = ContentValues().apply {

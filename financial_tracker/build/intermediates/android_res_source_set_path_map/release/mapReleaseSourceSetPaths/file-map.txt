@@ -1,0 +1,9 @@
+com.financial.tracker.module.financial_tracker-pngs-0 E:\Smartfinancialtracker\financial_tracker\build\generated\res\pngs\release
+com.financial.tracker.module.financial_tracker-updated_navigation_xml-1 E:\Smartfinancialtracker\financial_tracker\build\generated\updated_navigation_xml\release
+com.financial.tracker.module.financial_tracker-mergeReleaseResources-2 E:\Smartfinancialtracker\financial_tracker\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
+com.financial.tracker.module.financial_tracker-mergeReleaseResources-3 E:\Smartfinancialtracker\financial_tracker\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+com.financial.tracker.module.financial_tracker-release-4 E:\Smartfinancialtracker\financial_tracker\build\intermediates\merged_res\release\mergeReleaseResources
+com.financial.tracker.module.financial_tracker-release-5 E:\Smartfinancialtracker\financial_tracker\build\intermediates\packaged_res\release\packageReleaseResources
+com.financial.tracker.module.financial_tracker-main-6 E:\Smartfinancialtracker\financial_tracker\src\main\res
+com.financial.tracker.module.financial_tracker-release-7 E:\Smartfinancialtracker\financial_tracker\src\release\res
+gradleHome-0 C:\Users\hp\.gradle

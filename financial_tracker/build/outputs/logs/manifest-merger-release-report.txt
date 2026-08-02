@@ -1,0 +1,38 @@
+-- Merging decision tree log ---
+manifest
+ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:2:1-17:12
+INJECTED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:2:1-17:12
+	package
+		INJECTED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:2:11-69
+uses-permission#android.permission.RECEIVE_BOOT_COMPLETED
+ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:4:5-81
+	android:name
+		ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:4:22-78
+application
+ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:6:5-16:19
+service#com.financial.tracker.module.FinancialNotificationListener
+ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:7:9-15:19
+	android:label
+		ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:9:13-59
+	android:exported
+		ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:11:13-36
+	android:permission
+		ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:10:13-87
+	android:name
+		ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:8:13-86
+intent-filter#action:name:android.service.notification.NotificationListenerService
+ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:12:13-14:29
+action#android.service.notification.NotificationListenerService
+ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:13:17-99
+	android:name
+		ADDED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:13:25-96
+uses-sdk
+INJECTED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml
+INJECTED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml
