@@ -1,10 +1,7 @@
-- [x] **Vision & Planning**
-    - [x] Create `ROADMAP.md`
-    - [x] Create `docs/CONTRIBUTING_GUIDE.md`
-- [x] **Technical Documentation (Wiki Content)**
-    - [x] Create `docs/architecture.md`
-    - [x] Create `docs/security-deep-dive.md`
-- [x] **Integration**
-    - [x] Update `README.md` with documentation links
+- [x] **Final Polish & Publication Readiness**
+    - [x] Create `NOTICE` file
+    - [x] Update `financial_tracker/build.gradle.kts` with POM metadata
+    - [x] Create `.github/workflows/release.yml`
 - [x] **Verification**
-    - [x] Verify all internal links
+    - [x] Verify POM generation (via manual check)
+    - [x] Final project-wide clean-up

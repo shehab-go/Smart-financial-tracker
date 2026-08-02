@@ -28,8 +28,10 @@ class FinancialNotificationListener : NotificationListenerService() {
         val title = extras.getCharSequence("android.title")?.toString() ?: ""
         val text = extras.getCharSequence("android.text")?.toString() ?: ""
 
-        // Print EVERYTHING to logcat so we can analyze any new bank/wallet apps
-        android.util.Log.d("WalletTrackerRaw", "Package: $packageName | Title: $title | Text: $text")
+        if (FinancialTrackerClient.loggingEnabled) {
+            // Print EVERYTHING to logcat so we can analyze any new bank/wallet apps
+            android.util.Log.d("WalletTrackerRaw", "Package: $packageName | Title: $title | Text: $text")
+        }
 
         if (!WalletConfigManager.isTargetWallet(packageName)) {
             return

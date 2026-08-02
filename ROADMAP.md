@@ -3,7 +3,7 @@
 This document outlines the planned future for the Smart Financial Tracker library. We aim to make financial tracking as seamless and secure as possible.
 
 ## 🚀 Near Term (v1.2.x) - "Accessibility & Integration"
-- [ ] **Multi-Bank Presets**: Add built-in regex configurations for major banks in Saudi Arabia and the Gulf region.
+- [ ] **Regional Support (Yemen & GCC)**: Add built-in regex configurations for major Yemeni wallets (mFloos, ONE Cash, Mobile Money) and Saudi wallets (STC Pay, Urpay).
 - [ ] **CSV/Excel Export**: Allow users to export their transaction history to local files.
 - [ ] **Charts & Statistics**: Add a basic statistics engine to the library to calculate monthly spending/income.
 
