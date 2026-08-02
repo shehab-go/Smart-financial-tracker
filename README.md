@@ -39,6 +39,7 @@ client.startListening()
 For more detailed information, check our technical guides:
 - [Technical Architecture](docs/architecture.md)
 - [Security Deep Dive](docs/security-deep-dive.md)
+- [Regional Support (Yemen & Gulf)](docs/regional-support.md)
 - [Technical Contribution Guide](docs/CONTRIBUTING_GUIDE.md)
 - [Project Roadmap](ROADMAP.md)
 

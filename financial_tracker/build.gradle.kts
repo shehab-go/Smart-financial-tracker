@@ -69,6 +69,30 @@ afterEvaluate {
                 groupId = "com.github.shehab-go"
                 artifactId = "wallet-events"
                 version = "1.1.0"
+
+                pom {
+                    name.set("Smart Financial Tracker")
+                    description.set("A powerful Android library for secure and dynamic financial transaction parsing from notifications.")
+                    url.set("https://github.com/shehab-go/smart-financial-tracker")
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("shehab-go")
+                            name.set("Shehab Go")
+                            email.set("shehab.go.dev@gmail.com")
+                        }
+                    }
+                    scm {
+                        connection.set("scm:git:github.com/shehab-go/smart-financial-tracker.git")
+                        developerConnection.set("scm:git:ssh://github.com/shehab-go/smart-financial-tracker.git")
+                        url.set("https://github.com/shehab-go/smart-financial-tracker/tree/main")
+                    }
+                }
             }
         }
     }

@@ -13,6 +13,12 @@ import kotlinx.coroutines.flow.asSharedFlow
  * for manual processing and configuration management.
  */
 object FinancialTrackerClient {
+    /**
+     * Set this to true to enable internal library logging in Logcat.
+     * Useful for debugging regex rules and parsing logic.
+     */
+    var loggingEnabled: Boolean = false
+
     private val _transactionFlow =
         MutableSharedFlow<FinancialTransaction>(
             replay = 0,

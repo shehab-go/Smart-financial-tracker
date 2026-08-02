@@ -1,32 +1,31 @@
-# Community Engagement & Future Vision Plan
+# Final Polish & Publication Readiness Plan
 
-This plan focuses on the "social" and "future-proofing" aspects of the project, preparing the content for GitHub Wikis, Projects, and a Roadmap.
-
-## User Review Required
-
-> [!TIP]
-> **Roadmap Content**: I've included features like "CSV Export" and "AI Classification" in the roadmap. Let me know if you have specific features you'd like to prioritize for future versions.
-
-> [!NOTE]
-> **Wiki Strategy**: GitHub Wikis are hosted separately, so I will create the content in a `docs/` folder. This allows you to easily copy-paste it into the GitHub Wiki interface once you make the repo public.
+This plan represents the final stage of the project, focusing on legal compliance, publication metadata, and release automation to ensure a world-class launch.
 
 ## Proposed Changes
 
-### 1. Vision & Planning
-- **[NEW] [ROADMAP.md](file:///E:/Smartfinancialtracker/ROADMAP.md)**: A transparent look at future versions (v1.2, v2.0). Shows potential contributors what's coming next.
-- **[NEW] [docs/CONTRIBUTING_GUIDE.md](file:///E:/Smartfinancialtracker/docs/CONTRIBUTING_GUIDE.md)**: A more detailed technical guide for developers on how to set up the project and add new bank parsers.
+### 1. Legal & Compliance
+- **[NEW] [NOTICE](file:///E:/Smartfinancialtracker/NOTICE)**: Standard Apache 2.0 notice file documenting copyright and ownership.
 
-### 2. Technical Documentation (Wiki Material)
-- **[NEW] [docs/architecture.md](file:///E:/Smartfinancialtracker/docs/architecture.md)**: Detailed explanation of the "Event-to-Action" flow:
-    - Notification Listener -> Dynamic Parser -> AES Encryption -> Room/SQLite.
-- **[NEW] [docs/security-deep-dive.md](file:///E:/Smartfinancialtracker/docs/security-deep-dive.md)**: Explaining the AES-256 implementation and why we hash Reference IDs. This builds trust with users handling financial data.
+### 2. Publication Metadata
+- **[MODIFY] [financial_tracker/build.gradle.kts](file:///E:/Smartfinancialtracker/financial_tracker/build.gradle.kts)**: Enhance the `MavenPublication` block with comprehensive metadata (name, description, URL, license, developer info, and SCM). This is crucial for appearing professionally on JitPack/Maven Central.
 
-### 3. Integration
-- **[MODIFY] [README.md](file:///E:/Smartfinancialtracker/README.md)**: Add a "Documentation" section linking to the new guides in the `docs/` folder.
+### 3. Release Automation
+- **[NEW] [.github/workflows/release.yml](file:///E:/Smartfinancialtracker/.github/workflows/release.yml)**: A new GitHub Action that triggers when you push a version tag (e.g., `v1.1.0`). It will:
+    - Build the release AAR.
+    - Build the Sample App APK.
+    - Create a GitHub Release and upload these artifacts automatically.
+
+### 4. Discoverability
+- **Recommended GitHub Topics**: (To be applied by the user in GitHub Settings)
+    - `android-library`, `fintech`, `security`, `kotlin-compose`, `transaction-tracker`, `notification-listener`.
 
 ## Verification Plan
 
+### Automated Tests
+- Run `./gradlew :financial_tracker:generatePomFileForReleasePublication` to verify that the enhanced POM metadata is valid.
+- Verify the syntax of the new `release.yml` workflow.
+
 ### Manual Verification
-- Verify all links between `README.md`, `ROADMAP.md`, and the `docs/` folder are correct.
-- Ensure the technical explanations in `architecture.md` accurately reflect the current code implementation.
-- Review the Roadmap for realistic open-source goals.
+- Review the `NOTICE` file content.
+- Confirm that the `POM` metadata accurately reflects the project's identity.
