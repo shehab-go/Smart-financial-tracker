@@ -1,7 +1,6 @@
-- [x] **Final Polish & Publication Readiness**
-    - [x] Create `NOTICE` file
-    - [x] Update `financial_tracker/build.gradle.kts` with POM metadata
-    - [x] Create `.github/workflows/release.yml`
+- [x] **GitHub Packages Integration**
+    - [x] Update `financial_tracker/build.gradle.kts` with repository info
+    - [x] Update `.github/workflows/release.yml` with publish step
 - [x] **Verification**
-    - [x] Verify POM generation (via manual check)
-    - [x] Final project-wide clean-up
+    - [x] Final build check (syntax check)
+    - [x] Git push

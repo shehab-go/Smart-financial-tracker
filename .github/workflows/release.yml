@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   build:
@@ -25,8 +26,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Library (AAR)
-        run: ./gradlew :financial_tracker:assembleRelease
+      - name: Build and Publish Library (AAR to GitHub Packages)
+        run: ./gradlew :financial_tracker:publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
 
       - name: Build Sample App (APK)
         run: ./gradlew :app:assembleRelease
