@@ -1,17 +1,16 @@
 package com.financial.tracker.module
 
+import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.os.Bundle
+import com.financial.tracker.module.config.WalletConfigManager
+import com.financial.tracker.module.data.DatabaseClient
+import com.financial.tracker.module.parser.DynamicParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.financial.tracker.module.parser.DynamicParser
-import com.financial.tracker.module.data.DatabaseClient
-import com.financial.tracker.module.config.WalletConfigManager
 
 class FinancialNotificationListener : NotificationListenerService() {
-
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
@@ -41,7 +40,11 @@ class FinancialNotificationListener : NotificationListenerService() {
         }
     }
 
-    private suspend fun processNotificationSilently(packageName: String, title: String, text: String) {
+    private suspend fun processNotificationSilently(
+        packageName: String,
+        title: String,
+        text: String,
+    ) {
         val transaction = DynamicParser.parse(packageName, title, text)
         val dao = DatabaseClient.getDatabase(applicationContext)
 
@@ -55,12 +58,13 @@ class FinancialNotificationListener : NotificationListenerService() {
             }
         } else {
             // Error Analytics: Log the unparsed notification
-            val unparsed = com.financial.tracker.module.data.UnparsedNotification(
-                packageName = packageName,
-                title = title,
-                text = text,
-                timestamp = System.currentTimeMillis()
-            )
+            val unparsed =
+                com.financial.tracker.module.data.UnparsedNotification(
+                    packageName = packageName,
+                    title = title,
+                    text = text,
+                    timestamp = System.currentTimeMillis(),
+                )
             dao.insertUnparsedNotification(unparsed)
         }
     }

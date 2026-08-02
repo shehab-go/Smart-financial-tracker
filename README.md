@@ -1,5 +1,9 @@
 # Smart Financial Tracker
 
+![Android CI](https://github.com/shehab-go/smart-financial-tracker/actions/workflows/android.yml/badge.svg)
+![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-1.1.0-green.svg)
+
 [English](#english) | [العربية](#arabic)
 
 ---

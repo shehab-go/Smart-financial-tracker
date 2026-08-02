@@ -1,19 +1,18 @@
-- [x] **Repository Foundation**
-    - [x] Create `.gitignore`
-    - [x] Create `.editorconfig`
-    - [x] Create `LICENSE` (Apache 2.0)
-- [x] **Professional Documentation**
-    - [x] Create `README.md` (Bilingual English/Arabic)
-    - [x] Create `CONTRIBUTING.md`
-    - [x] Create `CODE_OF_CONDUCT.md`
-    - [x] Create `SECURITY.md`
-- [x] **CI/CD & Automation**
-    - [x] Create `.github/workflows/android.yml`
-    - [x] Create Issue Templates (Bug/Feature)
-    - [x] Create Pull Request Template
-- [x] **Project Standardisation**
-    - [x] Update `settings.gradle.kts` root name
-    - [x] Audit code for sensitive info or local paths
-- [x] **Verification**
-    - [x] Run `./gradlew lint` (Fixed missing VIBRATE permission)
-    - [x] Verify build
+- [ ] **Quality & Standards**
+    - [ ] Update `libs.versions.toml` with Compose and Ktlint
+    - [ ] Configure Ktlint in root `build.gradle.kts`
+    - [ ] Create `CHANGELOG.md`
+    - [ ] Add status badges to `README.md`
+- [ ] **Library Deepening**
+    - [ ] Add KDoc to public classes/methods in `financial_tracker`
+    - [ ] Refine `proguard-rules.pro` for the library
+- [ ] **Sample App Overhaul (Compose & Material 3)**
+    - [ ] Update `:app` `build.gradle.kts` for Compose
+    - [ ] Create `Theme.kt` and `Color.kt` for the sample app
+    - [ ] Implement `PermissionGuideScreen`
+    - [ ] Implement `TransactionDashboardScreen`
+    - [ ] Rewrite `MainActivity.kt` with Compose navigation/logic
+- [ ] **Verification**
+    - [ ] Add basic Compose UI test
+    - [ ] Run `./gradlew ktlintCheck`
+    - [ ] Final build verification

@@ -1,27 +1,31 @@
 package com.financial.tracker.module.parser
 
 import android.os.Build
-import com.financial.tracker.module.data.FinancialTransaction
+import com.financial.tracker.module.config.WalletConfig
 import com.financial.tracker.module.config.WalletConfigManager
+import com.financial.tracker.module.data.FinancialTransaction
+import com.google.gson.Gson
 import java.util.regex.Pattern
 
-import com.financial.tracker.module.config.WalletConfig
-import com.google.gson.Gson
-
 internal object DynamicParser {
-
-    fun parse(packageName: String, title: String, text: String, customConfigJson: String? = null): FinancialTransaction? {
+    fun parse(
+        packageName: String,
+        title: String,
+        text: String,
+        customConfigJson: String? = null,
+    ): FinancialTransaction? {
         val fullContent = "$title $text"
-        val config = if (customConfigJson != null) {
-            try {
-                Gson().fromJson(customConfigJson, WalletConfig::class.java)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                return null
-            }
-        } else {
-            WalletConfigManager.getConfigForPackage(packageName)
-        } ?: return null
+        val config =
+            if (customConfigJson != null) {
+                try {
+                    Gson().fromJson(customConfigJson, WalletConfig::class.java)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    return null
+                }
+            } else {
+                WalletConfigManager.getConfigForPackage(packageName)
+            } ?: return null
 
         for (rule in config.rules) {
             val identifierMatcher = Pattern.compile(rule.identifierRegex).matcher(fullContent)
@@ -31,36 +35,46 @@ internal object DynamicParser {
                 val counterpart = extractField(fullContent, rule.parsers.counterpart) ?: "Unknown"
                 var referenceId = extractField(fullContent, rule.parsers.referenceId) ?: ""
                 val balanceRaw = extractField(fullContent, rule.parsers.balance)
-                val balance = if (balanceRaw != null) {
-                    balanceRaw.replace(Regex("[^0-9.]"), "").toDoubleOrNull()
-                } else null
+                val balance =
+                    if (balanceRaw != null) {
+                        balanceRaw.replace(Regex("[^0-9.]"), "").toDoubleOrNull()
+                    } else {
+                        null
+                    }
 
                 if (referenceId.isEmpty() || referenceId == "N/A") {
                     referenceId = "hash_" + Math.abs(fullContent.hashCode()).toString()
                 }
 
-                val parsedTx = com.financial.tracker.module.data.FinancialTransaction(
-                    packageName = packageName,
-                    transactionType = rule.transactionType,
-                    amount = amount,
-                    currency = currency,
-                    counterpart = counterpart,
-                    referenceId = referenceId,
-                    timestamp = System.currentTimeMillis(),
-                    balance = balance
+                val parsedTx =
+                    com.financial.tracker.module.data.FinancialTransaction(
+                        packageName = packageName,
+                        transactionType = rule.transactionType,
+                        amount = amount,
+                        currency = currency,
+                        counterpart = counterpart,
+                        referenceId = referenceId,
+                        timestamp = System.currentTimeMillis(),
+                        balance = balance,
+                    )
+
+                android.util.Log.i(
+                    "WalletTracker",
+                    "✅ Parsed Successfully: \nAmount: $amount $currency\nType: ${rule.transactionType}\nCounterpart: $counterpart\nRef: $referenceId",
                 )
-                
-                android.util.Log.i("WalletTracker", "✅ Parsed Successfully: \nAmount: $amount $currency\nType: ${rule.transactionType}\nCounterpart: $counterpart\nRef: $referenceId")
-                
+
                 return parsedTx
             }
         }
-        
+
         android.util.Log.w("WalletTracker", "❌ Failed to parse notification from $packageName. No matching rule found.")
         return null
     }
 
-    private fun extractField(text: String, regexPattern: String?): String? {
+    private fun extractField(
+        text: String,
+        regexPattern: String?,
+    ): String? {
         if (regexPattern == null) return null
         try {
             val matcher = Pattern.compile(regexPattern).matcher(text)
@@ -73,7 +87,7 @@ internal object DynamicParser {
                         // Fallback to group 1 if named group fails
                     }
                 }
-                
+
                 // Fallback: use the first capturing group if it exists, otherwise the whole match
                 return if (matcher.groupCount() >= 1) {
                     matcher.group(1)
