@@ -1,11 +1,8 @@
-- [ ] **Dokka Setup & Configuration**
-    - [ ] Update `libs.versions.toml` with Dokka
-    - [ ] Apply Dokka in root `build.gradle.kts`
-    - [ ] Configure Dokka in `financial_tracker/build.gradle.kts`
-- [ ] **Documentation Automation**
-    - [ ] Create `.github/workflows/docs.yml` for GitHub Pages deployment
-- [ ] **Integration**
-    - [ ] Update `README.md` with API Reference link
-- [ ] **Verification**
-    - [ ] Run `./gradlew dokkaHtml` locally
-    - [ ] Git push
+- [ ] **GitHub Issue Forms Migration**
+    - [x] Create `task.artifact.md`
+    - [ ] Delete old markdown templates
+    - [ ] Create `bug_report.yml`
+    - [ ] Create `feature_request.yml`
+    - [ ] Create `config.yml`
+- [ ] **Verification & Sync**
+    - [ ] Git push to master

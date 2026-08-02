@@ -1,37 +1,34 @@
-# Professional Documentation Site (Dokka) Implementation Plan
+# Advanced GitHub Issue Forms Implementation Plan
 
-Transform the library's KDoc comments into a professional, searchable, and interactive HTML documentation site using **Dokka** (the official documentation engine for Kotlin).
+Upgrade the repository's issue reporting system from basic markdown templates to **GitHub Issue Forms**. This provides a structured, modern UI for users to report bugs and suggest features.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **GitHub Pages Integration**: The documentation will be automatically generated and hosted on **GitHub Pages**. This means anyone can access your library's API reference via a URL like `https://shehab-go.github.io/smart-financial-tracker`.
-
-> [!NOTE]
-> **KDoc Standard**: I will perform a final review of the KDoc in the `:financial_tracker` module to ensure the generated site looks complete and professional.
+> **Form Fields**: I have included a dropdown for "Android Version" and "Library Version" to ensure users provide accurate technical data. Let me know if you want to add specific fields for certain Yemeni banks.
 
 ## Proposed Changes
 
-### 1. Build Configuration
-- **[MODIFY] [libs.versions.toml](file:///E:/Smartfinancialtracker/gradle/libs.versions.toml)**: Add Dokka plugin version (`2.2.0`) and alias.
-- **[MODIFY] [build.gradle.kts](file:///E:/Smartfinancialtracker/build.gradle.kts)**: Apply the Dokka plugin globally to enable multi-module documentation support.
-- **[MODIFY] [financial_tracker/build.gradle.kts](file:///E:/Smartfinancialtracker/financial_tracker/build.gradle.kts)**: Configure Dokka specifically for the library module (set module name, output directory, etc.).
+### 1. Issue Templates
+- **[DELETE] [bug_report.md](file:///E:/Smartfinancialtracker/.github/ISSUE_TEMPLATE/bug_report.md)**: Remove the old markdown template.
+- **[NEW] [bug_report.yml](file:///E:/Smartfinancialtracker/.github/ISSUE_TEMPLATE/bug_report.yml)**: A structured form for reporting bugs with:
+    - Problem description.
+    - Reproduction steps (Step-by-step).
+    - Device info (Dropdown for Android 10, 11, 12, 13, 14, 15).
+    - Library version.
+    - Logcat output field.
+- **[DELETE] [feature_request.md](file:///E:/Smartfinancialtracker/.github/ISSUE_TEMPLATE/feature_request.md)**: Remove the old markdown template.
+- **[NEW] [feature_request.yml](file:///E:/Smartfinancialtracker/.github/ISSUE_TEMPLATE/feature_request.yml)**: A structured form for new features with:
+    - User goal.
+    - Proposed solution.
+    - Alternatives considered.
 
-### 2. Automation (CI/CD)
-- **[NEW] [.github/workflows/docs.yml](file:///E:/Smartfinancialtracker/.github/workflows/docs.yml)**: A new GitHub Action that:
-    - Triggers on every push to `master`.
-    - Generates the Dokka HTML documentation.
-    - Deploys the result to the `gh-pages` branch.
-
-### 3. Discoverability
-- **[MODIFY] [README.md](file:///E:/Smartfinancialtracker/README.md)**: Add a "API Reference" link at the top and in the Documentation section pointing to the GitHub Pages URL.
+### 2. General Config
+- **[NEW] [config.yml](file:///E:/Smartfinancialtracker/.github/ISSUE_TEMPLATE/config.yml)**: Add a global configuration for issues, pointing users to Discussions for general questions.
 
 ## Verification Plan
 
-### Automated Tests
-- Run `./gradlew dokkaHtml` locally to verify that the HTML files are generated correctly in the `build/dokka/html` directory.
-- Verify the syntax of the new `docs.yml` workflow.
-
 ### Manual Verification
-- Open the generated `index.html` in a browser to check the visual quality and navigation.
-- Ensure all public classes (`FinancialTrackerClient`, `FinancialTransaction`) are properly documented.
+- Once pushed, go to the **Issues** tab on GitHub and click "New Issue".
+- Verify that the new forms appear as a structured UI instead of a simple text box.
+- Check that the dropdowns and required fields work as intended.
