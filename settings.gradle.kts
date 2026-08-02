@@ -15,6 +15,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SmartFinancialTrackerLibrary"
+rootProject.name = "smart-financial-tracker"
 include(":app")
 include(":financial_tracker")

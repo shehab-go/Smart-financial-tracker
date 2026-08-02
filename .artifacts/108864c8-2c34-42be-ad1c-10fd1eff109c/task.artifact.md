@@ -1,0 +1,19 @@
+- [x] **Repository Foundation**
+    - [x] Create `.gitignore`
+    - [x] Create `.editorconfig`
+    - [x] Create `LICENSE` (Apache 2.0)
+- [x] **Professional Documentation**
+    - [x] Create `README.md` (Bilingual English/Arabic)
+    - [x] Create `CONTRIBUTING.md`
+    - [x] Create `CODE_OF_CONDUCT.md`
+    - [x] Create `SECURITY.md`
+- [x] **CI/CD & Automation**
+    - [x] Create `.github/workflows/android.yml`
+    - [x] Create Issue Templates (Bug/Feature)
+    - [x] Create Pull Request Template
+- [x] **Project Standardisation**
+    - [x] Update `settings.gradle.kts` root name
+    - [x] Audit code for sensitive info or local paths
+- [x] **Verification**
+    - [x] Run `./gradlew lint` (Fixed missing VIBRATE permission)
+    - [x] Verify build
