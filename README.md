@@ -35,6 +35,13 @@ val client = FinancialTrackerClient(context)
 client.startListening()
 ```
 
+### 📚 Documentation
+For more detailed information, check our technical guides:
+- [Technical Architecture](docs/architecture.md)
+- [Security Deep Dive](docs/security-deep-dive.md)
+- [Technical Contribution Guide](docs/CONTRIBUTING_GUIDE.md)
+- [Project Roadmap](ROADMAP.md)
+
 ---
 
 <a name="arabic"></a>

@@ -1,18 +1,10 @@
-- [ ] **Quality & Standards**
-    - [ ] Update `libs.versions.toml` with Compose and Ktlint
-    - [ ] Configure Ktlint in root `build.gradle.kts`
-    - [ ] Create `CHANGELOG.md`
-    - [ ] Add status badges to `README.md`
-- [ ] **Library Deepening**
-    - [ ] Add KDoc to public classes/methods in `financial_tracker`
-    - [ ] Refine `proguard-rules.pro` for the library
-- [ ] **Sample App Overhaul (Compose & Material 3)**
-    - [ ] Update `:app` `build.gradle.kts` for Compose
-    - [ ] Create `Theme.kt` and `Color.kt` for the sample app
-    - [ ] Implement `PermissionGuideScreen`
-    - [ ] Implement `TransactionDashboardScreen`
-    - [ ] Rewrite `MainActivity.kt` with Compose navigation/logic
-- [ ] **Verification**
-    - [ ] Add basic Compose UI test
-    - [ ] Run `./gradlew ktlintCheck`
-    - [ ] Final build verification
+- [x] **Vision & Planning**
+    - [x] Create `ROADMAP.md`
+    - [x] Create `docs/CONTRIBUTING_GUIDE.md`
+- [x] **Technical Documentation (Wiki Content)**
+    - [x] Create `docs/architecture.md`
+    - [x] Create `docs/security-deep-dive.md`
+- [x] **Integration**
+    - [x] Update `README.md` with documentation links
+- [x] **Verification**
+    - [x] Verify all internal links
