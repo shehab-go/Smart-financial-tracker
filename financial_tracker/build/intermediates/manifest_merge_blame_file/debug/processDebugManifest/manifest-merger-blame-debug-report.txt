@@ -3,8 +3,6 @@
 3    package="com.financial.tracker.module" >
 4
 5    <uses-sdk android:minSdkVersion="24" />
-5-->INJECTED
-5-->INJECTED
 6
 7    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 7-->E:\Smartfinancialtracker\financial_tracker\src\main\AndroidManifest.xml:4:5-81

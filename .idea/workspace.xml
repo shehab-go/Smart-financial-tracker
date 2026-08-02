@@ -10,421 +10,77 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5b9c2e71-03ab-4fe7-a28e-7e4928bea6b4" name="Changes" comment="Merge project histories and update parser SDK compatibility.&#10;&#10;- Resolved &quot;unrelated histories&quot; merge conflict to unify project versions while maintaining the Android module structure.&#10;- Updated `DynamicParser` to conditionally use named regex capture groups only on Android Oreo (API 26) and higher to prevent runtime crashes.&#10;- Refactored `SplashScreen` animation logic to use Kotlin's `Duration` API (`milliseconds`) for improved readability and type safety.&#10;- Added a comprehensive project analysis document (`Deep_Project_Analysis_For_Non_Programmers.md`) covering architectural principles and privacy-first automation.&#10;- Created implementation artifacts documenting the Git workflow, task status, and merge walkthrough for the project history unification.&#10;- Updated IDE configuration files, including VCS directory mappings and module definitions.">
-      <change afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/AndroidProjectSystem.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Smartfinancialtracker.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/deploymentTargetSelector.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/markdown.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.kotlin/errors/errors-1781025961494.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.kotlin/errors/errors-1781025962072.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.kotlin/errors/errors-1781026223600.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.kotlin/errors/errors-1781026675592.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.metadata" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.vercel/project.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.vscode/settings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AI_Agent_Core_Rules.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CHANGELOG.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Deep_Project_Analysis_For_Non_Programmers.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/IMPLEMENTATION_GUIDE.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PROFESSIONAL_RECOMMENDATIONS.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SETUP_INSTRUCTIONS.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/The_Complete_Integration_and_UX_Plan.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/The_Complete_UI_Plan.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/analysis_options.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/client_secret_68995492033-t1bvdbu3pemugp1nnbdcji88verq8rbs.apps.googleusercontent.com.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/google-services.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/proguard-rules.pro" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/debug/AndroidManifest.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/debug/res/mipmap-hdpi/ic_launcher.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/debug/res/mipmap-mdpi/ic_launcher.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/debug/res/mipmap-xhdpi/ic_launcher.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/debug/res/mipmap-xxhdpi/ic_launcher.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/debug/res/mipmap-xxxhdpi/ic_launcher.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/assets/financial_tracker_config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/kotlin/com/financial/tracker/module/FinancialNotificationListener.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/kotlin/com/financial/tracker/module/FinancialTrackerClient.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/kotlin/com/financial/tracker/module/config/WalletConfigManager.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/kotlin/com/financial/tracker/module/data/AESEncryptionHelper.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/kotlin/com/financial/tracker/module/data/DatabaseClient.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/kotlin/com/financial/tracker/module/data/FinancialTransaction.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/kotlin/com/financial/tracker/module/data/TransactionDao.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/kotlin/com/financial/tracker/module/data/UnparsedNotification.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/kotlin/com/financial/tracker/module/parser/DynamicParser.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/kotlin/com/ramzi/debit_credit_app/MainActivity.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/res/drawable-v21/launch_background.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/res/drawable/launch_background.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/res/mipmap-hdpi/ic_launcher.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/res/mipmap-mdpi/ic_launcher.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/res/values-night/styles.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/res/values/styles.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/profile/AndroidManifest.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/google-services.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/gradle.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/settings.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/build.gradle.kts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/androidTest/java/com/shehabgo/smartfinancialtracker/ExampleInstrumentedTest.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/MainActivity.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/SmartFinancialApp.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/data/CategoryManager.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/AppNavigation.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/components/gamification/BudgetProgressBar.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/components/gamification/SaverBadgeDialog.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/admin/UnparsedLogsScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/admin/UnparsedLogsViewModel.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/categories/CategoriesCustomizationScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/categories/CategoryItem.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/dashboard/DashboardViewModel.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/dashboard/UnconfirmedTransactionCard.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/dashboard/UnifiedDashboardScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/ledger/LedgerViewModel.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/ledger/SocialLedgerScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/onboarding/BatteryOptimizationScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/onboarding/NotificationPermissionScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/onboarding/OnboardingPagerScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/onboarding/OnboardingScaffold.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/onboarding/PermissionFlowScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/onboarding/PrivacyPromiseScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/onboarding/WelcomeAndPrivacyScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/onboarding/WelcomeScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/settings/SettingsScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/splash/SplashScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/transactions/TransactionsHistoryScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/wallets/CashWalletToggle.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/screens/wallets/WalletsSetupScreen.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/theme/AppColors.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/theme/AppShapes.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/theme/AppSpacing.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/theme/Color.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/theme/Theme.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/theme/Type.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/utils/CategoryMapper.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/shehabgo/smartfinancialtracker/ui/utils/ExportUtils.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/keepRules/rules.keep" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/ic_launcher_background.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/ic_launcher_foreground.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/font/almarai_bold.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/font/almarai_extrabold.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/font/almarai_light.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/font/almarai_regular.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-hdpi/ic_launcher.webp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-hdpi/ic_launcher_round.webp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-mdpi/ic_launcher.webp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-mdpi/ic_launcher_round.webp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-xhdpi/ic_launcher.webp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-xhdpi/ic_launcher_round.webp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-xxhdpi/ic_launcher.webp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.webp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/colors.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/themes.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/xml/backup_rules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/xml/data_extraction_rules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/test/java/com/shehabgo/smartfinancialtracker/ExampleUnitTest.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/append_parsers.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/fonts/ArbFONTS-IBMPlexArabic-Text.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/fonts/ArbFONTS-t2216.otf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/fonts/IBM_Plex_Sans_Arabic/IBMPlexSansArabic-Bold.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/fonts/IBM_Plex_Sans_Arabic/IBMPlexSansArabic-ExtraLight.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/fonts/IBM_Plex_Sans_Arabic/IBMPlexSansArabic-Light.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/fonts/IBM_Plex_Sans_Arabic/IBMPlexSansArabic-Medium.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/fonts/IBM_Plex_Sans_Arabic/IBMPlexSansArabic-Regular.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/fonts/IBM_Plex_Sans_Arabic/IBMPlexSansArabic-SemiBold.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/fonts/IBM_Plex_Sans_Arabic/IBMPlexSansArabic-Thin.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/fonts/IBM_Plex_Sans_Arabic/OFL.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/fonts/NotoNaskhArabic-Regular.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/app_icon.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/arrow-long-down.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/arrow-long-up.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/calendar.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/gallery.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/hand-thumb-up.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/jaeeb.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/money-borrow.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/pencil.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/report_icons/pdf_report.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/trend-down-expense.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/trend-up-income.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/user-circle.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/user_logo.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/whatsapp.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client_secret_68995492033-t9754odssr17isc9u0o403lgighu1o9k.apps.googleusercontent.com.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/devtools_options.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/download_stitch.ps1" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/expense_enhancement.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/financial_tracker/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/financial_tracker/build/intermediates/aar_metadata/release/writeReleaseAarMetadata/aar-metadata.properties" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/aar_metadata/release/writeReleaseAarMetadata/aar-metadata.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/financial_tracker/build/intermediates/java_res/release/processReleaseJavaRes/out/META-INF/financial_tracker.kotlin_module" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/financial_tracker/src/main/java/com/financial/tracker/module/FinancialTrackerClient.kt" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/src/main/java/com/financial/tracker/module/FinancialTrackerClient.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/financial_tracker/src/main/java/com/financial/tracker/module/data/TransactionDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/src/main/java/com/financial/tracker/module/data/TransactionDao.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle/gradle-daemon-jvm.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle/libs.versions.toml" beforeDir="false" afterPath="$PROJECT_DIR$/gradle/libs.versions.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.jar" beforeDir="false" afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.jar" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradlew" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradlew.bat" beforeDir="false" afterPath="$PROJECT_DIR$/gradlew.bat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Flutter/AppFrameworkInfo.plist" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Flutter/Debug.xcconfig" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Flutter/Release.xcconfig" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.pbxproj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.xcworkspace/contents.xcworkspacedata" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner.xcworkspace/contents.xcworkspacedata" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/AppDelegate.swift" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@1x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@1x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@1x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Base.lproj/LaunchScreen.storyboard" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Base.lproj/Main.storyboard" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Info.plist" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner/Runner-Bridging-Header.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/RunnerTests/RunnerTests.swift" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/jaeeb.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/key.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/db/database_fix.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/db/database_helper.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/db/migration_helper.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/events/category_events.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/events/financial_events.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/account.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/category.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/currency.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/expense.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/expense_account.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/expense_balance_allocation.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/financial_insight_model.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/income_balance.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/income_resource.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/installment_plan.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/transaction.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/transaction_balance_allocation.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/models/user_profile.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/app_update_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/auto_backup_manager.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/backup_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/enhanced_backup_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/google_drive_backup_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/google_drive_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/installment_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/onboarding_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/region_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/report_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/search_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/security_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/theme/app_theme.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/widgets/app_drawer.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/widgets/currency_migration_gate.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/widgets/main_navigation.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/docs/plan.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/about/presentation/screens/about_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/accounts/application/reports/account_report_generator.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/accounts/presentation/dialogs/add_transaction_dialog.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/accounts/presentation/dialogs/smart_reminder_dialog.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/accounts/presentation/screens/account_transactions_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/accounts/presentation/widgets/transaction_tile.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/backup/presentation/screens/backup_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/backup/presentation/screens/enhanced_backup_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/balances/application/reports/all_income_balances_report_generator.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/balances/application/reports/all_income_resources_report_generator.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/balances/presentation/screens/income_balances_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/categories/application/categories_controller.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/categories/application/categories_state.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/categories/domain/categories_repository.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/categories/presentation/dialogs/category_dialog.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/categories/presentation/screens/categories_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/categories/presentation/widgets/category_empty_state.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/categories/presentation/widgets/category_header.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/categories/presentation/widgets/category_list_item.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/currencies/presentation/screens/currencies_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/currencies/presentation/screens/currency_migration_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/currencies/presentation/widgets/local_currency_picker.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/dashboard/presentation/screens/main_dashboard_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/application/expense_controller.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/application/expense_state.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/application/financial_insights_engine.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/application/reports/all_expense_accounts_report_generator.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/application/reports/expense_account_report_generator.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/application/reports/expense_category_report_generator.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/domain/expense_repository.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/presentation/dialogs/add_expense_dialog.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/presentation/screens/expense_account_details_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/presentation/screens/expense_detail_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/presentation/screens/expense_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/presentation/widgets/category_picker_sheet.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/expenses/presentation/widgets/smart_insights_card.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/application/debt_insights_engine.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/application/home_controller.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/application/home_report_coordinator.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/application/home_state.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/application/reports/all_accounts_report_generator.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/application/reports/category_report_generator.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/application/reports/selected_accounts_report_generator.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/application/selection_controller.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/domain/home_repository.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/presentation/screens/home_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/presentation/screens/search_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/presentation/screens/smart_dashboard_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/presentation/screens/smart_radar_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/presentation/widgets/account_card_tile.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/presentation/widgets/accounts_header_row.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/presentation/widgets/category_accounts_tab.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/presentation/widgets/category_stats_card.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/presentation/widgets/home_default_app_bar.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/presentation/widgets/home_selection_app_bar.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/home/presentation/widgets/report_bottom_sheet.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/installments/presentation/dialogs/add_installment_dialog.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/installments/presentation/screens/installments_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/onboarding/presentation/screens/onboarding_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/privacy/presentation/screens/app_lock_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/privacy/presentation/screens/privacy_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/privacy/presentation/screens/security_settings_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/profile/presentation/screens/user_profile_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/settings/presentation/screens/settings_screen.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/services/dynamic_rules_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/services/financial_tracker_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/services/smart_debt_settlement_service.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/linux/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/linux/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/linux/flutter/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/linux/flutter/generated_plugin_registrant.cc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/linux/flutter/generated_plugin_registrant.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/linux/flutter/generated_plugins.cmake" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/linux/main.cc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/linux/my_application.cc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/linux/my_application.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Flutter/Flutter-Debug.xcconfig" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Flutter/Flutter-Release.xcconfig" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Flutter/GeneratedPluginRegistrant.swift" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner.xcodeproj/project.pbxproj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner.xcworkspace/contents.xcworkspacedata" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/AppDelegate.swift" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_16.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_32.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_64.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Base.lproj/MainMenu.xib" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Configs/AppInfo.xcconfig" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Configs/Debug.xcconfig" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Configs/Release.xcconfig" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Configs/Warnings.xcconfig" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/DebugProfile.entitlements" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Info.plist" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/MainFlutterWindow.swift" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/Runner/Release.entitlements" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/macos/RunnerTests/RunnerTests.swift" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-upload-key.jks" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/patch.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/patch_db.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen2_wallets.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen2_wallets.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen3_onboarding.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen3_onboarding.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen4_categories.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen4_categories.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen5_dashboard.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen5_dashboard.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen6_ledger.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen6_ledger.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen7_admin.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stitch_designs/screen7_admin.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/categories_test.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/multi_currency_test.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/widget_test.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_migration.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/favicon.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/icons/Icon-192.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/icons/Icon-512.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/icons/Icon-maskable-192.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/icons/Icon-maskable-512.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/manifest.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/flutter/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/flutter/generated_plugin_registrant.cc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/flutter/generated_plugin_registrant.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/flutter/generated_plugins.cmake" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/Runner.rc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/flutter_window.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/flutter_window.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/main.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/resource.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/resources/app_icon.ico" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/runner.exe.manifest" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/utils.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/utils.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/win32_window.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/windows/runner/win32_window.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/وثيقة الفلسفة التصميمية الكاملة والدقيقة (The Unified Design Philosophy).md" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/.transforms/ca9392dcd3f297201020d1d7fcc8d120/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/financial/tracker/module/FinancialNotificationListener$onNotificationPosted$1.dex" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/.transforms/d0edcb3dd38a97c902703feb51349cad/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/financial/tracker/module/data/AESEncryptionHelper.dex" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/incremental/release/mergeReleaseResources/merged.dir/values-el/values-el.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/incremental/release/mergeReleaseResources/merged.dir/values-en-rXC/values-en-rXC.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/incremental/release/mergeReleaseResources/merged.dir/values-port/values-port.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/incremental/release/mergeReleaseResources/merged.dir/values-te/values-te.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/incremental/release/mergeReleaseResources/merged.dir/values-w٣٦٠dp-port-v13/values-w٣٦٠dp-port-v13.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/animator/fragment_fade_exit.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/color-v31/m3_ref_palette_dynamic_neutral_variant22.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/color-v31/m3_ref_palette_dynamic_neutral_variant6.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/color/abc_primary_text_material_dark.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/color/m3_button_outline_color_selector.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/color/m3_hint_foreground.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/color/m3_simple_item_ripple_color.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/color/mtrl_filled_stroke_color.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/drawable-mdpi-v4/abc_textfield_activated_mtrl_alpha.9.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/drawable-v21/abc_dialog_material_background.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/drawable-v21/notification_action_background.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/drawable-xxxhdpi-v4/abc_btn_radio_to_on_mtrl_000.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/drawable-xxxhdpi-v4/abc_text_select_handle_right_mtrl.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/drawable/abc_ic_go_search_api_material.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/drawable/ic_m3_chip_checked_circle.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/drawable/ic_search_black_24.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/drawable/mtrl_ic_check_mark.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/drawable/mtrl_popupmenu_background.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/interpolator-v21/m3_sys_motion_easing_emphasized_decelerate.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/values-af/values-af.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/values-cs/values-cs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/values-sr/values-sr.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res/release/mergeReleaseResources/values-zh-rTW/values-zh-rTW.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res_blame_folder/release/mergeReleaseResources/out/multi-v2/values-sw.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_res_blame_folder/release/mergeReleaseResources/out/multi-v2/values-v21.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/anim-v21_m3_bottom_sheet_slide_out.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/anim-v21_m3_side_sheet_enter_from_left.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/animator_design_fab_hide_motion_spec.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/animator_fragment_fade_exit.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/color_abc_primary_text_material_light.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/color_m3_button_outline_color_selector.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/color_m3_timepicker_display_ripple_color.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/color_mtrl_error.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/drawable-hdpi-v4_abc_list_selector_disabled_holo_dark.9.png.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/drawable-hdpi-v4_notify_panel_notification_icon_bg.png.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/drawable-xhdpi-v4_abc_scrubber_control_to_pressed_mtrl_005.png.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/drawable-xxhdpi-v4_abc_btn_radio_to_on_mtrl_000.png.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/drawable-xxxhdpi-v4_abc_switch_track_mtrl_alpha.9.png.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/drawable_abc_btn_radio_material.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/drawable_abc_ic_ab_back_material.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/drawable_btn_radio_off_to_on_mtrl_animation.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/layout_mtrl_alert_select_dialog_item.xml.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/values-bg_values-bg.arsc.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/values-fr_values-fr.arsc.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/values-watch-v20_values-watch-v20.arsc.flat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/verified_library_resources/release/verifyReleaseResources/compiled/values-w٣٦٠dp-port-v13_values-w٣٦٠dp-port-v13.arsc.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.11.1/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.11.1/checksums/checksums.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.11.1/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.11.1/checksums/sha1-checksums.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.11.1/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.11.1/executionHistory/executionHistory.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.11.1/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.11.1/executionHistory/executionHistory.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.11.1/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.11.1/fileHashes/fileHashes.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.11.1/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.11.1/fileHashes/fileHashes.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.11.1/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.11.1/fileHashes/resourceHashesCache.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/financial_tracker/build/intermediates/aar_main_jar/debug/syncDebugLibJars/classes.jar" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/aar_main_jar/debug/syncDebugLibJars/classes.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/financial_tracker/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/financial_tracker/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/financial_tracker/build/intermediates/incremental/debug/packageDebugResources/merger.xml" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/incremental/debug/packageDebugResources/merger.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/financial_tracker/build/intermediates/java_res/debug/processDebugJavaRes/out/META-INF/financial_tracker.kotlin_module" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/financial_tracker/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/feature-financial_tracker.jar" beforeDir="false" afterPath="$PROJECT_DIR$/financial_tracker/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/feature-financial_tracker.jar" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -434,7 +90,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[LocalEmulator::path=C:\Users\hp\.android\avd\Medium_Phone_2.avd]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[PhysicalDevice::serial=RFCT703PPYE]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -476,6 +132,16 @@
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/shehab-go/Smart-financial-tracker.git&quot;,
     &quot;accountId&quot;: &quot;26069f4a-5cb2-4b47-bc71-7a39838f161b&quot;
+  },
+  &quot;recentNewPullRequestHead&quot;: {
+    &quot;server&quot;: {
+      &quot;useHttp&quot;: false,
+      &quot;host&quot;: &quot;github.com&quot;,
+      &quot;port&quot;: null,
+      &quot;suffix&quot;: null
+    },
+    &quot;owner&quot;: &quot;shehab-go&quot;,
+    &quot;repository&quot;: &quot;Smart-financial-tracker&quot;
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
@@ -490,31 +156,31 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Android App.androidTest.executor": "Run",
-    "Android App.app.executor": "Run",
-    "Gradle.Configure Daemon JVM Criteria.executor": "Run",
-    "GradleDaemonJvmCriteriaMigrationNotification.isNotificationDisabled": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "add-new-feat",
-    "git.auto.fetch.suggestion.counter": "2",
-    "io.flutter.project.isFirstOpen": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "E:/Smartfinancialtracker",
-    "settings.editor.selected.configurable": "templates.modelproviders.configurable",
-    "show.migrate.to.gradle.popup": "false"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Android App.androidTest.executor&quot;: &quot;Run&quot;,
+    &quot;Android App.app.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.Configure Daemon JVM Criteria.executor&quot;: &quot;Run&quot;,
+    &quot;GradleDaemonJvmCriteriaMigrationNotification.isNotificationDisabled&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;#4 on add-new-feat&quot;,
+    &quot;git.auto.fetch.suggestion.counter&quot;: &quot;2&quot;,
+    &quot;io.flutter.project.isFirstOpen&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;E:/Smartfinancialtracker&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;templates.modelproviders.configurable&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Android App.unitTest">
     <configuration name="androidTest" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
       <option name="ANDROID_RUN_CONFIGURATION_SCHEMA_VERSION" value="1" />
@@ -828,8 +494,51 @@
       <option name="project" value="LOCAL؜" />
       <updated>1785613761868</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL؜-٠٠٠٠٦" summary="Merge project histories and update parser SDK compatibility.&#10;&#10;- Resolved &quot;unrelated histories&quot; merge conflict to unify project versions while maintaining the Android module structure.&#10;- Updated `DynamicParser` to conditionally use named regex capture groups only on Android Oreo (API 26) and higher to prevent runtime crashes.&#10;- Refactored `SplashScreen` animation logic to use Kotlin's `Duration` API (`milliseconds`) for improved readability and type safety.&#10;- Added a comprehensive project analysis document (`Deep_Project_Analysis_For_Non_Programmers.md`) covering architectural principles and privacy-first automation.&#10;- Created implementation artifacts documenting the Git workflow, task status, and merge walkthrough for the project history unification.&#10;- Updated IDE configuration files, including VCS directory mappings and module definitions.">
+      <option name="closed" value="true" />
+      <created>1785619541888</created>
+      <option name="number" value="٠٠٠٠٦" />
+      <option name="presentableId" value="LOCAL؜-٠٠٠٠٦" />
+      <option name="project" value="LOCAL؜" />
+      <updated>1785619541888</updated>
+    </task>
+    <task id="LOCAL؜-٠٠٠٠٧" summary="Merge project histories and update parser SDK compatibility.&#10;&#10;- Resolved &quot;unrelated histories&quot; merge conflict to unify project versions while maintaining the Android module structure.&#10;- Updated `DynamicParser` to conditionally use named regex capture groups only on Android Oreo (API 26) and higher to prevent runtime crashes.&#10;- Refactored `SplashScreen` animation logic to use Kotlin's `Duration` API (`milliseconds`) for improved readability and type safety.&#10;- Added a comprehensive project analysis document (`Deep_Project_Analysis_For_Non_Programmers.md`) covering architectural principles and privacy-first automation.&#10;- Created implementation artifacts documenting the Git workflow, task status, and merge walkthrough for the project history unification.&#10;- Updated IDE configuration files, including VCS directory mappings and module definitions.">
+      <option name="closed" value="true" />
+      <created>1785619708045</created>
+      <option name="number" value="٠٠٠٠٧" />
+      <option name="presentableId" value="LOCAL؜-٠٠٠٠٧" />
+      <option name="project" value="LOCAL؜" />
+      <updated>1785619708045</updated>
+    </task>
+    <task id="LOCAL؜-٠٠٠٠٨" summary="Merge project histories and update parser SDK compatibility.&#10;&#10;- Resolved &quot;unrelated histories&quot; merge conflict to unify project versions while maintaining the Android module structure.&#10;- Updated `DynamicParser` to conditionally use named regex capture groups only on Android Oreo (API 26) and higher to prevent runtime crashes.&#10;- Refactored `SplashScreen` animation logic to use Kotlin's `Duration` API (`milliseconds`) for improved readability and type safety.&#10;- Added a comprehensive project analysis document (`Deep_Project_Analysis_For_Non_Programmers.md`) covering architectural principles and privacy-first automation.&#10;- Created implementation artifacts documenting the Git workflow, task status, and merge walkthrough for the project history unification.&#10;- Updated IDE configuration files, including VCS directory mappings and module definitions.">
+      <option name="closed" value="true" />
+      <created>1785619800845</created>
+      <option name="number" value="٠٠٠٠٨" />
+      <option name="presentableId" value="LOCAL؜-٠٠٠٠٨" />
+      <option name="project" value="LOCAL؜" />
+      <updated>1785619800845</updated>
+    </task>
+    <task id="LOCAL؜-٠٠٠٠٩" summary="Merge project histories and update parser SDK compatibility.&#10;&#10;- Resolved &quot;unrelated histories&quot; merge conflict to unify project versions while maintaining the Android module structure.&#10;- Updated `DynamicParser` to conditionally use named regex capture groups only on Android Oreo (API 26) and higher to prevent runtime crashes.&#10;- Refactored `SplashScreen` animation logic to use Kotlin's `Duration` API (`milliseconds`) for improved readability and type safety.&#10;- Added a comprehensive project analysis document (`Deep_Project_Analysis_For_Non_Programmers.md`) covering architectural principles and privacy-first automation.&#10;- Created implementation artifacts documenting the Git workflow, task status, and merge walkthrough for the project history unification.&#10;- Updated IDE configuration files, including VCS directory mappings and module definitions.">
+      <option name="closed" value="true" />
+      <created>1785619865053</created>
+      <option name="number" value="٠٠٠٠٩" />
+      <option name="presentableId" value="LOCAL؜-٠٠٠٠٩" />
+      <option name="project" value="LOCAL؜" />
+      <updated>1785619865053</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Implement smart financial tracker with notification-based transaction analysis.&#10;&#10;- Created `financial_tracker` module to capture and parse banking notifications using dynamic regex rules.&#10;- Implemented `AESEncryptionHelper` and `TransactionDao` for secure, local-first data storage with encryption.&#10;- Added `WalletConfigManager` to drive parsing logic via JSON configuration for various banking packages.&#10;- Built a reactive UI using Jetpack Compose featuring a unified dashboard, social debt ledger, and step-by-step onboarding.&#10;- Added administrative tools for reprocessing unparsed notification logs and managing battery optimization exemptions.&#10;- Established `AI_Agent_Core_Rules.md` to define architectural and privacy-first development principles." />

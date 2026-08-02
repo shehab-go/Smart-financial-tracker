@@ -65,16 +65,20 @@ internal object DynamicParser {
         try {
             val matcher = Pattern.compile(regexPattern).matcher(text)
             if (matcher.find()) {
-                return try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        matcher.group("value")
-                    } else {
-                        TODO("VERSION.SDK_INT < O")
+                // If named groups are supported (API 26+) and the pattern contains "(?<value>", try it
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && regexPattern.contains("(?<value>")) {
+                    try {
+                        return matcher.group("value")
+                    } catch (e: Exception) {
+                        // Fallback to group 1 if named group fails
                     }
-                } catch (e: IllegalArgumentException) {
+                }
+                
+                // Fallback: use the first capturing group if it exists, otherwise the whole match
+                return if (matcher.groupCount() >= 1) {
                     matcher.group(1)
-                } catch (e: UnsupportedOperationException) {
-                    matcher.group(1)
+                } else {
+                    matcher.group(0)
                 }
             }
         } catch (e: Exception) {

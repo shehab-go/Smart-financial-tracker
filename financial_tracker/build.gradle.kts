@@ -25,6 +25,10 @@ android {
         }
     }
     
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+    
     publishing {
         singleVariant("release") {
             withSourcesJar()

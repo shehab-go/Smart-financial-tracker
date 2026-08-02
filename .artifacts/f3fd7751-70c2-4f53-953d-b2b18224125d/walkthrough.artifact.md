@@ -1,22 +1,33 @@
-# Merge Conflict Resolution Walkthrough
+# Project Setup and Verification Walkthrough
 
-The "unrelated histories" error occurred because the `master` branch and the `fix-the-proplem` branch were initialized separately and did not share a common ancestor. This often happens when merging two different versions of a project.
+I have successfully added a sample application module to test your financial tracking library and verified the core logic.
 
 ## Changes Made
 
-### Version Control
-- **Stashed local changes**: Safely stored your modifications to `SplashScreen.kt` and `DynamicParser.kt`.
-- **Performed Merge**: Executed `git merge origin/fix-the-proplem --allow-unrelated-histories`.
-- **Resolved Conflicts**: Handled a conflict in `.gitignore` by combining relevant rules from both branches.
-- **Restored Changes**: Re-applied your local modifications using `git stash pop`.
+### 1. Sample App Module (`:app`)
+- Created a new Android application module that depends on the `:financial_tracker` library.
+- **MainActivity**: Implemented a simple UI that collects and displays financial transactions in real-time using `FinancialTrackerClient.transactionFlow`.
+- **Permissions**: The app is ready for "Notification Access" testing.
 
-## Current Project State
+### 2. Library Fixes (`:financial_tracker`)
+- **Compatibility**: Fixed `DynamicParser.kt` to handle cases where named regex groups are not supported (pre-Android Oreo or Desktop JVM).
+- **Unit Testing**: Added `testOptions` to the library's build configuration to allow mocking of Android classes (like `Log`) in unit tests.
+- **SDK Update**: Switched to SDK 35 for better compatibility with local development environments.
 
-> [!NOTE]
-> The `fix-the-proplem` branch appears to contain a Flutter project structure (`lib/`, `pubspec.yaml`, etc.), while your `master` branch is a Native Android project. The merge has brought all these files together.
->
-> Your original Android modules (`app` and `financial_tracker`) remain intact and are still the active modules in `settings.gradle.kts`.
+### 3. Verification
+- **Build**: Successfully built the sample app using `:app:assembleDebug`.
+- **Unit Test**: Created and passed a unit test for `DynamicParser` that verifies parsing of STC Pay notifications.
 
-## Verification Results
-- Git history is now unified.
-- Local changes have been restored and are visible in your workspace.
+## How to Test
+1. **Deploy the App**: Install the `:app` module on your device.
+2. **Grant Access**: Go to **Settings > Apps > Special app access > Notification access** and enable "Financial Transaction Analyzer" (the name of the listener service).
+3. **Simulate Notification**: Send a test notification that matches the patterns in your bank rules. The transactions should appear instantly on the screen.
+
+```kotlin
+// Example transaction flow in MainActivity.kt
+lifecycleScope.launch {
+    FinancialTrackerClient.transactionFlow.collect { transaction ->
+        // Updates UI with new transaction data
+    }
+}
+```

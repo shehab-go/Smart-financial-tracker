@@ -1,23 +1,29 @@
-# Fix Git Unrelated Histories Problem
+# Implementation Plan - Add Sample App for Library Verification
 
-The user is experiencing a `refusing to merge unrelated histories` error when attempting to bring changes from the `fix-the-proplem` branch into their local branch. This occurs because the two branches do not share a common commit history.
+The project currently only contains the `:financial_tracker` library module. To "build the app" and verify the library's functionality (like notification listening and parsing), we need a runnable application module.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> This process will merge two different project histories. While most files should merge cleanly if the project structure is similar, there may be conflicts if the same files exist in both histories with different content.
+> This will add a new `:app` module to your project. This module is intended for testing and demonstrating the library's capabilities. If you only wanted to build the `.aar` file for the library, I can do that instead.
 
 ## Proposed Changes
 
-### Git Workflow
+### Build Configuration
+- **[MODIFY] [libs.versions.toml](file:///E:/Smartfinancialtracker/gradle/libs.versions.toml)**: Add `android-application` plugin.
+- **[MODIFY] [build.gradle.kts](file:///E:/Smartfinancialtracker/build.gradle.kts)**: Apply the application plugin.
+- **[MODIFY] [settings.gradle.kts](file:///E:/Smartfinancialtracker/settings.gradle.kts)**: Include `:app`.
 
-1.  **Stash local changes**: Save the currently modified files (`SplashScreen.kt`, `DynamicParser.kt`) to avoid conflicts during the merge.
-2.  **Merge with `--allow-unrelated-histories`**: Force Git to merge the two histories.
-3.  **Resolve Conflicts (if any)**: If Git cannot automatically merge some files, I will resolve them based on the logic in both versions.
-4.  **Restore local changes**: Apply the stashed changes back to the codebase.
+### New Sample App Module
+- **[NEW] [app/build.gradle.kts](file:///E:/Smartfinancialtracker/app/build.gradle.kts)**: App configuration with dependency on `:financial_tracker`.
+- **[NEW] [app/src/main/AndroidManifest.xml](file:///E:/Smartfinancialtracker/app/src/main/AndroidManifest.xml)**: Basic manifest with `MainActivity`.
+- **[NEW] [app/src/main/java/com/shehabgo/sample/MainActivity.kt](file:///E:/Smartfinancialtracker/app/src/main/java/com/shehabgo/sample/MainActivity.kt)**: Simple UI to display captured transactions.
 
 ## Verification Plan
 
+### Automated Verification
+- Run `:app:assembleDebug` to verify the build.
+
 ### Manual Verification
-- Run `git log` to verify that the history from `fix-the-proplem` is now part of the current branch.
-- Check the project structure and ensure the app still builds.
+- Deploy to device/emulator.
+- Grant Notification Access permissions.
