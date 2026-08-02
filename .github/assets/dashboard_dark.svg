@@ -1,0 +1,21 @@
+<svg width="200" height="400" viewBox="0 0 200 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="400" rx="12" fill="#1C1B1F"/>
+    <!-- App Bar -->
+    <rect width="200" height="56" fill="#D0BCFF"/>
+    <text x="16" y="36" fill="#381E72" font-family="sans-serif" font-size="14" font-weight="bold">Smart Financial</text>
+    <!-- List Items -->
+    <rect x="10" y="70" width="180" height="60" rx="8" fill="#2B2930"/>
+    <text x="20" y="90" fill="#E6E1E5" font-family="sans-serif" font-size="12" font-weight="bold">STC Pay</text>
+    <text x="20" y="105" fill="#CAC4D0" font-family="sans-serif" font-size="10">Purchase</text>
+    <text x="130" y="105" fill="#F2B8B5" font-family="sans-serif" font-size="12" font-weight="bold">-150.00 SAR</text>
+
+    <rect x="10" y="140" width="180" height="60" rx="8" fill="#2B2930"/>
+    <text x="20" y="160" fill="#E6E1E5" font-family="sans-serif" font-size="12" font-weight="bold">mFloos</text>
+    <text x="20" y="175" fill="#CAC4D0" font-family="sans-serif" font-size="10">Transfer</text>
+    <text x="130" y="175" fill="#81C784" font-family="sans-serif" font-size="12" font-weight="bold">+5000 YER</text>
+
+    <rect x="10" y="210" width="180" height="60" rx="8" fill="#2B2930"/>
+    <text x="20" y="230" fill="#E6E1E5" font-family="sans-serif" font-size="12" font-weight="bold">UrPay</text>
+    <text x="20" y="245" fill="#CAC4D0" font-family="sans-serif" font-size="10">Payment</text>
+    <text x="130" y="245" fill="#F2B8B5" font-family="sans-serif" font-size="12" font-weight="bold">-45.50 SAR</text>
+</svg>

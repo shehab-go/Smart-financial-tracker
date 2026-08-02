@@ -31,9 +31,9 @@
     <td align="center"><b>Permission Guide</b></td>
   </tr>
   <tr>
-    <td><img src=".github/assets/dashboard_light.png" width="200" alt="Dashboard Light"></td>
-    <td><img src=".github/assets/dashboard_dark.png" width="200" alt="Dashboard Dark"></td>
-    <td><img src=".github/assets/permission_guide.png" width="200" alt="Permission Guide"></td>
+    <td><img src=".github/assets/dashboard_light.svg" width="200" alt="Dashboard Light"></td>
+    <td><img src=".github/assets/dashboard_dark.svg" width="200" alt="Dashboard Dark"></td>
+    <td><img src=".github/assets/permission_guide.svg" width="200" alt="Permission Guide"></td>
   </tr>
 </table>
 
