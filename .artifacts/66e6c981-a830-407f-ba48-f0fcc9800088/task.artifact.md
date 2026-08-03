@@ -1,6 +1,0 @@
-- [x] Update `DynamicParser.kt` with named-group Regex support
-- [x] Align `FinancialTrackerClient.kt` with smart logic improvements
-- [x] Review and update `FinancialNotificationListener.kt`
-- [x] Merge `financial_tracker_config.json` improvements
-- [x] Verify build and functionality
-- [x] Cleanup temporary files

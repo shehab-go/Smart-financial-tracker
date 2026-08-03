@@ -1,8 +1,0 @@
-- [ ] **GitHub Issue Forms Migration**
-    - [x] Create `task.artifact.md`
-    - [ ] Delete old markdown templates
-    - [ ] Create `bug_report.yml`
-    - [ ] Create `feature_request.yml`
-    - [ ] Create `config.yml`
-- [ ] **Verification & Sync**
-    - [ ] Git push to master
