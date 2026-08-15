@@ -25,6 +25,8 @@ This document outlines the planned future for the Smart Financial Tracker librar
 - [ ] **Cloud Sync (Optional)**: Secure, end-to-end encrypted backup to Google Drive or iCloud. | **المزامنة السحابية (اختياري)**: نسخ احتياطي مشفر بالكامل (End-to-End) على Google Drive أو iCloud.
 - [ ] **Cross-Platform Bridge (iOS)**: Bring the parsing logic to iOS via Swift (where notification listening allows). | **دعم الأنظمة الأخرى (iOS)**: نقل منطق التحليل لنظام iOS عبر لغة Swift (حيثما تسمح صلاحيات النظام).
 - [ ] **Widget Support**: Ready-to-use Android widgets for real-time balance tracking. | **دعم الودجت (Widgets)**: ويدجت جاهزة للاستخدام لتتبع الرصيد في الوقت الحقيقي من الشاشة الرئيسية.
+- [ ] **Expansion to React Native**: Official bridge for React Native developers. | **دعم رياكت نيتف**: توفير جسر برمجي رسمي لمطوري رياكت نيتف.
+- [ ] **KMP Transition**: Migrating the core logic to Kotlin Multiplatform for shared business logic. | **التحول إلى KMP**: نقل المنطق البرمجي الأساسي لتقنية كوتلن للمنصات المتعددة لمشاركة الكود.
 
 ---
 

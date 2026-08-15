@@ -37,6 +37,18 @@
 
 ---
 
+## 💻 Programming Languages & Platforms | لغات البرمجة والمنصات
+
+| Language/Platform | اللغة / المنصة | Icon | Status | الحالة |
+| :--- | :--- | :---: | :--- | :--- |
+| **Kotlin (Android)** | **كوتلن (أندرويد)** | <img src="https://img.shields.io/badge/kotlin-%237F52FF.svg?style=for-the-badge&logo=kotlin&logoColor=white" height="25"> | ✅ Fully Supported | ✅ مدعوم بالكامل |
+| **Flutter** | **فلاتر** | <img src="https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white" height="25"> | ✅ Fully Supported | ✅ مدعوم بالكامل |
+| **Swift (iOS)** | **سويفت (آيفون)** | <img src="https://img.shields.io/badge/swift-%23E57300.svg?style=for-the-badge&logo=swift&logoColor=white" height="25"> | ⏳ Planned | ⏳ مخطط له |
+| **React Native** | **رياكت نيتف** | <img src="https://img.shields.io/badge/react_native-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" height="25"> | ⏳ Planned | ⏳ مخطط له |
+| **Kotlin Multiplatform** | **كوتلن للمنصات المتعددة** | <img src="https://img.shields.io/badge/KMP-%237F52FF.svg?style=for-the-badge&logo=kotlin&logoColor=white" height="25"> | ⏳ Planned | ⏳ مخطط له |
+
+---
+
 <!--
 ## 📱 Showcase
 
