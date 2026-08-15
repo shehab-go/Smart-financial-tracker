@@ -1,8 +1,8 @@
 <p align="center">
-  <img src=".github/assets/logo.svg" width="120" alt="Smart Financial Tracker Logo">
+  <img src=".github/assets/yemen_wallet_logo.svg" width="150" alt="Smart Financial Tracker Yemen Logo">
 </p>
 
-<h1 align="center">Smart Financial Tracker</h1>
+<h1 align="center">Smart Financial Tracker (Yemen)</h1>
 
 <p align="center">
   <img src="https://github.com/shehab-go/smart-financial-tracker/actions/workflows/android.yml/badge.svg" alt="Android CI">
@@ -129,11 +129,11 @@ client.startListening()
 ### 📚 التوثيق التقني
 لمزيد من المعلومات التفصيلية، يرجى مراجعة الأدلة التقنية التالية:
 - [📖 مرجع الـ API (التوثيق البرمجي)](https://shehab-go.github.io/Smart-financial-tracker)
-- [الهندسة البرمجية للمشروع](docs/architecture.md)
-- [دليل الأمان المتعمق](docs/security-deep-dive.md)
-- [الدعم الإقليمي (اليمن والخليج)](docs/regional-support.md)
-- [دليل المساهمة التقنية للمطورين](docs/CONTRIBUTING_GUIDE.md)
-- [خارطة طريق المشروع](ROADMAP.md)
+- [الهندسة البرمجية للمشروع](./docs/architecture.md)
+- [دليل الأمان المتعمق](./docs/security-deep-dive.md)
+- [الدعم الإقليمي (اليمن والخليج)](./docs/regional-support.md)
+- [دليل المساهمة التقنية للمطورين](./docs/CONTRIBUTING_GUIDE.md)
+- [خارطة طريق المشروع](./ROADMAP.md)
 
 ## 📄 License
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
