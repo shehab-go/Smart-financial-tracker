@@ -1,6 +1,9 @@
-# Security Deep Dive
+# Security Deep Dive | نظرة معمقة على الأمان
 
 Security is the #1 priority for Smart Financial Tracker. Financial data is extremely sensitive, and we take multiple steps to ensure it never leaks.
+الأمان هو الأولوية القصوى لمتتبع البيانات المالية الذكي. البيانات المالية حساسة للغاية، ولذلك نتخذ خطوات متعددة لضمان عدم تسريبها أبداً.
+
+---
 
 ## 1. Local-Only Processing
 **No data ever leaves the device.**

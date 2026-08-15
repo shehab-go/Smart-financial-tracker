@@ -1,8 +1,11 @@
-# Technical Architecture
+# Technical Architecture | البنية الهندسية للنظام
 
 The Smart Financial Tracker is built on a modular, event-driven architecture designed for high security and low latency.
+يعتمد متتبع البيانات المالية الذكي على بنية برمجية معيارية موجهة بالأحداث، مصممة لتحقيق أمان عالٍ وسرعة في المعالجة.
 
-## High-Level Flow
+---
+
+## High-Level Flow | التدفق العام للبيانات
 
 ```mermaid
 graph TD

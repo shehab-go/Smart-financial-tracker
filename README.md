@@ -13,13 +13,27 @@
 </p>
 
 <p align="center">
-  <b>Professional Android library for secure, dynamic transaction parsing.</b><br>
-  Designed for speed, privacy, and extensive regional support (Yemen & Gulf).
+  <b>The ultimate Android library for tracking all Yemeni digital wallets and banks.</b><br>
+  <b>المكتبة الأقوى لتتبع وإدارة كافة المحافظ الرقمية والبنوك اليمنية عبر نظام الأندرويد.</b><br>
+  Secure, dynamic, and designed specifically for the Middle East financial ecosystem.
 </p>
 
 ---
 
 [English](#english) | [العربية](#arabic)
+
+---
+
+## 🇾🇪 Yemeni Financial Ecosystem Support | دعم النظام المالي اليمني
+
+| Institution | المؤسسة | Status | الحالة |
+| :--- | :---: | :--- | :--- |
+| **Jeeb (جيب)** | <img src=".github/assets/jeeb_logo.png" width="40"> | ✅ Fully Supported | ✅ مدعوم بالكامل |
+| **mFloos (الكريمي)** | <img src=".github/assets/mfloos_logo.png" width="40"> | ⏳ In Progress | ⏳ قيد التنفيذ |
+| **ONE Cash** | <img src=".github/assets/onecash_logo.png" width="40"> | ⏳ Planned | ⏳ مخطط له |
+| **Jawali (جوالي)** | <img src=".github/assets/jawali_logo.png" width="40"> | ⏳ Planned | ⏳ مخطط له |
+| **Mobile Money** | <img src=".github/assets/mobilemoney_logo.png" width="40"> | ⏳ Planned | ⏳ مخطط له |
+| **Mahfathati (محفظتي)** | <img src=".github/assets/mahfathati_logo.png" width="40"> | ⏳ Planned | ⏳ مخطط له |
 
 ---
 

@@ -1,6 +1,9 @@
-# Technical Contribution Guide
+# Technical Contribution Guide | دليل المساهمة التقنية
 
 This guide is for developers who want to contribute code to the Smart Financial Tracker.
+هذا الدليل مخصص للمطورين الراغبين في المساهمة برمجياً في مشروع متتبع البيانات المالية الذكي.
+
+---
 
 ## Project Structure
 - `:financial_tracker`: The core library module.
