@@ -64,9 +64,9 @@
 
 ## 🏆 Real-world Success Stories | قصص نجاح واقعية
 
-| App | التطبيق | Link | الرابط |
-| :--- | :--- | :--- | :--- |
-| **Daily Accounts (حسابات يومية)** | تطبيق احترافي لإدارة الحسابات والديون. | <a href="https://play.google.com/store/apps/details?id=com.ramzi.debit_credit_app"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="120"></a> | <img src=".github/assets/daily.webp" width="40" style="border-radius:8px;"> |
+| App | Description | Link | Icon |
+| :--- | :--- | :--- | :---: |
+| **Daily Accounts** | **حسابات يومية** - تطبيق احترافي لإدارة الحسابات والديون. | <a href="https://play.google.com/store/apps/details?id=com.ramzi.debit_credit_app"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="130"></a> | <img src=".github/assets/daily.webp" width="48" style="border-radius:10px;"> |
 
 ---
 
