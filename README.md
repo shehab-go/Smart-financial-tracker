@@ -61,6 +61,28 @@
 ---
 -->
 
+---
+
+## 🏆 Real-world Success Stories | قصص نجاح واقعية
+
+**English:**
+This library powers the automatic transaction discovery feature in successful production applications, including:
+- **Daily Accounts (حسابات يومية)**: A professional financial management app.
+  <a href="https://play.google.com/store/apps/details?id=com.ramzi.debit_credit_app">
+    <img src=".github/assets/daily.webp" width="48" style="vertical-align:middle; border-radius:8px;">
+    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="140" style="vertical-align:middle;">
+  </a>
+
+**العربية:**
+هذه المكتبة هي المحرك الأساسي لميزة الاكتشاف التلقائي للعمليات في تطبيقات ناجحة ومنشورة، منها:
+- **تطبيق حسابات يومية (Daily Accounts)**: تطبيق احترافي لإدارة الحسابات والديون.
+  <a href="https://play.google.com/store/apps/details?id=com.ramzi.debit_credit_app">
+    <img src=".github/assets/daily.webp" width="48" style="vertical-align:middle; border-radius:8px;">
+    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="140" style="vertical-align:middle;">
+  </a>
+
+---
+
 <a name="english"></a>
 ## English
 

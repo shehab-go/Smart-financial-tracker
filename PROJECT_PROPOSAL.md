@@ -1,49 +1,38 @@
-# إعلان مشروع: Smart Financial Tracker (مُتتبع البيانات المالية الذكي)
-
-[English Version Below](#english)
+# مقترح تقديم مشروع استراتيجي: Smart Financial Tracker 🇾🇪
+# Strategic Project Proposal: Smart Financial Tracker
 
 ---
 
-## 🇾🇪 مقدمة للمجتمع اليمني للمصادر المفتوحة
-أود مشاركة مشروع **Smart Financial Tracker** مع زملائي المطورين في منظمة **Yemen Open Source**. هذا المشروع هو مكتبة أندرويد متكاملة تهدف إلى تسهيل تتبع وإدارة الأحداث المالية عبر تحليل الإشعارات والرسائل النصية البنكية بشكل تلقائي وآمن.
+## 🇾🇪 إلى الإخوة في مجتمع Yemen Open Source
+السلام عليكم ورحمة الله وبركاته،
 
-### ✨ لماذا هذا المشروع؟
-في ظل التحول الرقمي المتسارع في اليمن واعتمادنا الكبير على المحافظ الإلكترونية، برزت الحاجة لأداة برمجية تسهل على المطورين بناء تطبيقات مالية ذكية. هذا المشروع يوفر "المحرك" الأساسي لذلك، مع التركيز التام على **خصوصية المستخدم وأمان بياناته**.
+أقدم لكم مشروع **Smart Financial Tracker**، وهو مشروع أندرويد متكامل صُمم ليكون حلاً جذرياً وآمناً لمشكلة تتبع العمليات المالية عبر تحليل إشعارات المحافظ الإلكترونية والبنوك اليمنية تلقائياً.
 
-### 🛠 المميزات التقنية:
-- **تكنولوجيا حديثة**: مبني بالكامل باستخدام **Kotlin 2.1** و **Jetpack Compose** و **Material 3**.
-- **أمان فائق**: تشفير البيانات باستخدام **AES-256 GCM** مدعوم بنظام Android KeyStore لضمان عدم تسريب البيانات المالية حتى لو فُقد الهاتف.
-- **محرك تحليل ديناميكي**: يعتمد على نظام Regex مرن يسمح بإضافة قواعد تحليل لبنوك جديدة دون الحاجة لتغيير الكود.
-- **دعم المحافظ اليمنية**: نهدف إلى دعم كافة المحافظ والبنوك اليمنية. تم بالفعل الانتهاء من دعم محفظة **جيب (Jeeb)** بالكامل ✅، ونحن بصدد استكمال بقية المحافظ (الكريمي، ONE Cash، موبايل موني، إلخ).
-- **توثيق كامل**: موقع توثيق (API Reference) مولد بواسطة Dokka ومنشور على GitHub Pages.
-- **أتمتة احترافية**: نظام CI/CD متكامل لفحص جودة الكود وبناء النسخ تلقائياً.
+### ✨ القيمة المضافة للمنظمة وللمجتمع اليمني:
+*   **دعم شامل للنظام المالي اليمني**: المشروع يركز بشكل أساسي على دعم المشهد المالي الرقمي في اليمن. تم بالفعل إتمام دعم محفظة **جيب (Jeeb)** بالكامل، مع وجود خطة واضحة لدعم بقية المؤسسات (الكريمي، ONE Cash، موبايل موني، إلخ).
+*   **جودة برمجية بمعايير عالمية**: تم بناء الكود باستخدام أحدث التقنيات (**Kotlin 2.1**, **Jetpack Compose**, **Material 3**) مع نظام أتمتة كامل (**CI/CD**) وتوثيق تقني شامل يسهل على المطورين المساهمة فيه.
+*   **الأمان والخصوصية المطلقة**: تم دمج تشفير **AES-256 GCM** المدعوم بنظام Android KeyStore، مما يجعله نموذجاً آمناً للمشاريع المالية المفتوحة المصدر التي تحترم خصوصية المستخدم اليمني.
+*   **إثبات كفاءة (Production Ready)**: تم استخدام تقنية الاكتشاف التلقائي لهذه المكتبة بنجاح في تطبيقات قائمة ولها قاعدة مستخدمين واسعة، مثل تطبيق **[حسابات يومية](https://play.google.com/store/apps/details?id=com.ramzi.debit_credit_app)** على متجر جوجل بلاي.
 
-### 🔗 روابط المشروع:
+### 🎯 الهدف من هذا المقترح:
+أطمح أن ينضم هذا المشروع رسمياً تحت مظلة **Yemen Open Source**، ليكون مرجعاً تقنياً للمطورين اليمنيين، ومساهمةً فعلية في تطوير أدوات التقنية المالية (Fintech) المفتوحة في بلادنا.
+
+---
+
+## 🚀 English Summary
+I am proposing **Smart Financial Tracker** as a strategic addition to the **Yemen Open Source** organization. This library is a professional solution for secure financial event tracking, specifically optimized for the Yemeni digital wallet ecosystem.
+
+### Key Highlights:
+- **Yemeni First**: Full support for **Jeeb (جيب)** and a roadmap for all major Yemeni banks/wallets.
+- **Top-Tier Tech**: Built with **Kotlin 2.1** and **Compose**, featuring professional **CI/CD** and **Dokka** documentation.
+- **Bank-Grade Security**: Implements **AES-256 GCM** for local data protection.
+
+---
+
+### 🔗 روابط هامة | Important Links:
 - **المستودع (Repository)**: [Smart Financial Tracker](https://github.com/shehab-go/Smart-financial-tracker)
 - **التوثيق البرمجي**: [API Reference](https://shehab-go.github.io/Smart-financial-tracker/)
-- **نسخة تجريبية (APK)**: متاحة في قسم [Releases](https://github.com/shehab-go/Smart-financial-tracker/releases).
+- **نسخة تجريبية (APK)**: [Latest Release](https://github.com/shehab-go/Smart-financial-tracker/releases)
 
-يسعدني جداً تلقي ملاحظاتكم، مراجعاتكم للكود، أو مساهماتكم لتطوير محرك التحليل ليشمل كافة الخدمات المالية في اليمن والخليج.
-
----
-
-<a name="english"></a>
-## 🚀 Project Announcement: Smart Financial Tracker
-
-I am excited to introduce **Smart Financial Tracker** to the **Yemen Open Source** community. This is a professional Android library designed to simplify financial event tracking by automatically and securely parsing transaction notifications and SMS messages.
-
-### 🌟 Vision
-With the rise of digital wallets in Yemen and the region, there is a growing need for tools that help developers build smarter fintech applications. This project provides the core engine for such apps, prioritizing **user privacy and data security** above all else.
-
-### 🔧 Technical Highlights:
-- **Modern Stack**: Built with **Kotlin 2.1**, **Jetpack Compose**, and **Material 3**.
-- **Bank-Grade Security**: Implements **AES-256 GCM** encryption backed by Android KeyStore.
-- **Dynamic Parsing**: A flexible Regex-based engine that allows adding new bank patterns without code changes.
-- **Yemeni First**: Our goal is to support every financial institution in Yemen. **Jeeb (جيب)** is already fully integrated ✅, with mFloos, ONE Cash, and others in active development.
-- **DevOps Ready**: Automated CI/CD pipelines for linting, testing, and releases.
-
-### 🔗 Useful Links:
-- **Repository**: [GitHub Link](https://github.com/shehab-go/Smart-financial-tracker)
-- **Documentation**: [API Reference Site](https://shehab-go.github.io/Smart-financial-tracker/)
-
-I invite you to review the codebase, try the sample app, and contribute to making this the standard financial tracking tool for the Yemeni developer ecosystem.
+أتطلع لمراجعتكم ومناقشة سبل التعاون.
+**شهاب (shehab-go)**

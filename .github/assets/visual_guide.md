@@ -25,7 +25,7 @@ A GIF showing a notification arriving and then appearing in the app dashboard is
 1. Go to your repository on GitHub.com.
 2. Click **Settings** -> **General**.
 3. Scroll to **Social preview**.
-4. Upload the `logo.svg` (or a PNG version of it). This will show up when you share the link.
+4. Upload the `yemen_wallet_logo.svg` (or a PNG version of it). This will show up when you share the link.
 
 ## 4. Banner (Optional but Recommended)
 If you want a banner at the top of the README, create a wide image (1280x640) with the logo and name using tools like **Canva** or **Figma**. Save it as `banner.png` in this folder.
