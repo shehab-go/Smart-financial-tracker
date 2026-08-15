@@ -1,0 +1,26 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Main Background Container -->
+    <rect width="200" height="200" rx="50" fill="#1A1A1A"/>
+
+    <!-- Wallet Body (Folded Shape) -->
+    <rect x="40" y="60" width="120" height="90" rx="10" fill="#333333" stroke="white" stroke-width="2"/>
+
+    <!-- Wallet Flap (The part that closes) -->
+    <path d="M40 60H160V100C160 100 130 120 100 120C70 120 40 100 40 100V60Z" fill="#222222" stroke="white" stroke-width="1.5"/>
+
+    <!-- Yemeni Flag Integration on the Flap -->
+    <path d="M41 61H159V73H41V61Z" fill="#CE1126"/> <!-- Red Strip -->
+    <path d="M41 73H159V85H41V73Z" fill="white"/>   <!-- White Strip -->
+    <path d="M41 85H159V97H41V85Z" fill="#000000"/> <!-- Black Strip -->
+
+    <!-- Wallet Clap / Button -->
+    <circle cx="100" cy="110" r="8" fill="#FFD700" stroke="white" stroke-width="1"/>
+    <path d="M97 110L99 113L103 107" stroke="#1A1A1A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Digital Element: Credit Card peeking out -->
+    <rect x="60" y="45" width="50" height="30" rx="4" fill="#6750A4" opacity="0.8"/>
+    <rect x="65" y="52" width="15" height="10" rx="2" fill="#FFD700" opacity="0.9"/> <!-- Chip -->
+
+    <!-- Connecting Lines (Digital aspect) -->
+    <path d="M40 130H160" stroke="white" stroke-width="1" stroke-dasharray="4 4" opacity="0.3"/>
+</svg>
