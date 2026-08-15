@@ -28,12 +28,12 @@
 
 | Institution | المؤسسة | Status | الحالة |
 | :--- | :---: | :--- | :--- |
-| **Jeeb (جيب)** | <img src=".github/assets/jeeb_logo.png" width="40"> | ✅ Fully Supported | ✅ مدعوم بالكامل |
+| **Jeeb (جيب)** | <img src=".github/assets/jeeb_logo.webp" width="40"> | ✅ Fully Supported | ✅ مدعوم بالكامل |
 | **mFloos (الكريمي)** | <img src=".github/assets/mfloos_logo.png" width="40"> | ⏳ In Progress | ⏳ قيد التنفيذ |
-| **ONE Cash** | <img src=".github/assets/onecash_logo.png" width="40"> | ⏳ Planned | ⏳ مخطط له |
+| **ONE Cash** | <img src=".github/assets/onecash_logo.jpg" width="40"> | ⏳ Planned | ⏳ مخطط له |
 | **Jawali (جوالي)** | <img src=".github/assets/jawali_logo.png" width="40"> | ⏳ Planned | ⏳ مخطط له |
 | **Mobile Money** | <img src=".github/assets/mobilemoney_logo.png" width="40"> | ⏳ Planned | ⏳ مخطط له |
-| **Mahfathati (محفظتي)** | <img src=".github/assets/mahfathati_logo.png" width="40"> | ⏳ Planned | ⏳ مخطط له |
+| **Mahfathati (محفظتي)** | <img src=".github/assets/mahfathati_logo.jpg" width="40"> | ⏳ Planned | ⏳ مخطط له |
 
 ---
 
