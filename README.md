@@ -120,6 +120,34 @@ For more detailed information, check our technical guides:
 
 ---
 
+## 🤝 How to Contribute | كيف تساهم
+
+We welcome contributions from everyone! There are two main ways you can help:
+
+### 1. For Developers: Adding New Parsers
+The core of this library is the `DynamicParser`, which uses regex rules to extract data from notifications. You can contribute by adding support for new banks or wallets.
+
+- **Explore rules:** Check [financial_tracker_config.json](file:///E:/Smartfinancialtracker/financial_tracker/src/main/assets/financial_tracker_config.json) to see existing patterns.
+- **Add a rule:** Follow the structure in our [Technical Contribution Guide](file:///E:/Smartfinancialtracker/docs/CONTRIBUTING_GUIDE.md).
+- **Test:** Use `FinancialTrackerClient.testParser()` to verify your regex against real notification text.
+
+### 2. For Non-Developers: Help Us Collect Data
+If you use a wallet that isn't supported yet, you can help us by providing sample notification data securely via our debug app.
+
+**Currently Supported Apps for Capture:**
+- **Jeeb (جيب)**, **mFloos (الكريمي)**, **ONE Cash (ون كاش)**
+- **Mahfathati (محفظتي)**, **Mobile Money (موبايل موني)**, **Jawali (جوالي)**
+- **Pando (باندو)**, **Yemen Wallet (محفظة اليمن)**, **SabaPay (Saba Islamic Bank)**
+- **Shamil Mobile**, **YKB Mobile**, **IBY Mobile**, **Plus Cash**, **FastPay**, **Floosak**, **Wessal**
+
+- **Download the APK:** [Download Latest Debug APK](https://github.com/shehab-go/smart-financial-tracker/releases) (or build the `:app` module).
+- **Grant Permissions:** Open the app and follow the guide to grant **Notification Access**.
+- **Perform Transactions:** Use your wallet/bank app to perform transactions.
+- **Automatic Reporting:** Our debug app is integrated with **Sentry**. If a notification is received but cannot be parsed, it is automatically sent to our development team for analysis so we can create a new parser rule for it.
+- **Privacy:** We only collect the notification package name, title, and body text. No personal identifiers are linked to this data.
+
+---
+
 <a name="arabic"></a>
 ## العربية
 
@@ -155,6 +183,36 @@ client.startListening()
 - [الدعم الإقليمي (اليمن والخليج)](./docs/regional-support.md)
 - [دليل المساهمة التقنية للمطورين](./docs/CONTRIBUTING_GUIDE.md)
 - [خارطة طريق المشروع](./ROADMAP.md)
+
+---
+
+## 🤝 كيف تساهم | How to Contribute
+
+نرحب بمساهمات الجميع! هناك طريقتان رئيسيتان للمساعدة:
+
+### 1. للمطورين: إضافة أدوات تحليل (Parsers) جديدة
+تعتمد المكتبة على `DynamicParser` الذي يستخدم قواعد Regex لاستخراج البيانات. يمكنك المساهمة بإضافة دعم لبنوك أو محافظ جديدة.
+
+- **استكشاف القواعد:** راجع ملف [financial_tracker_config.json](file:///E:/Smartfinancialtracker/financial_tracker/src/main/assets/financial_tracker_config.json).
+- **إضافة قاعدة:** اتبع التعليمات في [دليل المساهمة التقنية](./docs/CONTRIBUTING_GUIDE.md).
+- **الاختبار:** استخدم `FinancialTrackerClient.testParser()` للتحقق من صحة القواعد.
+
+### 2. لغير المطورين: ساعدنا في جمع البيانات
+إذا كنت تستخدم محفظة غير مدعومة، يمكنك مساعدتنا بإرسال نماذج للإشعارات بأمان عبر التطبيق التجريبي.
+
+**التطبيقات المدعومة حالياً للالتقاط:**
+- **جيب (Jeeb)**، **إم فلوس (الكريمي)**، **ون كاش (ONE Cash)**
+- **محفظتي (بنك التضامن)**، **موبايل موني (كاك بنك)**، **جوالي (CAC Jawali)**
+- **باندو (باندو)**، **محفظة اليمن (Yemen Wallet)**، **سبأ بي (SabaPay)**
+- **شامل موبايل**، **YKB موبايل**، **IBY موبايل**، **بلس كاش**، **فاست بي**، **فلوسك**، **وصال**
+
+- **تحميل التطبيق (APK):** قم بتحميل [أحدث نسخة APK](https://github.com/shehab-go/smart-financial-tracker/releases).
+- **منح الصلاحيات:** افتح التطبيق وامنح صلاحية **"الوصول إلى الإشعارات" (Notification Access)**.
+- **القيام بعمليات مالية:** قم بإجراء أي عملية مالية في تطبيق البنك أو المحفظة الخاص بك.
+- **التقاط البيانات تلقائياً:** التطبيق مدمج مع خدمة **Sentry**. عندما يصل إشعار لا يستطيع النظام تحليله، يتم إرساله تلقائياً لفريق التطوير لدراسته وإضافة قاعدة برمجية له.
+- **الخصوصية:** يتم جمع نص الإشعار واسم التطبيق فقط، ولا يتم ربط هذه البيانات بأي معلومات شخصية.
+
+---
 
 ## 📄 License
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

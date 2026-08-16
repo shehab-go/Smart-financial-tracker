@@ -133,5 +133,20 @@
         }
       }
     ]
-  }
+  },
+  { "packageName": "com.kuraimi.mfloos", "rules": [] },
+  { "packageName": "com.onecash.user", "rules": [] },
+  { "packageName": "com.tadhamonbank.mahfathati", "rules": [] },
+  { "packageName": "com.cacbank.mobilemoney", "rules": [] },
+  { "packageName": "com.cacbank.cacmobile", "rules": [] },
+  { "packageName": "com.alamalbank.pando", "rules": [] },
+  { "packageName": "com.yemenwallet.user", "rules": [] },
+  { "packageName": "com.sabaislamicbank.sabapay", "rules": [] },
+  { "packageName": "com.shamilbank.mobile", "rules": [] },
+  { "packageName": "com.ykb.mobile", "rules": [] },
+  { "packageName": "com.iby.mobile", "rules": [] },
+  { "packageName": "com.pluscash.user", "rules": [] },
+  { "packageName": "com.fastpay.yemen", "rules": [] },
+  { "packageName": "com.yemenbank.floosak", "rules": [] },
+  { "packageName": "com.qualityconnect.wessal", "rules": [] }
 ]

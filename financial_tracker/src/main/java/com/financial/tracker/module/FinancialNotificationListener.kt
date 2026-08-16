@@ -68,6 +68,15 @@ class FinancialNotificationListener : NotificationListenerService() {
                     timestamp = System.currentTimeMillis(),
                 )
             dao.insertUnparsedNotification(unparsed)
+
+            // Report to Sentry if available in the host app
+            try {
+                val sentryClass = Class.forName("io.sentry.Sentry")
+                val captureMessageMethod = sentryClass.getMethod("captureMessage", String::class.java)
+                captureMessageMethod.invoke(null, "Unparsed Notification: $packageName | Title: $title | Text: $text")
+            } catch (e: Exception) {
+                // Sentry not available or other error
+            }
         }
     }
 
