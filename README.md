@@ -7,7 +7,7 @@
 <p align="center">
   <img src="https://github.com/shehab-go/smart-financial-tracker/actions/workflows/android.yml/badge.svg" alt="Android CI">
   <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/Version-1.1.0-green.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.2.0-green.svg" alt="Version">
   <img src="https://img.shields.io/badge/Platform-Android-orange.svg" alt="Platform">
   <a href="https://shehab-go.github.io/Smart-financial-tracker"><img src="https://img.shields.io/badge/API-Reference-blue" alt="API Reference"></a>
 </p>
@@ -98,7 +98,7 @@ Add the following to your `build.gradle` (Module level):
 
 ```kotlin
 dependencies {
-    implementation("com.github.shehab-go:wallet-events:1.1.0")
+    implementation("com.github.shehab-go:wallet-events:1.2.0")
 }
 ```
 
@@ -164,7 +164,7 @@ If you use a wallet that isn't supported yet, you can help us by providing sampl
 
 ```kotlin
 dependencies {
-    implementation("com.github.shehab-go:wallet-events:1.1.0")
+    implementation("com.github.shehab-go:wallet-events:1.2.0")
 }
 ```
 

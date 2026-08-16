@@ -69,7 +69,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.shehab-go"
                 artifactId = "wallet-events"
-                version = "1.1.0"
+                version = "1.2.0"
 
                 pom {
                     name.set("Smart Financial Tracker")

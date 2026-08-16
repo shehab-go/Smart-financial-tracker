@@ -16,7 +16,7 @@ lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
 detekt = "1.23.7"
 dokka = "2.0.0"
-libVersion = "1.1.0"
+libVersion = "1.2.0"
 libGroup = "com.github.shehab-go"
 sentry = "7.14.0"
 
