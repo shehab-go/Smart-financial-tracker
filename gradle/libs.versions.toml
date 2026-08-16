@@ -1,5 +1,5 @@
 [versions]
-agp = "8.8.0"
+agp = "8.13.2"
 flutter_embedding_release = "1.0.0-e854d4850028ca660000a64599fea305318b005e"
 flutter_embedding_releaseVersion = "1.0.0-8bf2090718fea3655f466049a757f823898f0ad1"
 kotlin = "2.1.0"

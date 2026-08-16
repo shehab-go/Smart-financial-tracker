@@ -1,7 +1,11 @@
 complexity:
   TooManyFunctions:
     active: true
-    threshold: 15
+    thresholdInFiles: 15
+    thresholdInClasses: 15
+    thresholdInInterfaces: 15
+    thresholdInObjects: 15
+    thresholdInEnums: 15
   LongMethod:
     active: true
     threshold: 60
@@ -17,13 +21,11 @@ style:
     active: true
     excludeImports:
       - 'kotlinx.android.synthetic.*'
+  UnusedPrivateMember:
+    active: true
+    allowedNames: '(_|ignored|expected|serialVersionUID)'
 
 naming:
   FunctionNaming:
     active: true
     functionPattern: '[a-zA-Z][a-zA-Z0-9]*' # Relaxed for Compose
-
-potential-bugs:
-  UnusedPrivateMember:
-    active: true
-    allowedNames: '(_|ignored|expected|serialVersionUID)'

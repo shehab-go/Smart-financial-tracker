@@ -5,6 +5,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import androidx.core.net.toUri
 
 /**
  * The main entry point for the Smart Financial Tracker library.
@@ -131,7 +132,7 @@ object FinancialTrackerClient {
     fun requestBatteryOptimization(context: android.content.Context) {
         val intent =
             android.content.Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = android.net.Uri.parse("package:${context.packageName}")
+                data = "package:${context.packageName}".toUri()
                 flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
             }
         try {
