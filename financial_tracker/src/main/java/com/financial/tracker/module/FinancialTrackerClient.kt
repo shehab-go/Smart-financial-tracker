@@ -1,11 +1,11 @@
 package com.financial.tracker.module
 
+import androidx.core.net.toUri
 import com.financial.tracker.module.data.FinancialTransaction
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import androidx.core.net.toUri
 
 /**
  * The main entry point for the Smart Financial Tracker library.

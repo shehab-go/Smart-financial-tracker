@@ -65,61 +65,92 @@ class FinancialTrackerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, E
         }
 
         when (call.method) {
-            "requestNotificationPermission" -> {
-                val intent =
-                    Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                currentContext.startActivity(intent)
+            "requestNotificationPermission" -> handleRequestPermission(currentContext, result)
+            "isNotificationPermissionGranted" -> handleCheckPermission(currentContext, result)
+            "getAllTransactions" -> handleGetAllTransactions(currentContext, result)
+            "markAsClassified" -> handleMarkAsClassified(currentContext, call, result)
+            "reloadRules" -> handleReloadRules(currentContext, result)
+            "testParser" -> handleTestParser(call, result)
+            else -> result.notImplemented()
+        }
+    }
+
+    private fun handleRequestPermission(
+        context: Context,
+        result: MethodChannel.Result,
+    ) {
+        val intent =
+            Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        context.startActivity(intent)
+        result.success(true)
+    }
+
+    private fun handleCheckPermission(
+        context: Context,
+        result: MethodChannel.Result,
+    ) {
+        val enabledListeners = NotificationManagerCompat.getEnabledListenerPackages(context)
+        val isGranted = enabledListeners.contains(context.packageName)
+        result.success(isGranted)
+    }
+
+    private fun handleGetAllTransactions(
+        context: Context,
+        result: MethodChannel.Result,
+    ) {
+        scope.launch {
+            val transactions = FinancialTrackerClient.getAllTransactions(context)
+            val json =
+                withContext(Dispatchers.Default) {
+                    gson.toJson(transactions)
+                }
+            result.success(json)
+        }
+    }
+
+    private fun handleMarkAsClassified(
+        context: Context,
+        call: MethodCall,
+        result: MethodChannel.Result,
+    ) {
+        val refId = call.argument<String>("referenceId")
+        val category = call.argument<String>("category")
+        if (refId != null && category != null) {
+            scope.launch {
+                FinancialTrackerClient.markAsClassified(context, refId, category)
                 result.success(true)
             }
-            "isNotificationPermissionGranted" -> {
-                val enabledListeners = NotificationManagerCompat.getEnabledListenerPackages(currentContext)
-                val isGranted = enabledListeners.contains(currentContext.packageName)
-                result.success(isGranted)
-            }
-            "getAllTransactions" -> {
-                scope.launch {
-                    val transactions = FinancialTrackerClient.getAllTransactions(currentContext)
-                    val json =
-                        withContext(Dispatchers.Default) {
-                            gson.toJson(transactions)
-                        }
-                    result.success(json)
-                }
-            }
-            "markAsClassified" -> {
-                val refId = call.argument<String>("referenceId")
-                val category = call.argument<String>("category")
-                if (refId != null && category != null) {
-                    scope.launch {
-                        FinancialTrackerClient.markAsClassified(currentContext, refId, category)
-                        result.success(true)
-                    }
-                } else {
-                    result.error("INVALID_ARGS", "Missing referenceId or category", null)
-                }
-            }
-            "reloadRules" -> {
-                scope.launch {
-                    FinancialTrackerClient.reprocessUnparsedLogs(currentContext)
-                    result.success(true)
-                }
-            }
-            "testParser" -> {
-                val packageName = call.argument<String>("packageName") ?: ""
-                val title = call.argument<String>("title") ?: ""
-                val text = call.argument<String>("text") ?: ""
-                val customConfig = call.argument<String>("customConfigJson")
+        } else {
+            result.error("INVALID_ARGS", "Missing referenceId or category", null)
+        }
+    }
 
-                val parsedTx = FinancialTrackerClient.testParser(packageName, title, text, customConfig)
-                if (parsedTx != null) {
-                    result.success(gson.toJson(parsedTx))
-                } else {
-                    result.success(null)
-                }
-            }
-            else -> result.notImplemented()
+    private fun handleReloadRules(
+        context: Context,
+        result: MethodChannel.Result,
+    ) {
+        scope.launch {
+            FinancialTrackerClient.reprocessUnparsedLogs(context)
+            result.success(true)
+        }
+    }
+
+    private fun handleTestParser(
+        call: MethodCall,
+        result: MethodChannel.Result,
+    ) {
+        val packageName = call.argument<String>("packageName") ?: ""
+        val title = call.argument<String>("title") ?: ""
+        val text = call.argument<String>("text") ?: ""
+        val customConfig = call.argument<String>("customConfigJson")
+
+        val parsedTx = FinancialTrackerClient.testParser(packageName, title, text, customConfig)
+        if (parsedTx != null) {
+            result.success(gson.toJson(parsedTx))
+        } else {
+            result.success(null)
         }
     }
 

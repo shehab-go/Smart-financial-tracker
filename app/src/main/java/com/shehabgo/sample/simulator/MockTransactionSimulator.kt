@@ -8,7 +8,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object MockTransactionSimulator {
-
     private val simulatorScope = CoroutineScope(Dispatchers.IO)
 
     fun simulateSTCPay(context: Context) {
@@ -27,7 +26,12 @@ object MockTransactionSimulator {
         processMock(context, "com.urpay.app", "urpay", sms)
     }
 
-    private fun processMock(context: Context, pkg: String, title: String, text: String) {
+    private fun processMock(
+        context: Context,
+        pkg: String,
+        title: String,
+        text: String,
+    ) {
         simulatorScope.launch {
             // Add a small delay to feel like a real notification arriving
             delay(500)

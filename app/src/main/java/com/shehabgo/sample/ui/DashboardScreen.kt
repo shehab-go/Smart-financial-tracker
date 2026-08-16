@@ -47,7 +47,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     transactions: List<FinancialTransaction>,
@@ -58,77 +57,20 @@ fun DashboardScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Smart Financial Tracker") },
-                actions = {
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
-                    }
-                },
-            )
+            DashboardTopBar(onOpenSettings = onOpenSettings)
         },
         floatingActionButton = {
-            Box {
-                FloatingActionButton(onClick = { showSimulatorMenu = true }) {
-                    Icon(Icons.Default.Star, contentDescription = "Simulate")
-                }
-                DropdownMenu(
-                    expanded = showSimulatorMenu,
-                    onDismissRequest = { showSimulatorMenu = false },
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Simulate STC Pay") },
-                        onClick = {
-                            MockTransactionSimulator.simulateSTCPay(context)
-                            showSimulatorMenu = false
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Simulate mFloos") },
-                        onClick = {
-                            MockTransactionSimulator.simulateAlkuraimi(context)
-                            showSimulatorMenu = false
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Simulate UrPay") },
-                        onClick = {
-                            MockTransactionSimulator.simulateUrPay(context)
-                            showSimulatorMenu = false
-                        },
-                    )
-                }
-            }
+            DashboardFloatingActionButton(
+                showMenu = showSimulatorMenu,
+                onToggleMenu = { showSimulatorMenu = it },
+                onSimulateSTCPay = { MockTransactionSimulator.simulateSTCPay(context) },
+                onSimulateAlkuraimi = { MockTransactionSimulator.simulateAlkuraimi(context) },
+                onSimulateUrPay = { MockTransactionSimulator.simulateUrPay(context) },
+            )
         },
     ) { padding ->
         if (transactions.isEmpty()) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.Notifications,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        "No transactions yet",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray,
-                    )
-                    Text(
-                        "Try sending a transaction SMS to this device",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
-                    )
-                }
-            }
+            EmptyDashboardContent(modifier = Modifier.padding(padding))
         } else {
             LazyColumn(
                 modifier =
@@ -142,6 +84,88 @@ fun DashboardScreen(
                     TransactionItem(tx)
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DashboardTopBar(onOpenSettings: () -> Unit) {
+    TopAppBar(
+        title = { Text("Smart Financial Tracker") },
+        actions = {
+            IconButton(onClick = onOpenSettings) {
+                Icon(Icons.Default.Settings, contentDescription = "Settings")
+            }
+        },
+    )
+}
+
+@Composable
+private fun DashboardFloatingActionButton(
+    showMenu: Boolean,
+    onToggleMenu: (Boolean) -> Unit,
+    onSimulateSTCPay: () -> Unit,
+    onSimulateAlkuraimi: () -> Unit,
+    onSimulateUrPay: () -> Unit,
+) {
+    Box {
+        FloatingActionButton(onClick = { onToggleMenu(true) }) {
+            Icon(Icons.Default.Star, contentDescription = "Simulate")
+        }
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { onToggleMenu(false) },
+        ) {
+            DropdownMenuItem(
+                text = { Text("Simulate STC Pay") },
+                onClick = {
+                    onSimulateSTCPay()
+                    onToggleMenu(false)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Simulate mFloos") },
+                onClick = {
+                    onSimulateAlkuraimi()
+                    onToggleMenu(false)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Simulate UrPay") },
+                onClick = {
+                    onSimulateUrPay()
+                    onToggleMenu(false)
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyDashboardContent(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                Icons.Default.Notifications,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "No transactions yet",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.Gray,
+            )
+            Text(
+                "Try sending a transaction SMS to this device",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+            )
         }
     }
 }
